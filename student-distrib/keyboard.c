@@ -136,13 +136,21 @@ int char_count = 0;
  RETURN VALUE: none
  IMPACTS ON OTHERS: PIC, it will be enabled after this func is called
  */
-
 void init_keyboard() {
     // enable keyboard interrupt on the PIC
     // enable IRQ is in i8259.c
     enable_irq(IRQ_KB);
 }
 
+
+/*
+ NAME: keyboard_handler
+ DESCRIPTION: reads from keyboard and displays the chars 
+ INPUTS: none (inb from lib.c is used)
+ OUTPUTS: none
+ RETURN VALUE: none
+ IMPACTS ON OTHERS: values and chars displayed onto the screen
+ */
 void keyboard_handler() {
     unsigned int scan_code;
     char key_char;

@@ -66,9 +66,14 @@ Things we Need to do:
 
 // this section if for defining sys stuff
 //PORT # ON PIC
-#define IRQ_KB #
+#define IRQ_KB 1
+
+// Under PS/2 Controller IO Ports
+//https://wiki.osdev.org/%228042%22_PS/2_Controller#Data_Port
+#define PORT_NUM_KB 0x60
 //there are 59 chars we need to account for (0x3B)
 #define NUM_OF_CHARS 0X3B
+#define FLAG_COUNT 0x05
 
 
 // based on https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
@@ -105,12 +110,22 @@ char char_array_shift_cap[NUM_OF_CHARS] = {
                                              'v', 'b', 'n', 'm', '<', '>', '?', 0, '*', 0, ' ', 0
                                 };
 
+/*
+FLAG MAP   
+Flag[0]: Left Shift
+Flag[1]: Right Shift
+Flag[2]: Caps_lock
+Flag[3]: Control
+Flag[4]: Alt
+*/
+int flag_keys[FLAG_COUNT] = {0, 0, 0, 0, 0};
 
 
-
-
-
-
+// kb_idx, is the index for our keyboard buffer
+int kb_idx = 0;
+// char_count is to ensure we don't go over the char limit
+// there will be if statements later on
+int char_count = 0;
 
 
 /*
@@ -125,7 +140,18 @@ char char_array_shift_cap[NUM_OF_CHARS] = {
 void init_keyboard() {
     // enable keyboard interrupt on the PIC
     // enable IRQ is in i8259.c
+    enable_irq(IRQ_KB);
 }
 
-
+void keyboard_handler() {
+    unsigned int scan_code;
+    char key_char;
+    cli();
+    scan_code = inb(PORT_NUM_KB);
+    key_char = char_array_normal[scan_code];
+    putc(key_char);
+    keyboard_buffer[kb_idx]=key_char;
+    ++kb_idx;
+    ++char_count;
+}
 

@@ -37,7 +37,7 @@ void enable_irq(uint32_t irq_num) {
 void disable_irq(uint32_t irq_num) {
     uint32_t mask = ~(1 << irq_num);
     master_mask = master_mask | mask;
-    outb(master_mask, PIC1_DATA)
+    outb(master_mask, PIC1_DATA);
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */

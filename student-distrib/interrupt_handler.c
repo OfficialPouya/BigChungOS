@@ -1,28 +1,30 @@
 #include "lib.h"
-#include "i8529.h"
+#include "i8259.h"
 #include "interrupt_handler.h"
 #include "x86_desc.h"
 
-EXCEPTION_OBJ(DE, "Divide Error");
-EXCEPTION_OBJ(DB, "RESERVED");
-EXCEPTION_OBJ(NMI, "Non-maskable Interrupt");
-EXCEPTION_OBJ(BP, "Breakpoint");
-EXCEPTION_OBJ(OF, "Overflow");
-EXCEPTION_OBJ(BR, "BOUND Range Exceeded");
-EXCEPTION_OBJ(UD, "Invalid Opcode (undefined)");
-EXCEPTION_OBJ(NM, "Device not available (No Math Coprocessor)");
-EXCEPTION_OBJ(DF, "Double fault");
-EXCEPTION_OBJ(CSO, "Coprocessor Segment Overrun (reserved)");
-EXCEPTION_OBJ(TS, "Invalid TSS");
-EXCEPTION_OBJ(NP, "Segment Not Present");
-EXCEPTION_OBJ(SS, "Stack-Segment Fault");
-EXCEPTION_OBJ(GP, "General Protection");
-EXCEPTION_OBJ(PF, "Page Fault");
-// EXCEPTION_OBJ(IDK, "Intel reserved");
-EXCEPTION_OBJ(MF, "x87 FPU Floating-Point Error (Math Fault)");
-EXCEPTION_OBJ(AC, "Alignment Check");
-EXCEPTION_OBJ(MC, "Machine Check");
-EXCEPTION_OBJ(XF, "SIMD Floating-Point Error (Math Fault)");
+
+
+// DE, "Divide Error"
+// DB, "RESERVED"
+// NMI, "Non-maskable Interrupt"
+// BP, "Breakpoint"
+// OF, "Overflow"
+// BR, "BOUND Range Exceeded"
+// UD, "Invalid Opcode (undefined)"
+// NM, "Device not available (No Math Coprocessor)""
+// DF, "Double fault");
+// CSO, "Coprocessor Segment Overrun (reserved)"
+// TS, "Invalid TSS"
+// NP, "Segment Not Present"
+// SS, "Stack-Segment Fault"
+// GP, "General Protection"
+// PF, "Page Fault"
+// IDK, "Intel reserved"
+// MF, "x87 FPU Floating-Point Error (Math Fault)"
+// AC, "Alignment Check"
+// MC, "Machine Check"
+// XF, "SIMD Floating-Point Error (Math Fault)"
 
 void idt_setup(){
     int i;
@@ -46,29 +48,8 @@ void idt_setup(){
 
 
     }
-    SET_IDT_ENTRY(idt[0], DE);
-    SET_IDT_ENTRY(idt[1], DB);
-    SET_IDT_ENTRY(idt[2], NMI);
-    SET_IDT_ENTRY(idt[3], BP);
-    SET_IDT_ENTRY(idt[4], OF);
-    SET_IDT_ENTRY(idt[5], BR);
-    SET_IDT_ENTRY(idt[6], UD);
-    SET_IDT_ENTRY(idt[7], NM);
-    SET_IDT_ENTRY(idt[8], DF);
-    SET_IDT_ENTRY(idt[9], CSO);
-    SET_IDT_ENTRY(idt[10], TS);
-    SET_IDT_ENTRY(idt[11], NP);
-    SET_IDT_ENTRY(idt[12], SS);
-    SET_IDT_ENTRY(idt[13], GP);
-    SET_IDT_ENTRY(idt[14], PF);
-    // SET_IDT_ENTRY(idt[15], IDK);
-    SET_IDT_ENTRY(idt[16], MF);
-    SET_IDT_ENTRY(idt[17], AC);
-    SET_IDT_ENTRY(idt[18], MC);
-    SET_IDT_ENTRY(idt[19], XF);
+
+// SET_IDT_ENTRY here
 
     lidt(idt_desc_ptr);
 }
-
-
-#endif

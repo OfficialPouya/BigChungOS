@@ -2,6 +2,9 @@
 #include "i8259.h"
 #include "interrupt_handler.h"
 #include "x86_desc.h"
+#include "rtc.h"
+#include "keyboard.h"
+
 
 // DE, "Divide Error"
 // DB, "RESERVED"
@@ -46,7 +49,8 @@ void idt_setup(){
 
 
     }
-
+    SET_IDT_ENTRY(idt[0x21], keyboard_handler);
+    SET_IDT_ENTRY(idt[0x28], handle_rtc);
 // SET_IDT_ENTRY here
 
 }

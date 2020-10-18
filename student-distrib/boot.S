@@ -26,7 +26,7 @@ _start:
 continue:
     # Load the GDT
     lgdt gdt_desc
- 
+    lidt idt_desc_ptr
     pushl %eax
     pushl %ecx
     pushl %edx

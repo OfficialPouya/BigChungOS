@@ -3,8 +3,6 @@
 #include "interrupt_handler.h"
 #include "x86_desc.h"
 
-
-
 // DE, "Divide Error"
 // DB, "RESERVED"
 // NMI, "Non-maskable Interrupt"
@@ -51,5 +49,4 @@ void idt_setup(){
 
 // SET_IDT_ENTRY here
 
-    lidt(idt_desc_ptr);
 }

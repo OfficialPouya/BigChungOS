@@ -29,4 +29,5 @@ void handle_rtc(void){
      inb(CMOS_PORT); // throw away contents
      send_eoi(RTC_IRQ_LINE); 
      sti(); 
+     test_interrupts(); //tests if RTC works properly
 }

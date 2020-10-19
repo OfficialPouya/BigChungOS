@@ -45,6 +45,65 @@ int idt_test(){
 	return result;
 }
 
+/* Paging Test NULL
+*
+* Tries to dereference null
+*
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: init paging
+* Files: memory.c/.h 
+*/
+int page_test_null() {
+	TEST_HEADER;
+
+	int result = PASS;
+	uint32_t *temp = NULL;
+	*temp = 3;
+
+	return result;
+}
+
+/* Paging Test Outside boundaries
+*
+* Tries to reference outside memory space, 0xFFFFFFFF
+*
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: init paging
+* Files: memory.c/.h 
+*/
+int page_test_deref_out() {
+	TEST_HEADER;
+
+	int result = PASS;
+	uint32_t *temp = (uint32_t *) 0xFFFFFFF;
+	*temp = 3;
+
+	return result;
+}
+
+/* Paging Test Kernel 4MB space
+*
+* Tries to dereference space inside Kernel 4MB space
+*
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: init paging
+* Files: memory.c/.h 
+*/
+int page_test_deref_in() {
+	TEST_HEADER;
+
+	int result = PASS;
+	uint32_t *temp = (uint32_t *) 0x400005;
+	*temp = 3;
+
+	return result;
+}
 // add more tests here
 
 /* Checkpoint 2 tests */
@@ -55,6 +114,9 @@ int idt_test(){
 
 /* Test suite entry point */
 void launch_tests(){
-	TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("idt_test", page_test_null());
+	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
+	//TEST_OUTPUT("page_test_deref_in", page_test_deref_in());
 	// launch your tests here
 }

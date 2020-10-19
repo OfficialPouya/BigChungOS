@@ -1,9 +1,9 @@
-/* rtc.c functions to handle the RTC */ 
+/* rtc.c functions to handle the RTC */
 #include "lib.h"
 #include "rtc.h"
 #include "i8259.h"
 
-/* init_rtc 
+/* init_rtc
 *  DESCRIPTION: Initializes the RTC by setting registers and turning on the appropriate IRQ (IRQ #8)
 *  INPUTS: NONE
 *  OUTPUTS: NONE
@@ -17,17 +17,18 @@ void init_rtc(void){
     enable_irq(RTC_IRQ_LINE); //enables IRQ line which is line 8 for RTC
 }
 
-/* handle_rtc 
-*  DESCRIPTION: handles RTC interrupts 
+/* handle_rtc
+*  DESCRIPTION: handles RTC interrupts
 *  INPUTS: NONE
 *  OUTPUTS: NONE
 *  IMPACTS ON OTHERS: NONE
-*/ 
-void handle_rtc(void){
-     cli(); 
+*/
+void rtc_C(void){
+     cli();
      outb(REG_C, RTC_PORT); // select register C
      inb(CMOS_PORT); // throw away contents
-     send_eoi(RTC_IRQ_LINE); 
-     test_interrupts(); //tests if RTC works properly
-     sti(); 
+     send_eoi(RTC_IRQ_LINE);
+     // test_interrupts(); //tests if RTC works properly
+     sti();
+     
 }

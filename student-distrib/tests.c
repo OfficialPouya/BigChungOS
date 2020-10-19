@@ -102,27 +102,6 @@ int page_test_deref_out() {
 	return result;
 }
 
-/* Paging Test Kernel 4MB space
-*
-* Tries to dereference space inside Kernel 4MB space
-*
-* Inputs: None
-* Outputs: PASS/FAIL
-* Side Effects: None
-* Coverage: init paging
-* Files: memory.c/.h 
-*/
-int page_test_deref_in() {
-	TEST_HEADER;
-
-	int result = PASS;
-	uint32_t *temp = (uint32_t *) 0x400005;
-	*temp = 3;
-
-	return result;
-}
-
-
 // add more tests here
 
 /* Checkpoint 2 tests */
@@ -134,10 +113,11 @@ int page_test_deref_in() {
 /* Test suite entry point */
 void launch_tests(){
 	// launch your tests here
+
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page_test_null", page_test_null());
 	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
-	//TEST_OUTPUT("page_test_deref_in", page_test_deref_in());
+
 
 }

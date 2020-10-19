@@ -52,7 +52,15 @@ void i8259_init(void) {
     outb(slave_mask, PIC2_DATA);
 }
 
-/* Enable (unmask) the specified IRQ */
+
+/*
+ NAME: enable_irq
+ DESCRIPTION: Enable (unmask) the specified IRQ 
+ INPUTS: IRQ Number
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Does unmask passed IRQ
+ */
 void enable_irq(uint32_t irq_num) {
     // invalid IRQ NUM check IRQ RANGE is 0-15
     while(irq_num>15 || irq_num<0){return;} 
@@ -70,8 +78,14 @@ void enable_irq(uint32_t irq_num) {
     }
 }
 
-
-/* Disable (mask) the specified IRQ */
+/*
+ NAME: disable_irq
+ DESCRIPTION: Disable (mask) the specified IRQ
+ INPUTS: IRQ Number
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Does mask passed IRQ
+ */
 void disable_irq(uint32_t irq_num) {
     // invalid IRQ NUM check IRQ RANGE is 0-15
     while(irq_num>15 || irq_num<0){return;} 
@@ -88,7 +102,16 @@ void disable_irq(uint32_t irq_num) {
     }
 }
 
-/* Send end-of-interrupt signal for the specified IRQ */
+
+
+/*
+ NAME: send_eoi
+ DESCRIPTION: Send end-of-interrupt signal for the specified IRQ 
+ INPUTS: IRQ Number
+ OUTPUTS: None
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: does cause EOI, which means system can get more interrupts
+ */
 void send_eoi(uint32_t irq_num) {
     // so if its bigger than 8, we know its SLAVE
     // then we need to OR with 2 so Master knows Slave 

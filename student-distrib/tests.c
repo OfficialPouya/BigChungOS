@@ -21,7 +21,7 @@ static inline void assertion_failure(){
 /* Checkpoint 1 tests */
 
 /* IDT Test - Example
- * 
+ *
  * Asserts that first 10 IDT entries are not NULL
  * Inputs: None
  * Outputs: PASS/FAIL
@@ -35,7 +35,7 @@ int idt_test(){
 	int i;
 	int result = PASS;
 	for (i = 0; i < 10; ++i){
-		if ((idt[i].offset_15_00 == NULL) && 
+		if ((idt[i].offset_15_00 == NULL) &&
 			(idt[i].offset_31_16 == NULL)){
 			assertion_failure();
 			result = FAIL;
@@ -44,6 +44,23 @@ int idt_test(){
 
 	return result;
 }
+
+
+/*
+ NAME: div_z
+ DESCRIPTION: tries to divide by 0 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should never reach return 0 
+ IMPACTS ON OTHERS: should cause exception
+ */
+int div_z(){
+	int x = 0;
+	int y= 4;
+	y = y/x;
+	return 0;
+}
+
 
 /* Paging Test NULL
 *
@@ -104,6 +121,8 @@ int page_test_deref_in() {
 
 	return result;
 }
+
+
 // add more tests here
 
 /* Checkpoint 2 tests */
@@ -114,9 +133,11 @@ int page_test_deref_in() {
 
 /* Test suite entry point */
 void launch_tests(){
+	// launch your tests here
+	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("idt_test", idt_test());
-	//TEST_OUTPUT("idt_test", page_test_null());
+	//TEST_OUTPUT("page_test_null", page_test_null());
 	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
 	//TEST_OUTPUT("page_test_deref_in", page_test_deref_in());
-	// launch your tests here
+
 }

@@ -10,7 +10,8 @@
 #include "tests.h"
 #include "interrupt_handler.h"
 #include "rtc.h"
-
+#include "keyboard.h"
+#include "memory.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -139,9 +140,12 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Init the PIC */
-    idt_setup();
-    i8259_init();
-    init_rtc();
+    idt_vector(); // this inits the IDT
+    i8259_init(); // this inits the PIC
+    paging_init(); // this inits paging
+    init_rtc(); // this inits the rtc
+    init_keyboard(); // this inits the keyboard
+    
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */

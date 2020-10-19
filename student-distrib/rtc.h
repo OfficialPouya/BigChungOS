@@ -25,6 +25,6 @@
 void init_rtc(void);
 
 /* handle interrupts */
-void rtc_C(void);
+void handle_rtc(void);
 
 #endif /* _RTC_H */

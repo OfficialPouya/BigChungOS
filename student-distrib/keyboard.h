@@ -2,7 +2,7 @@
 #define KEYBOARD_H
 
 // only type 127 chars per line, the extra space is
-// for NULL padding 
+// for NULL padding
 #define TYPE_BUFFER_SIZE 128
 #define MAX_TYPE 127
 
@@ -15,4 +15,3 @@ void init_keyboard();
 void keyboard_handler();
 
 #endif
-

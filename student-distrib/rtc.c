@@ -23,12 +23,12 @@ void init_rtc(void){
 *  OUTPUTS: NONE
 *  IMPACTS ON OTHERS: NONE
 */
-void rtc_C(void){
+void handle_rtc(void){
      cli();
      outb(REG_C, RTC_PORT); // select register C
      inb(CMOS_PORT); // throw away contents
      send_eoi(RTC_IRQ_LINE);
-     // test_interrupts(); //tests if RTC works properly
+     //test_interrupts(); //tests if RTC works properly
      sti();
      
 }

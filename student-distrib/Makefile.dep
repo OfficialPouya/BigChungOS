@@ -1,0 +1,13 @@
+boot.o: boot.S multiboot.h x86_desc.h types.h
+new_link.o: new_link.S
+x86_desc.o: x86_desc.S x86_desc.h types.h
+i8259.o: i8259.c i8259.h types.h lib.h
+interrupt_handler.o: interrupt_handler.c lib.h types.h i8259.h \
+  interrupt_handler.h x86_desc.h rtc.h keyboard.h new_link.h
+kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
+  tests.h interrupt_handler.h rtc.h keyboard.h memory.h
+keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h
+lib.o: lib.c lib.h types.h
+memory.o: memory.c memory.h types.h x86_desc.h lib.h
+rtc.o: rtc.c lib.h types.h rtc.h i8259.h
+tests.o: tests.c tests.h x86_desc.h types.h lib.h

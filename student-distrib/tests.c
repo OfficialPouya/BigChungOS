@@ -21,7 +21,7 @@ static inline void assertion_failure(){
 /* Checkpoint 1 tests */
 
 /* IDT Test - Example
- * 
+ *
  * Asserts that first 10 IDT entries are not NULL
  * Inputs: None
  * Outputs: PASS/FAIL
@@ -35,12 +35,69 @@ int idt_test(){
 	int i;
 	int result = PASS;
 	for (i = 0; i < 10; ++i){
-		if ((idt[i].offset_15_00 == NULL) && 
+		if ((idt[i].offset_15_00 == NULL) &&
 			(idt[i].offset_31_16 == NULL)){
 			assertion_failure();
 			result = FAIL;
 		}
 	}
+
+	return result;
+}
+
+
+/*
+ NAME: div_z
+ DESCRIPTION: tries to divide by 0 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should never reach return 0 
+ IMPACTS ON OTHERS: should cause exception
+ */
+int div_z(){
+	int x = 0;
+	int y= 4;
+	y = y/x;
+	return 0;
+}
+
+
+/* Paging Test NULL
+*
+* Tries to dereference null
+*
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: init paging
+* Files: memory.c/.h 
+*/
+int page_test_null() {
+	TEST_HEADER;
+
+	int result = PASS;
+	uint32_t *temp = NULL;
+	*temp = 3;
+
+	return result;
+}
+
+/* Paging Test Outside boundaries
+*
+* Tries to reference outside memory space, 0xFFFFFFFF
+*
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: init paging
+* Files: memory.c/.h 
+*/
+int page_test_deref_out() {
+	TEST_HEADER;
+
+	int result = PASS;
+	uint32_t *temp = (uint32_t *) 0xFFFFFFF;
+	*temp = 3;
 
 	return result;
 }
@@ -55,6 +112,12 @@ int idt_test(){
 
 /* Test suite entry point */
 void launch_tests(){
-	//TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
+
+	//TEST_OUTPUT("divide_by_zero", div_z());
+	//TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("page_test_null", page_test_null());
+	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
+
+
 }

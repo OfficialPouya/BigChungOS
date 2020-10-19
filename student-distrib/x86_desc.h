@@ -22,6 +22,9 @@
 /* Number of vectors in the interrupt descriptor table (IDT) */
 #define NUM_VEC     256
 
+/* This is a common size used in page table objects */
+#define COMMON_SIZE 1024
+
 #ifndef ASM
 
 /* This structure is used to load descriptor base registers
@@ -166,6 +169,18 @@ typedef union idt_desc_t {
 extern idt_desc_t idt[NUM_VEC];
 /* The descriptor used to load the IDTR */
 extern x86_desc_t idt_desc_ptr;
+
+/* This defines a page_directory with 1024 PDE 
+   Will distinguish these entries in memory.c during
+   initialization */
+extern uint32_t page_directory[COMMON_SIZE];
+
+/* This defines a page_table with 1024 PTE 
+   Will distinguish these entries in memory.c during
+   initialization. I believe we will need more page
+   tables later, which is why this is suffixed
+   with "1" */
+extern uint32_t page_table1[COMMON_SIZE];
 
 /* Sets runtime parameters for an IDT entry */
 #define SET_IDT_ENTRY(str, handler)                              \

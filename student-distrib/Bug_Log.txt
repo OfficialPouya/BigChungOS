@@ -1,0 +1,72 @@
+Format
+==============
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+==============
+
+Bug #1
+Bug: IDT was causing Error 13, general fault
+Topic: IDT
+Fix: We had to init every single value in table, not just the ones we had (256 instead of 50)
+Location of Fix: interrupt_hanlder.c
+Estimated Time: 2hr
+
+
+Bug #2
+Bug: We did not need assembly linkage for every exception, caused error
+Topic: IDT
+Fix: Removed asm function calls for exceptions and only kept the ones for RTC and KB
+Location of Fix: interrupt_hanlder.c new_link.S
+Estimated Time: 1hr
+
+
+
+Bug #3
+Bug: initiliazed PIC before IDT, unexpected behavior
+Topic: IDT
+Fix: chagned init order
+Location of Fix: kernel.C
+Estimated Time: 30 mins
+
+
+
+Bug #4
+Bug: Double print of Chars
+Topic: Keyboard
+Fix: Not fixed yet. 
+Location of Fix: keyboard.c
+Estimated Time: TBA
+
+Bug #5
+Bug: Bootlooping when paging "enabled"
+Topic: Paging
+Fix: Fix the order in which the control registers are set to enable paging. Solution further explained in code @ memory.c
+Location of Fix: memory.c
+Estimated Time: 1 hour
+
+Bug #6
+Bug: Bootlooping when testing paging funcitoanlity
+Topic: Paging
+Fix: We're aware that in order to test paging, you need to "break it", but I think we broke it too much. IDT hasnt been set up yet to handle page faults. This should fix itself after page faults get handled.
+Location of Fix: IDT file
+Estimated Time: Still in progress
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:

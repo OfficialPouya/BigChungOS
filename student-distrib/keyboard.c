@@ -1,13 +1,13 @@
 
-//KEYBOARD LAYOUTS IN DIFF MODES, 
+//KEYBOARD LAYOUTS IN DIFF MODES,
 // DOESNT INCLUDE ANY ALIGNING OR SPACE CHARS
 // NOR ARE WE CONSIDERING NUM PAD
 
 /*
 NO SHIFT, NO CAP
-` 1 2 3 4 5 6 7 8 9 0 - = 
+` 1 2 3 4 5 6 7 8 9 0 - =
 q w e r t y u i o p [ ] \
-a s d f g h j k l ; ' 
+a s d f g h j k l ; '
 z x c v b n m , . /
 */
 
@@ -24,12 +24,12 @@ Z X C V B N M < > ?
 NO SHIFT, CAP
 ` 1 2 3 4 5 6 7 8 9 0 - =
 Q W E R T Y U I O P [ ] \
-A S D F G H J K L ; ' 
+A S D F G H J K L ; '
 Z X C V B  N M , . /
 */
 
 /*
-SHIFT, CAP 
+SHIFT, CAP
 ~ ! @ # $ % ^ & * ( ) _ +
 q w e r t y u i o p { } |
 a s d f g h j k l : "
@@ -41,16 +41,16 @@ z x c v b n m < > ?
 Things we Need to do:
 1. Initialize the Keyboard
 2. Keyboard Handler
-3. Map the Scan codes 
+3. Map the Scan codes
 */
 
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
 
-// All scan codes where found from 
+// All scan codes where found from
 // https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html#ss1.2
-// These scan codes are the data from a keyboard comes mainly in the form of 
+// These scan codes are the data from a keyboard comes mainly in the form of
 // scancodes, produced by key presses or used in the protocol with the computer
 #define ENTER 0x1C
 #define L_CTRL 0x1D
@@ -78,8 +78,8 @@ Things we Need to do:
 
 // based on https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
 // where I have NULLs are the specail scan codes, like enter, esc, tab, etc....
-// changed 0 to NULL 
-char char_array_normal[NUM_OF_CHARS] = {            
+// changed 0 to NULL
+char char_array_normal[NUM_OF_CHARS] = {
                                         '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\0', '\0',
                                         'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\0', '\0', 'a', 's',
                                         'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x', 'c', 'v',
@@ -112,7 +112,7 @@ char char_array_shift_cap[NUM_OF_CHARS] = {
                                 };
 
 /*
-FLAG MAP   
+FLAG MAP
 Flag[0]: Left Shift
 Flag[1]: Right Shift
 Flag[2]: Caps_lock
@@ -131,7 +131,7 @@ int char_count = 0;
 
 /*
  NAME: init_keyboard
- DESCRIPTION: intializes the keyboard 
+ DESCRIPTION: intializes the keyboard
  INPUTS: none
  OUTPUTS: none
  RETURN VALUE: none
@@ -146,7 +146,7 @@ void init_keyboard() {
 
 /*
  NAME: keyboard_handler
- DESCRIPTION: reads from keyboard and displays the chars 
+ DESCRIPTION: reads from keyboard and displays the chars
  INPUTS: none (inb from lib.c is used)
  OUTPUTS: none
  RETURN VALUE: none
@@ -162,5 +162,6 @@ void keyboard_handler() {
     keyboard_buffer[kb_idx]=key_char;
     ++kb_idx;
     ++char_count;
+    sti();
+    send_eoi(IRQ_KB);
 }
-

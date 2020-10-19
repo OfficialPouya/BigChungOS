@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+#include "interrupt_handler.h"
 
 #define RUN_TESTS
 
@@ -137,6 +138,7 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Init the PIC */
+    idt_setup();
     i8259_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
@@ -146,8 +148,9 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    /*printf("Enabling Interrupts\n");
-    sti();*/
+
+    printf("Enabling Interrupts\n");
+    sti();
 
 #ifdef RUN_TESTS
     /* Run tests */

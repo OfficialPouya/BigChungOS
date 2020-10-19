@@ -27,7 +27,7 @@ continue:
     # Load the GDT
     lgdt gdt_desc
 
-
+    lidt idt_desc_ptr
 
 
 

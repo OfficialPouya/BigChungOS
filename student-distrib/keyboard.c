@@ -162,5 +162,8 @@ void keyboard_handler() {
     keyboard_buffer[kb_idx]=key_char;
     ++kb_idx;
     ++char_count;
+    sti();
+    send_eoi(IRQ_KB);
+    return;
 }
 

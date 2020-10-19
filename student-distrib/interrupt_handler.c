@@ -98,7 +98,7 @@ void np() {
     while(1);
 } //segment not present
 void ssf() {
-    clear();
+    // clear();
     printf("ERROR 13\n");
     while(1);
 } //stack segment fault
@@ -145,11 +145,15 @@ void syscall_handler_c(){
   printf("SYSCALL ATTEMPTED");
   while(1);
 }
+void not_specific() {
+  printf("OTHER ERROR");
+   while(1);
+}
 
 void idt_setup(){
     int i;
 
-    for (i = 0; i < NUM_IDT_ENTRIES; i++){
+    for (i = 0; i < NUM_VEC; i++){
       idt[i].size = 1;              // 32-bit instruction instead of 16
       idt[i].seg_selector = KERNEL_CS;   // kernel segment
       idt[i].present = 1;           // segment is present
@@ -187,6 +191,37 @@ void idt_setup(){
     SET_IDT_ENTRY(idt[17], ac);
     SET_IDT_ENTRY(idt[18], mc);
     SET_IDT_ENTRY(idt[19], xf);
+
+    SET_IDT_ENTRY(idt[20], not_specific);
+    SET_IDT_ENTRY(idt[21], not_specific);
+    SET_IDT_ENTRY(idt[22], not_specific);
+    SET_IDT_ENTRY(idt[23], not_specific);
+    SET_IDT_ENTRY(idt[24], not_specific);
+    SET_IDT_ENTRY(idt[25], not_specific);
+    SET_IDT_ENTRY(idt[26], not_specific);
+    SET_IDT_ENTRY(idt[27], not_specific);
+    SET_IDT_ENTRY(idt[28], not_specific);
+    SET_IDT_ENTRY(idt[29], not_specific);
+    SET_IDT_ENTRY(idt[30], not_specific);
+    SET_IDT_ENTRY(idt[31], not_specific);
+    SET_IDT_ENTRY(idt[32], not_specific);
+
+    SET_IDT_ENTRY(idt[34], not_specific);
+    SET_IDT_ENTRY(idt[35], not_specific);
+    SET_IDT_ENTRY(idt[36], not_specific);
+    SET_IDT_ENTRY(idt[37], not_specific);
+    SET_IDT_ENTRY(idt[38], not_specific);
+    SET_IDT_ENTRY(idt[39], not_specific);
+
+    SET_IDT_ENTRY(idt[41], not_specific);
+    SET_IDT_ENTRY(idt[42], not_specific);
+    SET_IDT_ENTRY(idt[43], not_specific);
+    SET_IDT_ENTRY(idt[44], not_specific);
+
+    SET_IDT_ENTRY(idt[45], not_specific);
+
+    SET_IDT_ENTRY(idt[46], not_specific);
+
     SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
     SET_IDT_ENTRY(idt[SYSCALL_NUM], syscall_handler_asm);
     SET_IDT_ENTRY(idt[RTC_ADDR], handle_rtc);

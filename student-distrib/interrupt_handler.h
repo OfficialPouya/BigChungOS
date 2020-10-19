@@ -25,5 +25,6 @@ void mc();
 void xf();
 void gen_purp();
 void syscall_handler_c();
+void not_specific();
 
 #endif /* INTERRUPT_HANDLER_H */

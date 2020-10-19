@@ -1,1 +1,60 @@
-Bug 1: Could not get IDT to initialize properly. Saw this when the idt test did not even open. 
+Format
+==============
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+==============
+
+Bug #1
+Bug: IDT was causing Error 13, general fault
+Topic: IDT
+Fix: We had to init every single value in table, not just the ones we had (256 instead of 50)
+Location of Fix: interrupt_hanlder.c
+Estimated Time: 2hr
+
+
+Bug #2
+Bug: We did not need assembly linkage for every exception, caused error
+Topic: IDT
+Fix: Removed asm function calls for exceptions and only kept the ones for RTC and KB
+Location of Fix: interrupt_hanlder.c new_link.S
+Estimated Time: 1hr
+
+
+
+Bug #3
+Bug: initiliazed PIC before IDT, unexpected behavior
+Topic: IDT
+Fix: chagned init order
+Location of Fix: kernel.C
+Estimated Time: 30 mins
+
+
+
+Bug #4
+Bug: Double print of Chars
+Topic: Keyboard
+Fix: Not fixed yet. 
+Location of Fix: keyboard.c
+Estimated Time: TBA
+
+
+
+Bug #5
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #6
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:

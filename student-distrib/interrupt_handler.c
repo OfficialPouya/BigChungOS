@@ -2,230 +2,452 @@
 #include "i8259.h"
 #include "interrupt_handler.h"
 #include "x86_desc.h"
-#include "rtc.h"
-#include "keyboard.h"
-#include "linkage_asm.h"
 #include "types.h"
-
 
 #define SYSCALL_NUM 128 // 0x80
 #define KEYBOARD_ADDR 33
 #define RTC_ADDR 40
-#define NUM_IDT_ENTRIES 47 // number of entries in IDT that are defined
-#define KILLED_BY_EXCEPTION 256 // found on OSDEV
+#define NUM_IDT_ENTRIES 32 // number of entries in IDT that are defined
 
-// DE, "Divide Error"
-// DB, "RESERVED"
-// NMI, "Non-maskable Interrupt"
-// BP, "Breakpoint"
-// OF, "Overflow"
-// BR, "BOUND Range Exceeded"
-// UD, "Invalid Opcode (undefined)"
-// NM, "Device not available (No Math Coprocessor)"
-// DF, "Double fault"
-// CSO, "Coprocessor Segment Overrun (reserved)"
-// TS, "Invalid TSS"
-// NP, "Segment Not Present"
-// SS, "Stack-Segment Fault"
-// GP, "General Protection"
-// PF, "Page Fault"
-// IDK, "Intel reserved"
-// MF, "x87 FPU Floating-Point Error (Math Fault)"
-// AC, "Alignment Check"
-// MC, "Machine Check"
-// XF, "SIMD Floating-Point Error (Math Fault)"
-
-
-
-void de() {
+void exception0_C(void) {
     clear();
-    printf("ERROR 1\n");
+    printf("Divide-by-zero Error\n");
     while(1);
 } //divide error
-void db() {
+
+void exception1_C(void) {
     clear();
-    printf("ERROR 2\n");
+    printf("Debug\n");
     while(1);
 } //reserved  (reserved)
-void nmi() {
+
+void exception2_C(void) {
     clear();
-    printf("ERROR 3\n");
+    printf("Non-maskable Interrupt\n");
     while(1);
 } //nonmaskable external interrupt
-void bp() {
+
+void exception3_C(void) {
     clear();
-    printf("ERROR 4\n");
+    printf("Breakpoint\n");
     while(1);
 } //breakpoint
-void of() {
+
+void exception4_C(void) {
     clear();
-    printf("ERROR 5\n");
+    printf("Overflow\n");
     while(1);
 } //overflow
-void br() {
+
+void exception5_C(void) {
     clear();
-    printf("ERROR 6\n");
+    printf("Bound Range Exceeded\n");
     while(1);
 } //bound range exceeded
-void ud() {
+
+void exception6_C(void) {
     clear();
-    printf("ERROR 7\n");
+    printf("Invalid Opcode\n");
     while(1);
 } //invalid opcode
-void nm() {
+
+void exception7_C(void) {
     clear();
-    printf("ERROR 8\n");
+    printf("Device Not Available\n");
     while(1);
 } //device not available
-void df() {
+
+void exception8_C(void) {
     clear();
-    printf("ERROR 9\n");
+    printf("Double Fault\n");
     while(1);
 } //double fault --> return zero always
-void cpso(){
+
+void exception9_C(void){
     clear();
-    printf("ERROR 10\n");
+    printf("Coprocessor Segment Overrun\n");
     while(1);
 } //coprocessor segment overrun (reserved)
-void ts() {
+
+void exception10_C(void) {
     clear();
-    printf("ERROR 11\n");
+    printf("Invalid TSS\n");
     while(1);
 } //invalid tss
-void np() {
+
+void exception11_C(void) {
     clear();
-    printf("ERROR 12\n");
+    printf("Segment Not Present\n");
     while(1);
 } //segment not present
-void ssf() {
+
+void exception12_C(void) {
     // clear();
-    printf("ERROR 13\n");
+    printf("Stack-Segment Fault\n");
     while(1);
 } //stack segment fault
-void gp() {
+
+void exception13_C(void) {
     clear();
-    printf("ERROR 14\n");
+    printf("General Protection Fault\n");
     while(1);
 } //general protection
-void pf() {
+
+void exception14_C(void) {
     clear();
     printf("Page Fault\n");
     while(1);
 } //page fault
-// void ir() {
-//     printf("ERROR 16\n");
-//     while(1);
-// } //intel reserved do not use
-void mf() {
+
+void exception15_C(void) {
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception16_C(void) {
     clear();
-    printf("ERROR 17\n");
+    printf("x87 FPU Floating-Point Error\n");
     while(1);
 } //x87 FPU error
-void ac() {
+
+void exception17_C(void) {
     clear();
-    printf("ERROR 18\n");
+    printf("Alignment Check\n");
     while(1);
 } //alignment check ---> return zero
-void mc() {
+
+void exception18_C(void) {
     clear();
-    printf("ERROR 19\n");
+    printf("Machine Check\n");
     while(1);
 } //machine check
-void xf() {
+
+void exception19_C(void) {
     clear();
-    printf("ERROR 20\n");
+    printf("SIMD Floating-Point Error\n");
     while(1);
 } //simd floating point exception
-void gen_purp() {
+
+void exception20_C(void) {
     clear();
-    printf("ERROR NOT YET DEFINED");
+    printf("Virtualization Exception");
     while(1);
 }
-void syscall_handler_c(){
-  printf("SYSCALL ATTEMPTED");
-  while(1);
-}
-void not_specific() {
-  printf("OTHER ERROR");
-   while(1);
+
+void exception21_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception22_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception23_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception24_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception25_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception26_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception27_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception28_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception29_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void exception30_C(void) {
+    clear();
+    printf("Security Exception\n");
+    while(1);
+}    
+
+void exception31_C(void) {
+    clear();
+    printf("Reserved\n");
+    while(1);
+} //intel reserved do not use
+
+void sys_call_handler_C(void) {
+    clear();
+    printf("Sys Call Happened\n");
+    while(1);
+} //intel reserved do not use
+
+void not_specific(void) {
+    clear();
+    printf("You broke it :(");
+    while(1);
 }
 
-void idt_setup(){
+void do_IRQ_temp(int first_arg){
+    uint32_t gimme_eax;
+    asm("movl %%eax, %0;" : "=r" (gimme_eax) : );
+    
+    cli();
+        switch(gimme_eax+NUM_VEC){
+            case 0 :
+                exception0_C();
+                break;
+            case 1 :
+                exception1_C();
+                break;
+            case 2 :
+                exception2_C();
+                break;
+            case 3 :
+                exception3_C();
+                break;
+            case 4 :
+                exception4_C();
+                break;
+            case 5 :
+                exception5_C();
+                break;
+            case 6 :
+                exception6_C();
+                break;
+            case 7 :
+                exception7_C();
+                break;
+            case 8 :
+                exception8_C();
+                break;
+            case 9 :
+                exception9_C();
+                break;
+            case 10 :
+                exception10_C();
+                break;
+            case 11 :
+                exception11_C();
+                break;
+            case 12 :
+                exception12_C();
+                break;
+            case 13 :
+                exception13_C();
+                break;
+            case 14 :
+                exception14_C();
+                break;
+            case 15 :
+                exception15_C();
+                break;
+            case 16 :
+                exception16_C();
+                break;
+            case 17 :
+                exception17_C();
+                break;
+            case 18 :
+                exception18_C();
+                break;
+            case 19 :
+                exception19_C();
+                break;
+            case 20 :
+                exception20_C();
+                break;
+            case 21 :
+                exception21_C();
+                break;
+            case 22 :
+                exception22_C();
+                break;
+            case 23 :
+                exception23_C();
+                break;
+            case 24 :
+                exception24_C();
+                break;
+            case 25 :
+                exception25_C();
+                break;
+            case 26 :
+                exception26_C();
+                break;
+            case 27 :
+                exception27_C();
+                break;
+            case 28 :
+                exception28_C();
+                break;
+            case 29 :
+                exception29_C();
+                break;
+            case 30 :
+                exception30_C();
+                break;
+            case 31 :
+                exception31_C();
+                break;
+            case 126 :
+                sys_call_handler_C();
+                break;
+            default :
+                not_specific();    
+        }
+    sti();
+    return;
+}
+
+void idt_setup(void){
+    
     int i;
+    for (i = 0; i < NUM_IDT_ENTRIES; i++){               
+        // idt[i].seg_selector = KERNEL_CS;          
+        // idt[i].reserved0 = 0;
+        // idt[i].reserved1 = 1;
+        // idt[i].reserved2 = 1;
+        // idt[i].reserved3 = 0;
+        // idt[i].reserved4 = 0;
+        // idt[i].size = 1;    // 32-bit instruction instead of 16
+        // idt[i].dpl = 0;     // kernel segment 
+        // idt[i].present = 1; // segment is present 
+        
+        if(i==1){
+            idt[i].seg_selector = KERNEL_CS; 
+            idt[i].reserved0 =  0;
+            idt[i].reserved1 =  1;
+            idt[i].reserved2 =  1;
+            idt[i].reserved3 =  0;
+            idt[i].size =       1; 
+            idt[i].dpl =        0;
+            idt[i].present =    1;    
+        }
 
-    for (i = 0; i < NUM_VEC; i++){
-      idt[i].size = 1;              // 32-bit instruction instead of 16
-      idt[i].seg_selector = KERNEL_CS;   // kernel segment
-      idt[i].present = 1;           // segment is present
-      idt[i].dpl = 0;
+        if(i==2 || i==14){
+            idt[i].seg_selector = KERNEL_CS; 
+            idt[i].reserved0 =  0;
+            idt[i].reserved1 =  1;
+            idt[i].reserved2 =  1;
+            idt[i].reserved3 =  1;
+            idt[i].size =       1; 
+            idt[i].dpl =        0;
+            idt[i].present =    1;       
+        }
 
+        if(i==3){
+            idt[i].seg_selector = KERNEL_CS; 
+            idt[i].reserved0 =  0;
+            idt[i].reserved1 =  1;
+            idt[i].reserved2 =  1;
+            idt[i].reserved3 =  1;
+            idt[i].size =       1; 
+            idt[i].dpl =        3;
+            idt[i].present =    1;    
+        }
 
-      idt[i].reserved0 = 0;
-      idt[i].reserved1 = 1;
-      idt[i].reserved2 = 1;
-      idt[i].reserved3 = 0;
-      if (i == SYSCALL_NUM){
-        // idt[i].reserved3 = 1;
-        idt[i].dpl = 3;
-      }
+        if(i==4 || i==5){
+            idt[i].seg_selector = KERNEL_CS; 
+            idt[i].reserved0 =  0;
+            idt[i].reserved1 =  1;
+            idt[i].reserved2 =  1;
+            idt[i].reserved3 =  0;
+            idt[i].size =       1; 
+            idt[i].dpl =        3;
+            idt[i].present =    1;  
+        }
 
-      idt[i].reserved4 = 0;
+        if(i>=6 && i <=13){
+            idt[i].seg_selector = KERNEL_CS; 
+            idt[i].reserved0 =  0;
+            idt[i].reserved1 =  1;
+            idt[i].reserved2 =  1;
+            idt[i].reserved3 =  0;
+            idt[i].size =       1; 
+            idt[i].dpl =        0;
+            idt[i].present =    1;             
+        }
+
+        if(i>=15 && i <=31){
+            idt[i].seg_selector = KERNEL_CS; 
+            idt[i].reserved0 =  0;
+            idt[i].reserved1 =  1;
+            idt[i].reserved2 =  1;
+            idt[i].reserved3 =  0;
+            idt[i].size =       1; 
+            idt[i].dpl =        0;
+            idt[i].present =    1;             
+        }
     }
-    SET_IDT_ENTRY(idt[0], de);
-    SET_IDT_ENTRY(idt[1], db);
-    SET_IDT_ENTRY(idt[2], nmi);
-    SET_IDT_ENTRY(idt[3], bp);
-    SET_IDT_ENTRY(idt[4], of);
-    SET_IDT_ENTRY(idt[5], br);
-    SET_IDT_ENTRY(idt[6], ud);
-    SET_IDT_ENTRY(idt[7], nm);
-    SET_IDT_ENTRY(idt[8], df);
-    SET_IDT_ENTRY(idt[9], cpso);
-    SET_IDT_ENTRY(idt[10], ts);
-    SET_IDT_ENTRY(idt[11], np);
-    SET_IDT_ENTRY(idt[12], ssf);
-    SET_IDT_ENTRY(idt[13], gp);
-    SET_IDT_ENTRY(idt[14], pf);
-    // SET_IDT_ENTRY(idt[15], ir);
-    SET_IDT_ENTRY(idt[16], mf);
-    SET_IDT_ENTRY(idt[17], ac);
-    SET_IDT_ENTRY(idt[18], mc);
-    SET_IDT_ENTRY(idt[19], xf);
 
-    SET_IDT_ENTRY(idt[20], not_specific);
-    SET_IDT_ENTRY(idt[21], not_specific);
-    SET_IDT_ENTRY(idt[22], not_specific);
-    SET_IDT_ENTRY(idt[23], not_specific);
-    SET_IDT_ENTRY(idt[24], not_specific);
-    SET_IDT_ENTRY(idt[25], not_specific);
-    SET_IDT_ENTRY(idt[26], not_specific);
-    SET_IDT_ENTRY(idt[27], not_specific);
-    SET_IDT_ENTRY(idt[28], not_specific);
-    SET_IDT_ENTRY(idt[29], not_specific);
-    SET_IDT_ENTRY(idt[30], not_specific);
-    SET_IDT_ENTRY(idt[31], not_specific);
-    SET_IDT_ENTRY(idt[32], not_specific);
+    SET_IDT_ENTRY(idt[0], exception0_asm);
+    SET_IDT_ENTRY(idt[1], exception1_asm);
+    SET_IDT_ENTRY(idt[2], exception2_asm);
+    SET_IDT_ENTRY(idt[3], exception3_asm);
+    SET_IDT_ENTRY(idt[4], exception4_asm);
+    SET_IDT_ENTRY(idt[5], exception5_asm);
+    SET_IDT_ENTRY(idt[6], exception6_asm);
+    SET_IDT_ENTRY(idt[7], exception7_asm);
+    SET_IDT_ENTRY(idt[8], exception8_asm);
+    SET_IDT_ENTRY(idt[9], exception9_asm);
+    SET_IDT_ENTRY(idt[10], exception10_asm);
+    SET_IDT_ENTRY(idt[11], exception11_asm);
+    SET_IDT_ENTRY(idt[12], exception12_asm);
+    SET_IDT_ENTRY(idt[13], exception13_asm);
+    SET_IDT_ENTRY(idt[14], exception14_asm);
+    SET_IDT_ENTRY(idt[15], exception15_asm);
+    SET_IDT_ENTRY(idt[16], exception16_asm);
+    SET_IDT_ENTRY(idt[17], exception17_asm);
+    SET_IDT_ENTRY(idt[18], exception18_asm);
+    SET_IDT_ENTRY(idt[19], exception19_asm);
+    SET_IDT_ENTRY(idt[20], exception20_asm);
+    SET_IDT_ENTRY(idt[21], exception21_asm);
+    SET_IDT_ENTRY(idt[22], exception22_asm);
+    SET_IDT_ENTRY(idt[23], exception23_asm);
+    SET_IDT_ENTRY(idt[24], exception24_asm);
+    SET_IDT_ENTRY(idt[25], exception25_asm);
+    SET_IDT_ENTRY(idt[26], exception26_asm);
+    SET_IDT_ENTRY(idt[27], exception27_asm);
+    SET_IDT_ENTRY(idt[28], exception28_asm);
+    SET_IDT_ENTRY(idt[29], exception29_asm);
+    SET_IDT_ENTRY(idt[30], exception30_asm);
+    SET_IDT_ENTRY(idt[31], exception31_asm);
 
-    SET_IDT_ENTRY(idt[34], not_specific);
-    SET_IDT_ENTRY(idt[35], not_specific);
-    SET_IDT_ENTRY(idt[36], not_specific);
-    SET_IDT_ENTRY(idt[37], not_specific);
-    SET_IDT_ENTRY(idt[38], not_specific);
-    SET_IDT_ENTRY(idt[39], not_specific);
-
-    SET_IDT_ENTRY(idt[41], not_specific);
-    SET_IDT_ENTRY(idt[42], not_specific);
-    SET_IDT_ENTRY(idt[43], not_specific);
-    SET_IDT_ENTRY(idt[44], not_specific);
-
-    SET_IDT_ENTRY(idt[45], not_specific);
-
-    SET_IDT_ENTRY(idt[46], not_specific);
-
-    SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
     SET_IDT_ENTRY(idt[SYSCALL_NUM], syscall_handler_asm);
-    SET_IDT_ENTRY(idt[RTC_ADDR], handle_rtc);
-    // SET_IDT_ENTRY here
-    // lidt(idt_desc_ptr);
-
+    idt[SYSCALL_NUM].seg_selector = KERNEL_CS; 
+    idt[SYSCALL_NUM].reserved0 =  0;
+    idt[SYSCALL_NUM].reserved1 =  1;
+    idt[SYSCALL_NUM].reserved2 =  1;
+    idt[SYSCALL_NUM].reserved3 =  0;
+    idt[SYSCALL_NUM].size =       1; 
+    idt[SYSCALL_NUM].dpl =        0;
+    idt[SYSCALL_NUM].present =    1;    
+    
+    //SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
+    //SET_IDT_ENTRY(idt[RTC_ADDR], handle_rtc);
 }

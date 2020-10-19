@@ -9,36 +9,94 @@
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */
 #define PIC1_COMMAND	PIC1
-#define PIC1_DATA	(PIC1+1)
+#define PIC1_DATA	(PIC1+1) // data port is always 1 after command 
 #define PIC2_COMMAND	PIC2
-#define PIC2_DATA	(PIC2+1)
+#define PIC2_DATA	(PIC2+1) // dara port is always 1 after command 
+
+// Control words to init each PIC.
+#define ICW1                0x11
+#define ICW2_MASTER         0x20
+#define ICW2_SLAVE          0x28
+#define ICW3_MASTER         0x04
+#define ICW3_SLAVE          0x02
+#define ICW4                0x01
+
+
 
 /* Interrupt masks to determine which interrupts are enabled and disabled */
-uint8_t master_mask; /* IRQs 0-7  */
-// uint8_t slave_mask;  /* IRQs 8-15 */
+uint8_t master_mask = 0xFB; /* IRQs 0-7  */
+uint8_t slave_mask = 0xFF;  /* IRQs 8-15 */
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
-    outb(master_mask, PIC1_DATA); // masking the master
+    // masking the master
+    outb(master_mask, PIC1_DATA);
+    // masking the slave
+    outb(slave_mask, PIC2_DATA);
+
+    // set out the command words for master 
+    outb(ICW1, PIC1_COMMAND);
+    outb(ICW2_MASTER, PIC1_DATA);
+    outb(ICW3_MASTER, PIC1_DATA);
+    outb(ICW4, PIC1_DATA);
+
+    // set out the command words for slave
+    outb(ICW1, PIC2_COMMAND);
+    outb(ICW2_SLAVE, PIC2_DATA);
+    outb(ICW3_SLAVE, PIC2_DATA);
+    outb(ICW4, PIC2_DATA);
+
+    // mask the slave
+    outb(master_mask, PIC1_DATA);
+    // mask the slave
+    outb(slave_mask, PIC2_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-    uint32_t mask = ~(1 << irq_num);
-    master_mask = master_mask & mask;
-    outb(master_mask, PIC1_DATA);
+    // invalid IRQ NUM check IRQ RANGE is 0-15
+    while(irq_num>15 || irq_num<0){return;} 
 
+    uint32_t mask = ~(1 << irq_num);
+    // here the 8 signifies the size of the PIC
+    if (irq_num >= 8) {
+        uint32_t unmask = ~(1 << (irq_num - 8));
+        slave_mask = slave_mask & unmask;
+        outb(slave_mask, PIC2_DATA);
+    } 
+    else {
+        master_mask =  master_mask & mask;
+        outb(master_mask, PIC1_DATA);
+    }
 }
+
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
+    // invalid IRQ NUM check IRQ RANGE is 0-15
+    while(irq_num>15 || irq_num<0){return;} 
     uint32_t mask = (1 << irq_num);
     master_mask = master_mask | mask;
-    outb(master_mask, PIC1_DATA);
+    slave_mask = slave_mask | mask;
 
+    // this is selection of SLAVE or MASTER
+    if (irq_num & 8) {
+        outb(slave_mask, PIC2_DATA);
+    } 
+    else {
+        outb(master_mask, PIC1_DATA);
+    }
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    outb(EOI | irq_num, PIC1_COMMAND);
+    // so if its bigger than 8, we know its SLAVE
+    // then we need to OR with 2 so Master knows Slave 
+    // got the EOI
+    if (irq_num >= 8) {
+        outb(EOI | (irq_num - 8), PIC2_COMMAND);
+        outb(EOI | 2, PIC1_COMMAND);
+    } 
+    else{outb(EOI | irq_num, PIC1_COMMAND);}
+        
 }

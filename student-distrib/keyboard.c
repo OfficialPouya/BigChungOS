@@ -127,7 +127,7 @@ int kb_idx = 0;
 // char_count is to ensure we don't go over the char limit
 // there will be if statements later on
 int char_count = 0;
-
+volatile unsigned int last_press = 0;
 
 /*
  NAME: init_keyboard
@@ -153,15 +153,19 @@ void init_keyboard() {
  IMPACTS ON OTHERS: values and chars displayed onto the screen
  */
 void keyboard_handler() {
-    unsigned int scan_code;
+unsigned int scan_code;
     char key_char;
     cli();
     scan_code = inb(PORT_NUM_KB);
-    key_char = char_array_normal[scan_code];
-    putc(key_char);
-    keyboard_buffer[kb_idx]=key_char;
-    ++kb_idx;
-    ++char_count;
+    if (scan_code - 128 != last_press){
+        key_char = char_array_normal[scan_code];
+        last_press = scan_code;
+        putc(key_char);
+        keyboard_buffer[kb_idx]=key_char;
+        ++kb_idx;
+        ++char_count;
+        }
+        send_eoi(IRQ_KB);
     sti();
-    send_eoi(IRQ_KB);
+
 }

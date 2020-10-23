@@ -102,9 +102,35 @@ int page_test_deref_out() {
 	return result;
 }
 
-// add more tests here
-
 /* Checkpoint 2 tests */
+
+/* Home Brew LS 
+*
+* Should print filenames of all files in file system
+*
+* Inputs: None
+* Outputs: All 17 items in file system
+* Side Effects: None
+* Coverage: file system
+* Files: FileSystem.c/.h 
+*/
+void print_fnames() {
+	int i, floop;
+	clear();
+	dir_open();
+	printf("%x \n", boot_block_ptr);
+	for(i = 0; i < boot_block_main.dir_count; i++){
+        for (floop = 0; floop < FILENAME_LEN; floop++){
+			printf("%c", boot_block_main.direntries[i].filename[floop]);
+        }
+		printf("     ");
+		printf("%d", boot_block_main.direntries[i].filetype);
+		printf("     ");
+		printf("%d", boot_block_main.direntries[i].inode_num);
+		printf("\n");
+    }
+	printf("%d, %d, %d", boot_block_main.dir_count, boot_block_main.inode_count, boot_block_main.data_count);
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -113,7 +139,8 @@ int page_test_deref_out() {
 /* Test suite entry point */
 void launch_tests(){
 	// launch your tests here
-
+	print_fnames();
+	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page_test_null", page_test_null());

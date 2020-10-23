@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-/* rtc.c functions to handle the RTC */ 
-#include "lib.h"
-#include "rtc.h"
-#include "i8259.h"
-
-/* init_rtc 
-=======
 /* rtc.c functions to handle the RTC */
 #include "lib.h"
 #include "i8259.h"
@@ -13,9 +5,9 @@
 
 /* global variables */
 int interrupt_flag = 0; //flag to know whether an interrupt has occured 
-
+int32_t freq=0; 
+int32_t counter=1; 
 /* init_rtc
->>>>>>> master
 *  DESCRIPTION: Initializes the RTC by setting registers and turning on the appropriate IRQ (IRQ #8)
 *  INPUTS: NONE
 *  OUTPUTS: NONE
@@ -40,7 +32,7 @@ void handle_rtc(void){
      outb(REG_C, RTC_PORT); // select register C
      inb(CMOS_PORT); // throw away contents
      send_eoi(RTC_IRQ_LINE);
-     interrupt_flag = 1; // interrupt has occurred
+     counter++;
      //test_interrupts(); //tests if RTC works properly
      sti();     
 }
@@ -55,7 +47,7 @@ void rtc_set_frequency(int32_t frequency){
     unsigned char saved_a; 
     //frequency should not exceed 1024
     if(frequency > 1024){
-        frequency = 1024;  
+        frequency = 1024; 
     }
     //sets rate according to frequency, rate values taken from RTC document. 
     if(frequency == 2){
@@ -110,15 +102,15 @@ int32_t rtc_open(const uint8_t* filename){
 
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
     //wait until interrupt has occurred 
-    while(interrupt_flag == 0){
+    int32_t x = 1024/freq; 
+    while(counter != x ){
     }
     //once interrupt has occurred, reset flag and return 0
-    interrupt_flag=0; 
+    counter = 1;
     return 0;
 }
 
-int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
-    int32_t freq; 
+int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){ 
     //rtc_write must read 4 bytes, and must take in a frequency from the buffer. 
     if (nbytes != 4 || buf == NULL){
         return -1; 
@@ -129,7 +121,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     }
     //sets the frequency
     else{
-        rtc_set_frequency(freq);
+        rtc_set_frequency(1024);
     }
     return nbytes; 
 }

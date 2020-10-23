@@ -11,6 +11,7 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
+.globl page_directory, page_table1
 
 .align 4
 
@@ -33,6 +34,13 @@ _tss:
     .byte 0
     .endr
 tss_bottom:
+
+.align 4
+    .word 0 # Padding
+gdt_desc:
+    .word gdt_bottom - gdt - 1
+    .long gdt
+
 
     .align  16
 gdt:
@@ -106,3 +114,21 @@ _idt:
     .endr
 
 idt_bottom:
+
+# this saves space in x86_desc.S for page directory;
+# exact space is equal to 1024 entries * 32 bits each;
+# align on 4KB boundaries;
+    .align  COMMON_SIZE*4
+page_directory:
+    .rept COMMON_SIZE
+    .long 0
+    .endr
+
+# this saves space in x86_desc.S for page table;
+# exact space is equal to 1024 entries * 32 bits each;
+# align on 4KB boundaries;
+    .align  COMMON_SIZE*4
+page_table1:
+    .rept COMMON_SIZE
+    .long 0
+    .endr

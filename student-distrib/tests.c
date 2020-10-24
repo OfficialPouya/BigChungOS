@@ -104,6 +104,34 @@ int page_test_deref_out() {
 
 /* Checkpoint 2 tests */
 
+/* Check if can open, close, and write files 
+*
+* Should print pcb before and after open/close
+* write should print -1, as expected 
+*
+* Inputs: None
+* Outputs: Should display contents of primitive pcb
+* Side Effects: None
+* Coverage: file system
+* Files: FileSystem.c/.h 
+*/
+void open_close_write_test() {
+	int i;
+	uint8_t* temp;
+	temp = (uint8_t*)"frame1.txt";
+	
+	clear();
+	printf("Before fopen: ");
+	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+	file_open(temp);
+	printf("\nAfter fopen: ");
+	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+	printf("\nResult of fwrite: %d", file_write());
+	printf("\nAfter fclose: ");
+	file_close(temp);
+	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+}
+
 /* Home Brew LS 
 *
 * Should print filenames of all files in file system
@@ -114,16 +142,28 @@ int page_test_deref_out() {
 * Coverage: file system
 * Files: FileSystem.c/.h 
 */
-void print_fnames() {
-	dir_open();
-	//dir_read();
+void dir_read_test() {
+	clear();
+	dir_read();
+}
+
+/* File read test
+*
+* Should print data for a file
+*
+* Inputs: filename to output
+* Outputs: file data
+* Side Effects: None
+* Coverage: file system
+* Files: FileSystem.c/.h 
+*/
+void file_read_test() {
 	uint8_t* temper;
 	uint8_t* temp;
-	temp = (uint8_t*)"frame1.txt";
+	temp = (uint8_t*)"grep";
 
 	clear();
 	file_open(temp);
-
 	file_read(temp, temper);
 }
 /* Checkpoint 3 tests */
@@ -134,7 +174,9 @@ void print_fnames() {
 /* Test suite entry point */
 void launch_tests(){
 	// launch your tests here
-	print_fnames();
+	open_close_write_test();
+	//dir_read_test();
+	//file_read_test();
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("idt_test", idt_test());

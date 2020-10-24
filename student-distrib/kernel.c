@@ -150,6 +150,7 @@ void entry(unsigned long magic, unsigned long addr) {
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
+    dir_open();
     
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the

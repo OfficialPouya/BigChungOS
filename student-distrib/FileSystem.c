@@ -17,7 +17,13 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     // Scans through the directory entries in the “boot block” to find the file name >
     // Call read_dentry_by_index() {
         // Populates the dentry parameter -> file name, file type, inode number >
-    return 0;
+    uint32_t i;
+    for(i = 0; i < boot_block_main.dir_count; i++){
+        if (strncmp((int8_t*)boot_block_main.direntries[i].filename, (int8_t*)fname, FILENAME_LEN) == 0){
+            return read_dentry_by_index(i, dentry); 
+        }
+    }
+    return -1;
 }
 
 /*
@@ -28,7 +34,14 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
  IMPACTS ON OTHERS: Writes to dentry array
  */
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
-    return 0;
+    if (index < boot_block_main.dir_count){
+        strncpy(dentry->filename, boot_block_main.direntries[index].filename, FILENAME_LEN);
+        dentry->filetype = boot_block_main.direntries[index].filetype;
+        dentry->inode_num = boot_block_main.direntries[index].inode_num;
+        return 0;
+    }
+    
+    return -1;
 }
 
 /*
@@ -54,6 +67,19 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 int file_open(const uint8_t* fname){
     // assign a free inode to fname and puts it into file descriptor (not this
     // checkpoint). this opens the file and allows it to be read
+    int floop;
+    dentry_t temp;
+    // looks for file, grabs inode number, marks as opened
+    if (read_dentry_by_name(fname, &temp) == 0){
+        printf("file_name: ");
+        for (floop = 0; floop < FILENAME_LEN; floop++){
+			printf("%c", temp.filename[floop]);
+        }
+        printf(", file_type: ");
+		printf("%d", temp.filetype);
+		printf(", inode_num: %d\n"   , temp.inode_num);
+    }
+
     return 0;
 }
 
@@ -86,8 +112,25 @@ int file_write(void){
  IMPACTS ON OTHERS: Will return an error if you try to read this file again
  */
 int file_read(const uint8_t* fname, uint8_t* buf){
-    // i think this is used in conjunction with other functions, maybe
-    // read_dentry_by_name->read_data?
+    /*
+    int i, loop1;
+    
+    // looks for file, grabs inode number, marks as opened
+    for(i = 0; i < boot_block_main.dir_count; i++){
+        if (strncmp(boot_block_main.direntries[i].filename, fname, strlen(fname))){
+            loop1 = 0;
+            while(inode_list[loop1].inode_num != boot_block_main.direntries[i].inode_num && loop1 < 8){
+                loop1++;
+                if(loop1 == 8) return -1;
+            }
+            
+
+
+            read_data(inode_list[loop1].inode_num, inode_list[loop1].offset, &buf, )
+        }
+        else return -1;
+    }
+    */
     return 0;
 }
 
@@ -119,11 +162,6 @@ int dir_open(void){
         temp_ptr = temp_ptr + 16;
     }
 
-    // fills all inodes
-    for(i = 0; i < boot_block_main.inode_count; i++){
-        // did not get this far, had to sleep
-        // but basically complete the same as above, but for inodes
-    }
     return 0;
 }
 
@@ -146,7 +184,7 @@ int dir_close(void){
  */
 int dir_write(void){
     // not used
-    return 0;
+    return -1;
 }
 
 /*
@@ -156,7 +194,18 @@ int dir_write(void){
  IMPACTS ON OTHERS: None
  */
 int dir_read(void){
-    // this is used to print out every file in directory to screen like in gif
-    // only one file name at a time
+    int i, floop;
+    dentry_t temp;
+	clear();
+    for(i = 0; i < boot_block_main.dir_count; i++){
+        read_dentry_by_index(i, &temp);
+        printf("file_name: ");
+        for (floop = 0; floop < FILENAME_LEN; floop++){
+			printf("%c", temp.filename[floop]);
+        }
+        printf(", file_type: ");
+		printf("%d", temp.filetype);
+		printf(", inode_num: %d\n"   , temp.inode_num);
+    }
     return 0;
 }

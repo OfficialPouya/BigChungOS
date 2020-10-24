@@ -115,21 +115,13 @@ int page_test_deref_out() {
 * Files: FileSystem.c/.h 
 */
 void print_fnames() {
-	int i, floop;
-	clear();
 	dir_open();
-	printf("%x \n", boot_block_ptr);
-	for(i = 0; i < boot_block_main.dir_count; i++){
-        for (floop = 0; floop < FILENAME_LEN; floop++){
-			printf("%c", boot_block_main.direntries[i].filename[floop]);
-        }
-		printf("     ");
-		printf("%d", boot_block_main.direntries[i].filetype);
-		printf("     ");
-		printf("%d", boot_block_main.direntries[i].inode_num);
-		printf("\n");
-    }
-	printf("%d, %d, %d", boot_block_main.dir_count, boot_block_main.inode_count, boot_block_main.data_count);
+	//dir_read();
+	uint8_t* temp;
+	temp = "pingpong";
+
+	clear();
+	file_open(temp);
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */

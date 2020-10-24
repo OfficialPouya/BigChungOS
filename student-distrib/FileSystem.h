@@ -27,8 +27,12 @@ typedef struct inode {
     int32_t     data_block_num[1023];
 } inode_t;
 
+typedef struct curr_inode {
+    int32_t     inode_num;
+    int32_t     offset;
+} curr_inode_t;
 
-const uint32_t curr_inodes[8][2];
+curr_inode_t inode_list[8];
 const uint32_t* boot_block_ptr;
 boot_block_t boot_block_main;
 

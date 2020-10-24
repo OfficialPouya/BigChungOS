@@ -142,10 +142,12 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     idt_vector(); // this inits the IDT
     i8259_init(); // this inits the PIC
+    clear();
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
-    
+    char_count = 0;
+    kb_idx = 0;
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */

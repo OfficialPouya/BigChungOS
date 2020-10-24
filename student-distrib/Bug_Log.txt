@@ -56,14 +56,19 @@ Fix: We're aware that in order to test paging, you need to "break it", but I thi
 Location of Fix: IDT file
 Estimated Time: 1hr
 
-Bug #
-Bug:
+Bug #7
+Bug: Keyboard will print diff char on release
+Topic: Keyboard
+Fix: Listned for keypress and key release
+Location of Fix: keyboard.c
+Estimated Time: 1hr
+
+Bug #8
+Bug: 
 Topic:
 Fix:
 Location of Fix:
 Estimated Time:
-
-
 
 Bug #
 Bug:

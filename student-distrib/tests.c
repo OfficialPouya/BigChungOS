@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "rtc.h"
 
 #define PASS 1
 #define FAIL 0
@@ -105,6 +106,79 @@ int page_test_deref_out() {
 // add more tests here
 
 /* Checkpoint 2 tests */
+/*
+ NAME: rtc_test
+ DESCRIPTION: tests rtc at every frequency 2-1024
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
+int rtc_test(){
+	uint32_t freq; 
+	int i; 
+	clear();
+	rtc_open(0);
+	for(freq = 2; freq <= 1024; freq *= 2){
+		for(i = 0; i < 15; i++){
+			rtc_write(0, (void*)&freq, 4);
+			rtc_read(0, 0, 4);
+			printf("1");
+		}
+		printf("\n");
+		clear();
+	}
+	rtc_close(0);
+	return PASS;
+}
+/*
+ NAME: rtc_bad_input_test1
+ DESCRIPTION: tests bad input for frequency (frequency > 1024), should cause RTC to not do anything. 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
+int rtc_bad_input_test1(){
+	TEST_HEADER;
+	uint32_t freq = 2048;
+	rtc_open(0);
+	rtc_write(0, (void*)&freq, 4);
+	rtc_close(0);
+	return PASS;
+}
+/*
+ NAME: rtc_bad_input_test2
+ DESCRIPTION: tests bad input for buffer pointer, should cause RTC to not do anything. 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
+int rtc_bad_input_test2(){
+	TEST_HEADER;
+	rtc_open(0);
+	rtc_write(0,NULL,4);
+	rtc_close(0);
+	return PASS;
+}
+/*
+ NAME: rtc_bad_input_test3
+ DESCRIPTION: tests bad input for nbytes, should cause RTC to not do anything. 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
+int rtc_bad_input_test3(){
+	TEST_HEADER;
+	uint32_t freq = 2; 
+	rtc_open(0);
+	rtc_write(0,(void*)&freq,3);
+	rtc_close(0);
+	return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -118,6 +192,8 @@ void launch_tests(){
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page_test_null", page_test_null());
 	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
-
-
+	//TEST_OUTPUT("rtc_test", rtc_test());
+	//TEST_OUTPUT("rtc_bad_input_test1", rtc_bad_input_test1());
+	//TEST_OUTPUT("rtc_bad_input_test2", rtc_bad_input_test2());
+	//TEST_OUTPUT("rtc_bad_input_test3", rtc_bad_input_test3());
 }

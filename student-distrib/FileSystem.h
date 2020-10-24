@@ -32,13 +32,14 @@ typedef struct curr_inode {
     int32_t     offset;
 } curr_inode_t;
 
+int open_file_count;
 curr_inode_t inode_list[8];
 const uint32_t* boot_block_ptr;
 boot_block_t boot_block_main;
 
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
-int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 // FILE FUNCTIONS
 // initialize any temp structs, return 0 success

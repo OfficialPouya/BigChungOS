@@ -117,11 +117,14 @@ int page_test_deref_out() {
 void print_fnames() {
 	dir_open();
 	//dir_read();
+	uint8_t* temper;
 	uint8_t* temp;
-	temp = "pingpong";
+	temp = (uint8_t*)"frame1.txt";
 
 	clear();
 	file_open(temp);
+
+	file_read(temp, temper);
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */

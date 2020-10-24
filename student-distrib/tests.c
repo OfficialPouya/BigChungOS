@@ -1,7 +1,8 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-
+#include "keyboard.h"
+#include "terminal.h"
 #define PASS 1
 #define FAIL 0
 
@@ -105,6 +106,81 @@ int page_test_deref_out() {
 // add more tests here
 
 /* Checkpoint 2 tests */
+int read_test(){
+	TEST_HEADER;
+	int tst;
+	int results = PASS;
+	char test_buffer[16];
+	test_buffer[0] = 'A';
+	test_buffer[1] = 'a';
+	test_buffer[2] = 'm';
+	test_buffer[3] = 'i';
+	test_buffer[4] = 'r';
+	test_buffer[5] = ' ';
+	test_buffer[6] = 'i';
+	test_buffer[7] = 's';
+	test_buffer[8] = ' ';
+	test_buffer[9] = 'C';
+	test_buffer[10] = '0';
+	test_buffer[11] = '0';
+	test_buffer[12] = 'L';
+	test_buffer[13] = '!';
+	test_buffer[14] = '!';
+	test_buffer[15] = '\n';
+	printf("\nPRESS ENTER TO RUN");
+	// number 16 is size of the buffer here
+	// number 2 is the fd number 
+	memmove(keyboard_buffer, &test_buffer, 16);
+    tst = terminal_read(2, keyboard_buffer, 16);
+
+    if (tst != 15) {results = FAIL;} 
+	else {results = PASS;}
+
+    memset(&keyboard_buffer, 0, 128);
+
+    return results;
+}
+
+
+int write_test() {
+    TEST_HEADER;
+
+    int result = PASS;
+    int temp;
+    char test_buffer[3];
+    test_buffer[0] = '3';
+   	test_buffer[1] = '9';
+    test_buffer[2] = '1';
+
+    // number 3 is the size of the buffer here
+	// number 2 is the fd number 
+    temp = terminal_write(2, test_buffer, 3);
+
+    if (temp != 3) {result = FAIL;}
+	else {result = PASS;}
+
+    return result;
+}
+
+
+int read_n_write_test() {
+    TEST_HEADER;
+	int tst, temp;
+    int result = FAIL;
+	char test_buffer[128];
+	while(1){
+		printf("Type something: ");
+		tst = terminal_read(2, keyboard_buffer, 128);
+		printf("\nYou typed: ");
+		temp = terminal_write(2, keyboard_buffer, 128);
+		result = PASS;
+		break;
+	}
+
+    return result;
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -118,6 +194,10 @@ void launch_tests(){
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page_test_null", page_test_null());
 	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
-
-
+	TEST_OUTPUT("terminal_read", read_test());
+	printf("\n");
+	TEST_OUTPUT("terminal_write", write_test());
+	printf("\n");
+	TEST_OUTPUT("terminal_read_and_write", read_n_write_test());
+	printf("\n");
 }

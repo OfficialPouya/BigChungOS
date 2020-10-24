@@ -2,7 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
-
+#include "keyboard.h"
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
@@ -22,6 +22,8 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+    screen_x=0;
+    screen_y=0;
 }
 
 /* Standard printf().
@@ -168,17 +170,86 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    if(c == '\n' || c == '\r') {
+    // we use 78, bc 0-79 (80) spots on each line
+    if(screen_x > 78 || c == '\n' || c == '\r') {
+        // if the next line is the end of the screen
+        
+        if(screen_y+1 == NUM_ROWS){
+        int idx=0;
+        // this is a function given to us
+        // this will move the screen up
+        memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);    
+        screen_x = 0;    
+            // clear out the new line that was just created. (over right with NULL)
+            while(idx<NUM_COLS-1){
+                *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                ++idx;
+            }
+            screen_x = 0;
+        }
+        else{
         screen_y++;
         screen_x = 0;
-    } else {
+        }
+    } 
+    else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
+    update_cursor(screen_x, screen_y);
 }
+
+
+
+/*
+ NAME: rm_c
+ DESCRIPTION: removes the last char from video mem
+ INPUTS: none
+ OUTPUTS: NULL value in video mem
+ RETURN VALUE: none
+ IMPACTS ON OTHERS: changes whats on the screen, udpates screen_x & screen_y
+ */
+//This is PUTC Modified
+void rm_c(void) {
+    // remove 1 space from the
+    //printf("HERE");
+    if(screen_y==0 && screen_x == 0){return;}
+    if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
+    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
+    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
+    // move the current x back 1
+    if (screen_x) {screen_x--;}
+    else if (screen_y){
+        screen_x = NUM_COLS - 1;
+        screen_y--;
+    }
+    update_cursor(screen_x, screen_y);
+}
+
+
+
+// https://wiki.osdev.org/Text_Mode_Cursor
+// Look at moving cursor section
+void update_cursor(int x, int y) {
+    // With this code, you get: pos = y * VGA_WIDTH + x. 
+    // To obtain the coordinates, 
+    // just calculate: y = pos / VGA_WIDTH; x = pos % VGA_WIDTH;.
+    uint16_t pos = y * NUM_COLS + x;
+
+    // draw cursors new location
+    outb(0x0F, 0x3D4);
+    outb((unsigned char)(pos &0xFF), 0x3D5);
+    outb(0x0E, 0x3D4);
+    outb((unsigned char )((pos >>8) & 0xFF), 0x3D5);
+
+}
+
+
+
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert

@@ -31,3 +31,4 @@ rtc_asm:
 	call handle_rtc
 	popal
 	iret
+	

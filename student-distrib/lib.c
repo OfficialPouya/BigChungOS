@@ -170,37 +170,50 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    // we use 78, bc 0-79 (80) spots on each line
-    if(screen_x > 78 || c == '\n' || c == '\r') {
-        // if the next line is the end of the screen
-        
-        if(screen_y+1 == NUM_ROWS){
-        int idx=0;
-        // this is a function given to us
-        // this will move the screen up
-        memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);    
-        screen_x = 0;    
-            // clear out the new line that was just created. (over right with NULL)
-            while(idx<NUM_COLS-1){
-                *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
-                *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
-                ++idx;
-            }
-            screen_x = 0;
-        }
-        else{
+    // if enter has been pressed
+    // or new line in file
+    if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
+        // checks if we have reached bottom of screen
+        if(screen_y>=NUM_ROWS){
+            int idx=0;
+            // this copies the lines over 
+            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);       
+                // clear out the new line that was just created. (over right with NULL)
+                screen_y = NUM_ROWS -1;
+                while(idx<NUM_COLS-1){
+                    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                    ++idx;
+                }       
         }
-    } 
-    else {
+    }
+
+    else{
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        // calculation for screen pos
+        screen_y = (screen_y + (screen_x / NUM_COLS));
+        screen_x = screen_x % NUM_COLS;
+        // checks if we have reached bottom of screen
+        if(screen_y>=NUM_ROWS){
+            int idx=0;
+            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);       
+                // clear out the new line that was just created. (over right with NULL)
+                screen_y = NUM_ROWS -1;
+                while(idx<NUM_COLS-1){
+                    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                    ++idx;
+                }       
+        }
+
     }
+    // to update cursor
     update_cursor(screen_x, screen_y);
+
 }
 
 

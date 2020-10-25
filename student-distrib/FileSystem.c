@@ -99,8 +99,8 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
                     counter++;
                     // need to add new line, since we are avoiding all given ones
                     if (counter == screensize){
-                        *(buf+bytes_read) = nextline;
-                        bytes_read++;
+                        //*(buf+bytes_read) = nextline;
+                        //bytes_read++;
                         counter = 0;
                     } 
                 }

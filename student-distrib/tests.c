@@ -1,13 +1,10 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-<<<<<<< HEAD
 #include "rtc.h"
 
-=======
 #include "keyboard.h"
 #include "terminal.h"
->>>>>>> c2d299c40def61e9b20c57fa30febb010ee99e8e
 #define PASS 1
 #define FAIL 0
 
@@ -182,6 +179,15 @@ int rtc_bad_input_test3(){
 	return PASS;
 }
 
+
+/*
+ NAME: read_test
+ DESCRIPTION: counts numbers of bits read 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
 int read_test(){
 	TEST_HEADER;
 	int tst;
@@ -217,7 +223,14 @@ int read_test(){
     return results;
 }
 
-
+/*
+ NAME: write_test
+ DESCRIPTION: writes the number of bits from buffer passed to terminal 
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
 int write_test() {
     TEST_HEADER;
 
@@ -238,12 +251,19 @@ int write_test() {
     return result;
 }
 
-
+/*
+ NAME: read_n_write_test
+ DESCRIPTION: reads keyboard buffer and writes it out after enter is pressed
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: Should return PASS
+ IMPACTS ON OTHERS: none
+ */
 int read_n_write_test() {
     TEST_HEADER;
 	int tst, temp;
     int result = FAIL;
-	char test_buffer[128];
+	//char test_buffer[128];
 	while(1){
 		printf("Type something: ");
 		tst = terminal_read(2, keyboard_buffer, 128);
@@ -317,10 +337,10 @@ void file_read_test() {
 	
 	//temp = (uint8_t*)"frame0.txt";
 	//temp = (uint8_t*)"frame1.txt";
-	temp = (uint8_t*)"grep";
+	//temp = (uint8_t*)"grep";
 	//temp = (uint8_t*)"ls";
 	//temp = (uint8_t*)"fish";
-	//temp = (uint8_t*)"verylargetextwithverylongname.tx";
+	temp = (uint8_t*)"verylargetextwithverylongname.tx";
 
 	clear();
 	file_open(temp);
@@ -339,25 +359,35 @@ void file_read_test() {
 /* Test suite entry point */
 void launch_tests(){
 	// launch your tests here
-	//open_close_write_test();
-	//dir_read_test();
-	file_read_test();
-	//TEST_OUTPUT("divide_by_zero", div_z());
-	//TEST_OUTPUT("divide_by_zero", div_z());
-	//TEST_OUTPUT("idt_test", idt_test());
-	//TEST_OUTPUT("page_test_null", page_test_null());
-	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
-<<<<<<< HEAD
-	//TEST_OUTPUT("rtc_test", rtc_test());
-	//TEST_OUTPUT("rtc_bad_input_test1", rtc_bad_input_test1());
-	//TEST_OUTPUT("rtc_bad_input_test2", rtc_bad_input_test2());
-	//TEST_OUTPUT("rtc_bad_input_test3", rtc_bad_input_test3());
-=======
-	// TEST_OUTPUT("terminal_read", read_test());
-	// printf("\n");
-	// TEST_OUTPUT("terminal_write", write_test());
-	// printf("\n");
-	// TEST_OUTPUT("terminal_read_and_write", read_n_write_test());
-	// printf("\n");
->>>>>>> c2d299c40def61e9b20c57fa30febb010ee99e8e
+	
+// CHECK POINT 1
+	// EXCEPTION TEST
+		//TEST_OUTPUT("divide_by_zero", div_z());
+		//TEST_OUTPUT("idt_test", idt_test());
+
+	// PAGING TEST
+		//TEST_OUTPUT("page_test_null", page_test_null());
+		//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
+	
+
+
+// CHECK POINT 2
+	// FILE SYS TESTS
+		//open_close_write_test();
+		//dir_read_test();
+		//file_read_test();
+	
+	// RTC TESTS
+		//TEST_OUTPUT("rtc_test", rtc_test());
+		//TEST_OUTPUT("rtc_bad_input_test1", rtc_bad_input_test1());
+		//TEST_OUTPUT("rtc_bad_input_test2", rtc_bad_input_test2());
+		//TEST_OUTPUT("rtc_bad_input_test3", rtc_bad_input_test3());
+	
+	// TERMINAL TESTS
+		// TEST_OUTPUT("terminal_read", read_test());
+		// printf("\n");
+		// TEST_OUTPUT("terminal_write", write_test());
+		// printf("\n");
+		// TEST_OUTPUT("terminal_read_and_write", read_n_write_test());
+		// printf("\n");
 }

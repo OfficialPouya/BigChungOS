@@ -176,7 +176,7 @@ void keyboard_handler() {
         }
     }
     // Scan code 0x0E is Backspace
-    if(scan_code==0X0E && kb_idx >= 0){
+    if(scan_code==0X0E && kb_idx > 0){
         rm_c();
         kb_idx--; 
         char_count--;

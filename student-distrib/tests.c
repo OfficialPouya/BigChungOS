@@ -103,8 +103,6 @@ int page_test_deref_out() {
 	return result;
 }
 
-// add more tests here
-
 /* Checkpoint 2 tests */
 int read_test(){
 	TEST_HEADER;
@@ -181,6 +179,80 @@ int read_n_write_test() {
 }
 
 
+
+/* Check if can open, close, and write files 
+*
+* Should print pcb before and after open/close
+* write should print -1, as expected 
+*
+* Inputs: None
+* Outputs: Should display contents of primitive pcb
+* Side Effects: None
+* Coverage: file system
+* Files: FileSystem.c/.h 
+*/
+void open_close_write_test() {
+	int i;
+	uint8_t* temp;
+	temp = (uint8_t*)"frame1.txt";
+	
+	clear();
+	printf("Before fopen: ");
+	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+	file_open(temp);
+	printf("\nAfter fopen: ");
+	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+	printf("\nResult of fwrite: %d", file_write());
+	printf("\nAfter fclose: ");
+	file_close(temp);
+	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+}
+
+/* Home Brew LS 
+*
+* Should print filenames of all files in file system
+*
+* Inputs: None
+* Outputs: All 17 items in file system
+* Side Effects: None
+* Coverage: file system
+* Files: FileSystem.c/.h 
+*/
+void dir_read_test() {
+	clear();
+	while(dir_read()==0);
+}
+
+/* File read test
+*
+* Should print data for a file
+*
+* Inputs: filename to output
+* Outputs: file data
+* Side Effects: None
+* Coverage: file system
+* Files: FileSystem.c/.h 
+*/
+void file_read_test() {
+	uint8_t temper[5280];			// 5280 is the size of the largest amount of bytes we need to read for this checkpoint
+	uint8_t* temp;					// number is based off of verylargetextwithverylongname.tx
+	
+	//temp = (uint8_t*)"frame0.txt";
+	//temp = (uint8_t*)"frame1.txt";
+	temp = (uint8_t*)"grep";
+	//temp = (uint8_t*)"ls";
+	//temp = (uint8_t*)"fish";
+	//temp = (uint8_t*)"verylargetextwithverylongname.tx";
+
+	clear();
+	file_open(temp);
+	file_read(temp, temper);
+	
+	int i;
+	for (i = 0; i < bytes_read; i++){
+		putc(temper[i]);
+	}
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -189,7 +261,10 @@ int read_n_write_test() {
 /* Test suite entry point */
 void launch_tests(){
 	// launch your tests here
-
+	//open_close_write_test();
+	//dir_read_test();
+	file_read_test();
+	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page_test_null", page_test_null());

@@ -12,6 +12,9 @@
 #define maxblocksize    1023
 #define blocksizenorm   1024
 #define inodeamnt       8
+#define nextline        0x0A
+#define screensize      80
+#define ELFMAGIC        0x464C457F
 
 typedef struct dentry {
     int8_t      filename[FILENAME_LEN];
@@ -38,6 +41,7 @@ typedef struct curr_inode {
     int32_t     offset;
 } curr_inode_t;
 
+int curr_dir;
 int open_file_count;
 int bytes_read;
 curr_inode_t inode_list[inodeamnt];

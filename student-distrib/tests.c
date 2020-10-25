@@ -144,7 +144,7 @@ void open_close_write_test() {
 */
 void dir_read_test() {
 	clear();
-	dir_read();
+	while(dir_read()==0);
 }
 
 /* File read test
@@ -158,13 +158,24 @@ void dir_read_test() {
 * Files: FileSystem.c/.h 
 */
 void file_read_test() {
-	uint8_t* temper;
-	uint8_t* temp;
+	uint8_t temper[5280];			// 5280 is the size of the largest amount of bytes we need to read for this checkpoint
+	uint8_t* temp;					// number is based off of verylargetextwithverylongname.tx
+	
+	//temp = (uint8_t*)"frame0.txt";
+	//temp = (uint8_t*)"frame1.txt";
 	temp = (uint8_t*)"grep";
+	//temp = (uint8_t*)"ls";
+	//temp = (uint8_t*)"fish";
+	//temp = (uint8_t*)"verylargetextwithverylongname.tx";
 
 	clear();
 	file_open(temp);
 	file_read(temp, temper);
+	
+	int i;
+	for (i = 0; i < bytes_read; i++){
+		putc(temper[i]);
+	}
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */

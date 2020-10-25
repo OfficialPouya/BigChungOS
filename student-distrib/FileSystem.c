@@ -58,48 +58,62 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     const uint32_t* temp_ptr = boot_block_ptr;  // grabs the pointer to first block
     uint8_t* char_ptr;                          // used to temporarily loop thorugh chars
     int i, loop, flag, counter;
-    flag = 0;
+    flag = 0;       // check if exe or not
     i = 0;
+    bytes_read = 0; // sets this back to 0 before reading more
+
     for (loop = 0; loop < (inode.length/(blocksizenorm*4)+1); loop++){
         // skips past boot_blk, past all inodes, and then points to correct data_blk
         temp_ptr = boot_block_ptr + blocksizenorm * (1 + boot_block_main.inode_count + inode.data_block_num[loop]);
         
-        if ((loop+1) * 4096 < length){
-            i = 4096;
-        }              // sets the amount of iterations for the data blks
+        // sets the amount of iterations for the data blks
+        // lets loop write full 4096 sized block
+        if ((loop+1) * (blocksizenorm*4) < length){
+            i = (blocksizenorm*4);
+        }              
         
+        // only allows left over bytes to be read
         else {
-            i = 4096-(((loop+1) * 4096)-length);
+            i = (blocksizenorm*4)-(((loop+1) * (blocksizenorm*4))-length);
         }
         
         char_ptr = (uint8_t*)temp_ptr;
         // check if elf or not
-        if(*temp_ptr == 0x464C457F) flag = 1; 
+        if(*temp_ptr == ELFMAGIC) flag = 1; 
 
+        // if executable, do this
         if (flag){
             counter = 0;
             while (i > 0) {
-                if (*char_ptr == 0x00 || *char_ptr == 0x0A){
+                // skip over null and endline chars
+                if (*char_ptr == 0x00 || *char_ptr == nextline){
                     char_ptr++;
                     i--;
                 }
+                // put other chars into buffer
                 else {
-                    putc(*char_ptr);
+                    *(buf+bytes_read) = *char_ptr;
                     char_ptr++;
+                    bytes_read++;
                     i--;
                     counter++;
-                    if (counter == 80){
-                        printf("\n");
+                    // need to add new line, since we are avoiding all given ones
+                    if (counter == screensize){
+                        *(buf+bytes_read) = nextline;
+                        bytes_read++;
                         counter = 0;
                     } 
                 }
             }
         }
 
+        // if not executable, do this
         else {
             while (i > 0) {
-                putc(*char_ptr);
+                // place all chars into buffer
+                *(buf+bytes_read) = *char_ptr;
                 char_ptr++;
+                bytes_read++;
                 i--;
             }
         }
@@ -227,7 +241,7 @@ int dir_open(void){
     int8_t* chars;
     const uint32_t* temp_ptr = boot_block_ptr;
     open_file_count = 0;                        // initialize the amnt of files open
-
+    curr_dir = 0;                               // initializes directory index
     boot_block_main.dir_count = *temp_ptr;      // set ptr to beginnning of file sys, dentries count
     boot_block_main.inode_count = *(temp_ptr+1);// grab the next 4 bytes, inode blk count
     boot_block_main.data_count = *(temp_ptr+2); // grab the enxt 4 bytes, data blk count
@@ -255,7 +269,8 @@ int dir_open(void){
  IMPACTS ON OTHERS: NONE
  */
 int dir_close(void){
-    // unused function
+    // rests directory index
+    curr_dir = 0;
     return 0;
 }
 
@@ -277,12 +292,11 @@ int dir_write(void){
  IMPACTS ON OTHERS: None
  */
 int dir_read(void){
-    int i, floop;
+    int floop;
     dentry_t temp;
-	clear();
     // loops through all dentries in boot blk
-    for(i = 0; i < boot_block_main.dir_count; i++){
-        read_dentry_by_index(i, &temp);
+    if(curr_dir < boot_block_main.dir_count){
+        read_dentry_by_index(curr_dir, &temp);
         printf("file_name: ");                              // prints filename 
         for (floop = 0; floop < FILENAME_LEN; floop++){
 			printf("%c", temp.filename[floop]);
@@ -290,6 +304,8 @@ int dir_read(void){
         printf(", file_type: ");                            // print file type
 		printf("%d", temp.filetype);
 		printf(", inode_num: %d\n"   , temp.inode_num);     // prints inode number for file
+        curr_dir++;
+        return 0;
     }
-    return 0;
+    return -1;
 }

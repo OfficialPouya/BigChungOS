@@ -39,6 +39,7 @@ typedef struct curr_inode {
 } curr_inode_t;
 
 int open_file_count;
+int bytes_read;
 curr_inode_t inode_list[inodeamnt];
 const uint32_t* boot_block_ptr;
 boot_block_t boot_block_main;

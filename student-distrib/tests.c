@@ -174,9 +174,9 @@ void file_read_test() {
 /* Test suite entry point */
 void launch_tests(){
 	// launch your tests here
-	open_close_write_test();
+	//open_close_write_test();
 	//dir_read_test();
-	//file_read_test();
+	file_read_test();
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("divide_by_zero", div_z());
 	//TEST_OUTPUT("idt_test", idt_test());

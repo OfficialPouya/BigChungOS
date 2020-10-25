@@ -57,18 +57,51 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     const uint32_t* temp_ptr = boot_block_ptr;  // grabs the pointer to first block
     uint8_t* char_ptr;                          // used to temporarily loop thorugh chars
-    int i, loop;
-
+    int i, loop, flag, counter;
+    flag = 0;
+    i = 0;
     for (loop = 0; loop < (inode.length/(blocksizenorm*4)+1); loop++){
         // skips past boot_blk, past all inodes, and then points to correct data_blk
-        temp_ptr = temp_ptr + blocksizenorm * (1 + boot_block_main.inode_count + inode.data_block_num[loop]);
+        temp_ptr = boot_block_ptr + blocksizenorm * (1 + boot_block_main.inode_count + inode.data_block_num[loop]);
         
-        i = blocksizenorm;              // sets the amount of iterations for the data blks 
+        if ((loop+1) * 4096 < length){
+            i = 4096;
+        }              // sets the amount of iterations for the data blks
+        
+        else {
+            i = 4096-(((loop+1) * 4096)-length);
+        }
+        
         char_ptr = (uint8_t*)temp_ptr;
-        while (i > 0) {
-            putc(*char_ptr);
-            char_ptr++;
-            i--;
+        // check if elf or not
+        if(*temp_ptr == 0x464C457F) flag = 1; 
+
+        if (flag){
+            counter = 0;
+            while (i > 0) {
+                if (*char_ptr == 0x00 || *char_ptr == 0x0A){
+                    char_ptr++;
+                    i--;
+                }
+                else {
+                    putc(*char_ptr);
+                    char_ptr++;
+                    i--;
+                    counter++;
+                    if (counter == 80){
+                        printf("\n");
+                        counter = 0;
+                    } 
+                }
+            }
+        }
+
+        else {
+            while (i > 0) {
+                putc(*char_ptr);
+                char_ptr++;
+                i--;
+            }
         }
     }
 
@@ -180,7 +213,7 @@ int file_read(const uint8_t* fname, uint8_t* buf){
     }
 
     // pass this inode data to this fucntion to fill bufffer
-    return read_data(temp_inode, inode_list[found].offset, buf, 1024);
+    return read_data(temp_inode, inode_list[found].offset, buf, temp_inode.length);
 }
 
 /*

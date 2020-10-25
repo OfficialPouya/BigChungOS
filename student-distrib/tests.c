@@ -194,10 +194,10 @@ void launch_tests(){
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page_test_null", page_test_null());
 	//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
-	TEST_OUTPUT("terminal_read", read_test());
-	printf("\n");
-	TEST_OUTPUT("terminal_write", write_test());
-	printf("\n");
-	TEST_OUTPUT("terminal_read_and_write", read_n_write_test());
-	printf("\n");
+	// TEST_OUTPUT("terminal_read", read_test());
+	// printf("\n");
+	// TEST_OUTPUT("terminal_write", write_test());
+	// printf("\n");
+	// TEST_OUTPUT("terminal_read_and_write", read_n_write_test());
+	// printf("\n");
 }

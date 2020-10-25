@@ -8,6 +8,7 @@ Location of Fix:
 Estimated Time:
 ==============
 
+
 Bug #1
 Bug: IDT was causing Error 13, general fault
 Topic: IDT
@@ -24,14 +25,12 @@ Location of Fix: interrupt_hanlder.c new_link.S
 Estimated Time: 1hr
 
 
-
 Bug #3
 Bug: initiliazed PIC before IDT, unexpected behavior
 Topic: IDT
 Fix: chagned init order
 Location of Fix: kernel.C
 Estimated Time: 30 mins
-
 
 
 Bug #4
@@ -42,12 +41,14 @@ Fix: check after printing if there is a scan code with diff
 Location of Fix: keyboard.c
 Estimated Time: 1hr
 
+
 Bug #5
 Bug: Bootlooping when paging "enabled"
 Topic: Paging
 Fix: Fix the order in which the control registers are set to enable paging. Solution further explained in code @ memory.c
 Location of Fix: memory.c
 Estimated Time: 1 hour
+
 
 Bug #6
 Bug: Bootlooping when testing paging funcitoanlity
@@ -56,6 +57,7 @@ Fix: We're aware that in order to test paging, you need to "break it", but I thi
 Location of Fix: IDT file
 Estimated Time: 1hr
 
+
 Bug #7
 Bug: Keyboard will print diff char on release
 Topic: Keyboard
@@ -63,12 +65,39 @@ Fix: Listned for keypress and key release
 Location of Fix: keyboard.c
 Estimated Time: 1hr
 
+
 Bug #8
-Bug: 
-Topic:
-Fix:
+Bug: Backspace was causing page faults
+Topic: Keyboard
+Fix: make sure not to go into negative video mem space. Added IF statement to check if kb_idx is > 0
+Location of Fix: keyboard.c
+Estimated Time: 20 mins
+
+
+Bug #9
+Bug: character max was met before typing 127 chars
+Topic: keyboard
+Fix: had to decrement kb_idx after deleting printed char
+Location of Fix: keyboard.c 
+Estimated Time: 30 mins
+
+
+Bug #10
+Bug: After shifting text up for scrolling the last line would be copied over
+Topic: terminal 
+Fix: 
 Location of Fix:
 Estimated Time:
+
+
+Bug #11
+Bug: Frequency of RTC never changing to correct value during testing and only going to highest frequency. 
+Topic: RTC
+Fix: I was passing in the wrong type as the buffer into the write function for RTC in testing. To fix this, I made sure the temporary variable
+used for this argument was of the correct type (int32_t).
+Location of Fix: tests.c
+Estimated Time: 1.5 hours
+
 
 Bug #
 Bug:
@@ -76,3 +105,12 @@ Topic:
 Fix:
 Location of Fix:
 Estimated Time:
+
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+

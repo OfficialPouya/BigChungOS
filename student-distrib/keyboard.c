@@ -111,8 +111,12 @@ void keyboard_handler() {
     int y_pos;
     cli();
     scan_code = inb(PORT_NUM_KB);
-    /*
-            MAGIC NUMBERS 
+/*
+        
+|===================================================|
+|					Magic Numbers					|
+|===================================================|
+
     0x2A & 0x36 ==> Press Shift
     0x3A        ==> Press CapsLock
     0x1D        ==> Press Control
@@ -126,7 +130,7 @@ void keyboard_handler() {
     Flag[1]: Caps_lock
     Flag[2]: Control
     Flag[3]: Alt
-    */
+*/
 
 
     // PRESS
@@ -184,6 +188,8 @@ void keyboard_handler() {
         keyboard_buffer[kb_idx+1]='\n';
     }
 
+    
+
     //CTRL+L Handling
     // L ==> 0x26
     // flag_keys[2] holds state of control key (1 is pressed down)
@@ -193,21 +199,34 @@ void keyboard_handler() {
         y_pos=0;
         update_cursor(x_pos, y_pos);
     }
-    //Enter Handling 
+
+    if((scan_code == 0x0F) && (kb_idx<127)){
+        putc(' ');
+        keyboard_buffer[kb_idx]=' ';
+        ++kb_idx;
+        ++char_count;
+    }
+
+
+    //Enter Handling 0x1C
     if(scan_code == 0x1C){
         putc('\n');
         enter_p_flag = 1;
+        kb_idx = 0;
+        char_count = 0;
     }
     send_eoi(IRQ_KB);
     sti();
-
-
 }
 
 
 
 
-//HELPERS
+/*
+|===================================================|
+|				Helper Functions		    		|
+|===================================================|
+*/
 
 
 /*
@@ -238,8 +257,8 @@ int special_key_check(unsigned int code){
     if(code == 0x43){return 1;} // F9
     if(code == 0x44){return 1;} // F10
     if(code == 0x8E){return 1;} // Backspace
+    if(code == 0x0F){return 1;} // tab press
+    if(code == 0x8F){return 1;} // tab release
     return 2;
 }
-
-
 

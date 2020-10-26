@@ -8,6 +8,11 @@ Location of Fix:
 Estimated Time:
 ==============
 
+/*
+|===================================================|
+|					CP 1 BUGS						|
+|===================================================|
+*/
 
 Bug #1
 Bug: IDT was causing Error 13, general fault
@@ -57,6 +62,11 @@ Fix: We're aware that in order to test paging, you need to "break it", but I thi
 Location of Fix: IDT file
 Estimated Time: 1hr
 
+/*
+|===================================================|
+|					CP 2 BUGS						|
+|===================================================|
+*/
 
 Bug #7
 Bug: Keyboard will print diff char on release
@@ -85,9 +95,9 @@ Estimated Time: 30 mins
 Bug #10
 Bug: After shifting text up for scrolling the last line would be copied over
 Topic: terminal 
-Fix: 
-Location of Fix:
-Estimated Time:
+Fix: clear the line with putting ' '
+Location of Fix: lib.c 
+Estimated Time: 30 mins 
 
 
 Bug #11
@@ -114,3 +124,16 @@ Fix: When sstarting to travere the files system, i found that pointer types matt
 Location of Fix: Filesystem.c
 Estimated Time: 1 hour
 
+Bug #14
+Bug: tab would break the buffer
+Topic: keyboard
+Fix: added an if statemnt for the tab scan code 
+Location of Fix: keyboard.c
+Estimated Time: 15 mins
+
+Bug #15
+Bug: last space in last line would not be re-written with ' '
+Topic: putc
+Fix: made sure to re-write the entire line while(idx<NUM_COLS) instead of while(idx<NUM_COLS-1){
+Location of Fix: lib.c
+Estimated Time: 30 mins

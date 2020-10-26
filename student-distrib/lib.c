@@ -182,7 +182,7 @@ void putc(uint8_t c) {
             memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);       
                 // clear out the new line that was just created. (over right with NULL)
                 screen_y = NUM_ROWS -1;
-                while(idx<NUM_COLS-1){
+                while(idx<NUM_COLS){
                     *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
                     *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
                     ++idx;
@@ -203,7 +203,7 @@ void putc(uint8_t c) {
             memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);       
                 // clear out the new line that was just created. (over right with NULL)
                 screen_y = NUM_ROWS -1;
-                while(idx<NUM_COLS-1){
+                while(idx<NUM_COLS){
                     *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
                     *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
                     ++idx;

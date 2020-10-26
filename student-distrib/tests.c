@@ -340,7 +340,7 @@ void file_read_test() {
 	//temp = (uint8_t*)"grep";
 	//temp = (uint8_t*)"ls";
 	//temp = (uint8_t*)"fish";
-	temp = (uint8_t*)"verylargetextwithverylongname.tx";
+	//temp = (uint8_t*)"verylargetextwithverylongname.tx";
 
 	clear();
 	file_open(temp);
@@ -357,10 +357,30 @@ void file_read_test() {
 
 
 /* Test suite entry point */
+
+/*
+|===================================================|
+|													|
+|													|
+|			ONLY RUN 1 TEST AT A TIME				|
+|													|
+|													|
+|===================================================|
+*/
+
+
 void launch_tests(){
 	// launch your tests here
 	
-// CHECK POINT 1
+
+
+/*
+|===================================================|
+|					CP 1 Tests						|
+|===================================================|
+*/
+
+
 	// EXCEPTION TEST
 		//TEST_OUTPUT("divide_by_zero", div_z());
 		//TEST_OUTPUT("idt_test", idt_test());
@@ -369,9 +389,11 @@ void launch_tests(){
 		//TEST_OUTPUT("page_test_null", page_test_null());
 		//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
 	
-
-
-// CHECK POINT 2
+/*
+|===================================================|
+|					CP 2 Tests						|
+|===================================================|
+*/
 	// FILE SYS TESTS
 		//open_close_write_test();
 		//dir_read_test();
@@ -390,4 +412,12 @@ void launch_tests(){
 		// printf("\n");
 		// TEST_OUTPUT("terminal_read_and_write", read_n_write_test());
 		// printf("\n");
+
+/*
+|===================================================|
+|					CP 3 Tests						|
+|===================================================|
+*/
+
+
 }

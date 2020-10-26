@@ -99,18 +99,18 @@ Location of Fix: tests.c
 Estimated Time: 1.5 hours
 
 
-Bug #
-Bug:
-Topic:
-Fix:
-Location of Fix:
-Estimated Time:
+Bug #12
+Bug: Executbale files not printing correct
+Topic: Filesystem
+Fix: We were treating executables just like text files. This is an issue because text files had new lines characters to bring curos to next line. Executable does not have these, so the file overwrote itself on same row until seeing new line character. Had to implement counter to add new line when reading executable.
+Location of Fix: Filesystem.c
+Estimated Time: 4 hours
 
 
-Bug #
-Bug:
-Topic:
-Fix:
-Location of Fix:
-Estimated Time:
+Bug #13
+Bug: Grabbing more data than necessary
+Topic: Filesystem
+Fix: When sstarting to travere the files system, i found that pointer types matter for traversing. For example if you incremnet a 32 bit bointer, you are increasing adresses by 4 bytes. When incrementing 8 bit pointer you are increasing address by one byte.
+Location of Fix: Filesystem.c
+Estimated Time: 1 hour
 

@@ -153,7 +153,7 @@ void entry(unsigned long magic, unsigned long addr) {
     init_keyboard(); // this inits the keyboard
     char_count = 0;
     kb_idx = 0;
-    dir_open();
+    dir_open((uint8_t*)".");
     
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the

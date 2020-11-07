@@ -1,3 +1,5 @@
+#pragma once
+
 #include "lib.h"
 #include "i8259.h"
 #include "interrupt_handler.h"

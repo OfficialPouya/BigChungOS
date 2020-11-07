@@ -289,22 +289,22 @@ int read_n_write_test() {
 * Coverage: file system
 * Files: FileSystem.c/.h 
 */
-void open_close_write_test() {
-	int i;
-	uint8_t* temp;
-	temp = (uint8_t*)"frame1.txt";
+// void open_close_write_test() {
+// 	int i;
+// 	uint8_t* temp;
+// 	temp = (uint8_t*)"frame1.txt";
 	
-	clear();
-	printf("Before fopen: ");
-	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
-	file_open(temp);
-	printf("\nAfter fopen: ");
-	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
-	printf("\nResult of fwrite: %d", file_write());
-	printf("\nAfter fclose: ");
-	file_close(temp);
-	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
-}
+// 	clear();
+// 	printf("Before fopen: ");
+// 	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+// 	file_open(temp);
+// 	printf("\nAfter fopen: ");
+// 	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+// 	printf("\nResult of fwrite: %d", file_write(0, temp, 32));
+// 	printf("\nAfter fclose: ");
+// 	file_close(3);
+// 	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
+// }
 
 /* Home Brew LS 
 *
@@ -316,10 +316,12 @@ void open_close_write_test() {
 * Coverage: file system
 * Files: FileSystem.c/.h 
 */
-void dir_read_test() {
-	clear();
-	while(dir_read()==0);
-}
+// void dir_read_test() {
+// 	clear();
+// 	int32_t test;
+// 	int8_t* output;
+// 	while(dir_read(1,output,test)!=0 && dir_read(1,output,test)!=-1);
+// }
 
 /* File read test
 *
@@ -331,26 +333,26 @@ void dir_read_test() {
 * Coverage: file system
 * Files: FileSystem.c/.h 
 */
-void file_read_test() {
-	uint8_t temper[5280];			// 5280 is the size of the largest amount of bytes we need to read for this checkpoint
-	uint8_t* temp;					// number is based off of verylargetextwithverylongname.tx
-	
-	//temp = (uint8_t*)"frame0.txt";
-	//temp = (uint8_t*)"frame1.txt";
-	//temp = (uint8_t*)"grep";
-	//temp = (uint8_t*)"ls";
-	//temp = (uint8_t*)"fish";
-	//temp = (uint8_t*)"verylargetextwithverylongname.tx";
+// void file_read_test() {
+// 	uint8_t temper[5280];			// 5280 is the size of the largest amount of bytes we need to read for this checkpoint
+// 	uint8_t* temp;					// number is based off of verylargetextwithverylongname.tx
+// 	int fd;
+// 	//temp = (uint8_t*)"frame0.txt";
+// 	//temp = (uint8_t*)"frame1.txt";
+// 	//temp = (uint8_t*)"grep";
+// 	//temp = (uint8_t*)"ls";
+// 	//temp = (uint8_t*)"fish";
+// 	temp = (uint8_t*)"verylargetextwithverylongname.tx";
 
-	clear();
-	file_open(temp);
-	file_read(temp, temper);
+// 	clear();
+// 	fd = file_open(temp);
+// 	file_read(fd, temper, 5000);
 	
-	int i;
-	for (i = 0; i < bytes_read; i++){
-		putc(temper[i]);
-	}
-}
+// 	int i;
+// 	for (i = 0; i < 5000; i++){
+// 		putc(temper[i]);
+// 	}
+// }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */

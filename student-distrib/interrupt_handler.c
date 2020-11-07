@@ -6,7 +6,7 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "new_link.h"
-
+#include "sys_calls_link.h"
 #define SYSCALL_NUM 128 // 0x80
 #define KEYBOARD_ADDR 0x21 // addr for kb 
 #define RTC_ADDR 0x28 // addr for rtc 
@@ -215,7 +215,7 @@ void idt_vector(){
     SET_IDT_ENTRY(idt[19], exception19_C);
     SET_IDT_ENTRY(idt[RTC_ADDR], rtc_asm);
     SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
-    SET_IDT_ENTRY(idt[SYSCALL_NUM], sys_call_handler_C);
+    SET_IDT_ENTRY(idt[SYSCALL_NUM], sys_call_handler_asm);
 }
 
 

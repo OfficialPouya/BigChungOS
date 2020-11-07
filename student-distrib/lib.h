@@ -4,7 +4,7 @@
 
 #ifndef _LIB_H
 #define _LIB_H
-
+#pragma once
 #include "types.h"
 
 int32_t printf(int8_t *format, ...);

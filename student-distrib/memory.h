@@ -1,6 +1,7 @@
 /* memory.h - This initializes the paging structures.
  * vim:ts=4 noexpandtab
  */
+#pragma once
 
 #include "types.h"
 #include "x86_desc.h"

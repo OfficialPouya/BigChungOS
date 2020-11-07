@@ -1,16 +1,12 @@
-#include "memory.h"
-#include "lib.h"
-#include "terminal.h"
+
 #include "sys_calls.h"
-#include "FileSystem.h"
-#include "rtc.h"
+
+int fd_index_holder;
 
 fop rtc_struct = {rtc_open, rtc_close, rtc_read, rtc_write};
 fop file_struct = {file_open, file_close, file_read, file_write};
+fop dir_struct = {dir_open, dir_close, dir_read, dir_write};
 fop terminal_struct = {terminal_open, terminal_close, terminal_read, terminal_write};
-fop dir_struct = { dir_open, dir_close, dir_read, dir_write};
-
-int fd_index_holder;
 
 void sys_call_handler() {
     printf("\nBad System Call\n");
@@ -38,10 +34,10 @@ int32_t sys_open(const uint8_t *filename) {
                     file_d_table[t_index].fop_ = &rtc_struct;
                     break;
                 case 1: 
-                    file_d_table[t_index].fop_ = &file_struct;
+                    file_d_table[t_index].fop_ = &dir_struct;
                     break;
                 case 2: 
-                    file_d_table[t_index].fop_ = &dir_struct;
+                    file_d_table[t_index].fop_ = &file_struct;
                     break;
             }
         file_d_table[t_index].exists = 1; // now it exists 
@@ -55,52 +51,93 @@ int32_t sys_open(const uint8_t *filename) {
 int32_t sys_close(int32_t fd) {
     if (fd <= 2 || fd >= 6) {return -1;}
     if(file_d_table[fd].exists == 1){
-        file_d_table[fd].exists = -1;
-        file_d_table[fd].fop_->close(fd); 
+        file_d_table[fd_index_holder].exists = -1;
+        file_d_table[fd_index_holder].fop_->close(fd); 
     }
+    return 0;
 }
 
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf){return -1;}
     // the fd ranges from 0 - 6
     if (fd <= 0 || fd >= 6) {return -1;}
-    if(fd==1){return terminal_write(fd, buf, nbytes);}
-    if(file_d_table[fd].exists == -1){return -1;}
-    return file_d_table[fd].fop_->write(fd, buf, nbytes); 
+    if(file_d_table[fd_index_holder].exists == -1){return -1;}
+    return file_d_table[fd_index_holder].fop_->write(fd, buf, nbytes); 
 }
 
 
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf){return -1;}
     if (fd < 0 || fd >= 6 || fd == 1) {return -1;}
-    if(file_d_table[fd].exists == -1){return -1;}
-    return file_d_table[fd].fop_->read(fd, buf, nbytes);
+    if(file_d_table[fd_index_holder].exists == -1){return -1;}
+    return file_d_table[fd_index_holder].fop_->read(fd, buf, nbytes);
 }
 
 
-/*
-sys_open : 
--- have to check if file is valid to open 
--- switch statement to see what type of file is being opened
-    -fd = 0 is RTC
---return fd index
 
-Sys_close:
--- check if file has been opened (using flags??)
--- reset file to close & call corresponding close 
+int32_t sys_execute(const uint8_t *command){
 
-Sys_write: 
--- make sure file is in use 
--- call corresponding write file (using fda)
+return 0;
+}
 
-Sys_read: 
--- make sure file is in use 
--- call corresponding write file (using fda)
+int32_t sys_halt(uint8_t status){
 
-In file array need:
-    -file operation
-    -flags
-    -idk what else yet
-*/
+return 0;
+}
 
-// add some sort of struct, within fd ==> fd_table[index].
+void init_pcb(){
+    int fdt_index;
+    pcb my_pcb;
+    for(fdt_index=0; fdt_index<8;fdt_index++){
+        my_pcb.fdt[fdt_index].exists = -1;
+    }
+    // stdin members 
+    file_d_table[0].fop_ = &terminal_struct;
+    file_d_table[0].file_type = 3;
+    // stdout members 
+    file_d_table[1].fop_ = &terminal_struct;
+    file_d_table[1].file_type = 3;
+}
+
+
+    /*
+    1. PARSE 
+        ~ PARSE IS DONE
+    2. EXE CHECK
+        ~ LINE 82 in filesys.c -- ELF magic # is defined in header (sets flag if match)
+    3. PAGING
+        ~ Calling set_address helper function to point to correct 4MB offset from 8MB of physcial addr
+    4. USER LVL PROGRAM LOADER
+        ~ Copying Data, from filesystem using read data style function. Load into 0x8048000        
+    5. CREATE PCB
+        ~ Fill array of fd tables 
+    6. CONTEXT SWITCH
+        ~ Zohair 
+    */
+
+
+    /*
+    sys_open : 
+    -- have to check if file is valid to open 
+    -- switch statement to see what type of file is being opened
+        -fd = 0 is RTC
+    --return fd index
+
+    Sys_close:
+    -- check if file has been opened (using flags??)
+    -- reset file to close & call corresponding close 
+
+    Sys_write: 
+    -- make sure file is in use 
+    -- call corresponding write file (using fda)
+
+    Sys_read: 
+    -- make sure file is in use 
+    -- call corresponding write file (using fda)
+
+    In file array need:
+        -file operation
+        -flags
+        -idk what else yet
+    */
+

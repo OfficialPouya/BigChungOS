@@ -1,6 +1,6 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
-
+#pragma once
 // only type 127 chars per line, the extra space is
 // for NULL padding
 #define TYPE_BUFFER_SIZE 128

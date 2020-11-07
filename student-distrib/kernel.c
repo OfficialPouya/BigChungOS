@@ -12,7 +12,9 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "memory.h"
-//#include "FileSystem.h"
+#include "FileSystem.h"
+#include "sys_calls.h"
+
 #define RUN_TESTS
 
 /* Macros. */
@@ -153,7 +155,7 @@ void entry(unsigned long magic, unsigned long addr) {
     init_keyboard(); // this inits the keyboard
     char_count = 0;
     kb_idx = 0;
-    dir_open();
+    dir_open((uint8_t*)".");
     
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
@@ -166,6 +168,7 @@ void entry(unsigned long magic, unsigned long addr) {
     
     printf("Enabling Interrupts\n");
     sti();
+    init_pcb();
 
 #ifdef RUN_TESTS
     /* Run tests */

@@ -1,3 +1,5 @@
+#pragma once
+
 void idt_setup(int);
 void idt_vector();
 

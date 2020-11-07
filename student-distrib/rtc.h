@@ -1,6 +1,6 @@
 #ifndef _RTC_H
 #define _RTC_H
-
+#pragma once
 #include "types.h"
 
 /* Macros to be used in RTC functions. Values and names found on osdev */ 

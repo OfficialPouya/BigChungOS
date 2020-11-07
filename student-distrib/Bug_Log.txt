@@ -137,3 +137,37 @@ Topic: putc
 Fix: made sure to re-write the entire line while(idx<NUM_COLS) instead of while(idx<NUM_COLS-1){
 Location of Fix: lib.c
 Estimated Time: 30 mins
+
+/*
+|===================================================|
+|					CP 3 BUGS						|
+|===================================================|
+*/
+
+Bug #16
+Bug: filesys functions did not follow correct arg format
+Topic: Filesystem
+Fix: Had to change function header and logic
+Location of Fix: Filesystem.c & Filesystem.h
+Estimated Time: 7-8 hours
+
+Bug #17
+Bug: design error
+Topic: sys_call wrapper was not being used corerectly
+Fix: isntead of having different call cases for each function, a jumptable is used
+Location of Fix: sys_calls_link.S
+Estimated Time: 1 hour
+
+Bug #18
+Bug: redefinition of structres
+Topic: library usage
+Fix: add pragma once and ifndef, define, and endif in .h file
+Location of Fix: Filesystem.h + some other ones 
+Estimated Time: 1 hour
+
+Bug #19
+Bug: 
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:

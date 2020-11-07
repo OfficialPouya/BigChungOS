@@ -1,62 +1,30 @@
-.globl sys_call_link
+.globl sys_call_handler_asm
 
-sys_call_halt:
-sys_call_execute:
 
 sys_call_handler_asm:
+
+    pushal
+
     cmpl $0, %eax
     jle fail_handler
-    cmpl $6, %eax
+    cmpl $6, %eax   # will become 10 in cp4
     jg fail_handler
-    subl $1, %eax   # i think i need this for 0 index
-    jmp *jump_table(,%eax,4)
+    subl $1, %eax   # i need this for 0 index
 
-sys_call_open:
-    pushl %ebx      # filename
-    call sys_open
-    popl %ebx       # filename
+    pushl %ecx 
+    pushl %edx
+    pushl %ebx
+    call *jump_table(,%eax,4)
+    popl %ebx 
+    popl %edx
+    popl %ecx 
+
     iret
 
-sys_call_read:
-    cmpl $-1, %edx  # check for -1 (return -1 fail)
-    je read_fail
-    cmpl $-1, %ecx  # check for -1 (return -1 fail)
-    je read_fail
-    cmpl $-1, %ebx  # check for -1 (return -1 fail)
-    je read_fail
-    pushl %edx      # nbytes
-    pushl %ecx      # buf
-    pushl %ebx      # fd
-    call sys_read
-    popl %ebx       # fd
-    popl %ecx       # buf
-    popl %edx       # nbytes
-    iret
-
-sys_call_write:
-    pushl %edx      # nbytes
-    pushl %ecx      # buf
-    pushl %ebx      # fd
-    call sys_write
-    popl %ebx       # fd
-    popl %ecx       # buf
-    popl %edx       # nbytes
-    iret
-
-
-sys_call_close:
-    pushl %ebx      # fd
-    call sys_close
-    popl %ebx       # fd
-    iret
-
-read_fail:
-    call sys_call_handler
-    iret
 
 fail_handler:
     movl $-1, %eax
     iret
 
 jump_table:
-  .long sys_call_halt, sys_call_execute, sys_call_read, sys_call_write, sys_call_open, sys_call_close
+  .long sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close

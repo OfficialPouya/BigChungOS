@@ -76,7 +76,12 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 
 
 int32_t sys_execute(const uint8_t *command){
-
+// 1. PARSE (Chloe :: DONE)
+// 2. EXE CHECK (PAUL :: Already done?)
+// 3. PAGING (PAUL :: Already done?)
+// 4. USER LVL PROGRAM LOADER (PAUL)
+// 5. CREATE PCB (Pouya and Chloe DONE:: Zohair might need to add for his stuff)
+// 6.  CONTEXT SWITCH (Zohair)
 return 0;
 }
 
@@ -92,11 +97,11 @@ void init_pcb(){
         my_pcb.fdt[fdt_index].exists = -1;
     }
     // stdin members 
-    file_d_table[0].fop_ = &terminal_struct;
-    file_d_table[0].file_type = 3;
+    my_pcb.fdt[0].fop_ = &terminal_struct;
+    my_pcb.fdt[0].file_type = 3;
     // stdout members 
-    file_d_table[1].fop_ = &terminal_struct;
-    file_d_table[1].file_type = 3;
+    my_pcb.fdt[1].fop_ = &terminal_struct;
+    my_pcb.fdt[1].file_type = 3;
 }
 
 

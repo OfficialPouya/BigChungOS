@@ -83,4 +83,7 @@ int32_t dir_write(int32_t fd, const void* buf, int32_t nbytes);
 // reads filename by filename, return 0 on success
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes);
 
+// Checks if first 4 bytes are ELF
+int32_t exec_check(const uint8_t* filename);
+
 #endif

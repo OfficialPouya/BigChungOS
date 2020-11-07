@@ -57,7 +57,7 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     const uint32_t* temp_ptr = boot_block_ptr;  // grabs the pointer to first block
     uint8_t* char_ptr;                          // used to temporarily loop thorugh chars
-    int i, loop, flag, counter;
+    int i, loop, flag;//, counter;
     flag = 0;       // check if exe or not
     i = 0;
     bytes_read = 0; // sets this back to 0 before reading more
@@ -335,4 +335,29 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
     }
 
     return 0;
+}
+
+/*
+ NAME: exec_check
+ DESCRIPTION: Checks if first 4 bytes are ELF
+ IO: NONE
+ IMPACTS ON OTHERS: None
+ */
+int32_t exec_check(const uint8_t* filename){
+    dentry_t temp;
+    inode_t temp_inode;
+    const uint32_t* temp_ptr;
+    // looks for file, grabs inode number
+    if (read_dentry_by_name(filename, &temp) != 0){
+        return -1;
+    }
+
+    temp_ptr = boot_block_ptr + blocksizenorm * (1+temp.inode_num);
+    temp_inode.data_block_num[0] = *(temp_ptr + 1);
+    temp_ptr = boot_block_ptr + blocksizenorm * (1 + boot_block_main.inode_count + temp_inode.data_block_num[0]);
+
+    // check if elf or not
+    if(*temp_ptr != ELFMAGIC) return -1;
+
+    return (*temp_ptr+6);
 }

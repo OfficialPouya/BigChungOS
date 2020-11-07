@@ -9,6 +9,12 @@
 #include "terminal.h"
 #include "lib.h"
 #include "FileSystem.h"
+#include "memory.h"
+#include "x86_desc.h"
+
+int pid_counter;
+
+pcb my_pcb;
 
 void init_pcb();
 extern void sys_call_handler();

@@ -3,7 +3,12 @@
 
 sys_call_handler_asm:
 
-    pushal
+    
+	pushf           # dont wanna mess with eax 
+	pushl %ebp
+    pushl %esi
+	pushl %edi
+	
 
     cmpl $0, %eax
     jle fail_handler
@@ -18,12 +23,17 @@ sys_call_handler_asm:
     popl %ebx 
     popl %edx
     popl %ecx 
-
+    
+    popl %edi
+    popl %esi
+    popl %ebp
+    popf
     iret
 
 
 fail_handler:
     movl $-1, %eax
+    popal
     iret
 
 jump_table:

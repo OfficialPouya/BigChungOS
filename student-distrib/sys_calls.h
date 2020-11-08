@@ -15,7 +15,7 @@
 int pid_counter;
 
 
-void init_pcb();
+
 extern void sys_call_handler();
 extern int32_t sys_close(int32_t fd);
 extern int32_t sys_open(const uint8_t *filename);
@@ -37,15 +37,21 @@ typedef struct fd_table{
     int exists; // bool type var: 1 or -1
 }fd_table;
 
-fd_table file_d_table[8]; // number of sys calls will be 8
+// fd_table file_d_table[8]; // number of sys calls will be 8
 
 typedef struct pcb{
-    int esp;
-    int ebp;
+    int32_t old_esp;
+    int32_t old_eip;
+    int in_use;
     fd_table fdt[8];
     uint8_t args[1024];
 } pcb;
 
-pcb my_pcb;
+// pcb first_pcb;
+// pcb second_pcb;
+void init_pcb(int curr_pcb);
+
+pcb all_pcbs[6];
+
 
 #endif

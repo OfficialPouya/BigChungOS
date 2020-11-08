@@ -13,8 +13,8 @@ void sys_call_handler() {
 }
 
 int32_t sys_open(const uint8_t *filename) {
-    
-    // check params passed to sys call 
+
+    // check params passed to sys call
     if (filename[0] == 0) {return -1;}
     int f_o = file_open(filename);
     if(f_o == -1){return -1;}
@@ -28,31 +28,31 @@ int32_t sys_open(const uint8_t *filename) {
     for(t_index=2; t_index<8; t_index++){
         // used : 1
         // empty : -1
-        if(file_d_table[t_index].exists == -1){
-            switch (file_d_table[t_index].file_type){
-                case 0: 
-                    file_d_table[t_index].fop_ = &rtc_struct;
+        if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
+            switch (all_pcbs[pid_counter].fdt[t_index].file_type){
+                case 0:
+                    all_pcbs[pid_counter].fdt[fd_index_holder].fop_ = &rtc_struct;
                     break;
-                case 1: 
-                    file_d_table[t_index].fop_ = &dir_struct;
+                case 1:
+                    all_pcbs[pid_counter].fdt[t_index].fop_ = &dir_struct;
                     break;
-                case 2: 
-                    file_d_table[t_index].fop_ = &file_struct;
+                case 2:
+                    all_pcbs[pid_counter].fdt[t_index].fop_ = &file_struct;
                     break;
             }
-        file_d_table[t_index].exists = 1; // now it exists 
+        all_pcbs[pid_counter].fdt[t_index].exists = 1; // now it exists
         fd_index_holder = t_index;
         return fd_index_holder;
         }
     }
-    return -1; // nothing was able to get added 
+    return -1; // nothing was able to get added
 }
 
 int32_t sys_close(int32_t fd) {
     if (fd <= 2 || fd >= 6) {return -1;}
-    if(file_d_table[fd].exists == 1){
-        file_d_table[fd_index_holder].exists = -1;
-        file_d_table[fd_index_holder].fop_->close(fd); 
+    if(all_pcbs[pid_counter].fdt[fd].exists == 1){
+        all_pcbs[pid_counter].fdt[fd_index_holder].exists = -1;
+        all_pcbs[pid_counter].fdt[fd_index_holder].fop_->close(fd);
     }
     return 0;
 }
@@ -61,38 +61,41 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf){return -1;}
     // the fd ranges from 0 - 6
     if (fd <= 0 || fd >= 6) {return -1;}
-    if(file_d_table[fd_index_holder].exists == -1){return -1;}
-    return file_d_table[fd_index_holder].fop_->write(fd, buf, nbytes); 
+    if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
+    return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->write(fd, buf, nbytes);
 }
 
 
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf){return -1;}
     if (fd < 0 || fd >= 6 || fd == 1) {return -1;}
-    if(file_d_table[fd_index_holder].exists == -1){return -1;}
-    return file_d_table[fd_index_holder].fop_->read(fd, buf, nbytes);
+    if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
+    return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->read(fd, buf, nbytes);
 }
 
 
 
 int32_t sys_execute(const uint8_t *command){
 // 1. PARSE (Chloe :: DONE)
-    int command_index, i, j; // variables to be used as indices 
+    int command_index, i, j; // variables to be used as indices
     command_index = 0;
     i = 0;
     j = 0;
-    uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name 
+    uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
     //1. PARSE COMMAND FOR FILE NAME
+    ++pid_counter; // increment process counter
 
-    //check for valid command 
+    init_pcb(pid_counter);
+    //check for valid command
     if(command == NULL){
-        return -1; 
+        all_pcbs[pid_counter].in_use = -1;
+        return -1;
     }
-    // iterate through initial white space 
+    // iterate through initial white space
     while(command[command_index] == ' '){
         command_index++;
     }
-    // get file name from command 
+    // get file name from command
     while(command[command_index] != ' ' && command[command_index] != '\0'){
         filename[i] = command[command_index];
         i++;
@@ -105,10 +108,10 @@ int32_t sys_execute(const uint8_t *command){
     while(command[command_index] == ' '){
         command_index++;
     }
-    // stores args in pcb 
+    // stores args in pcb
     while(command[command_index] != ' ' && command[command_index] != '\0'){
-        //store args in pcb 
-        my_pcb.args[j] = command[command_index];
+        //store args in pcb
+        all_pcbs[pid_counter].args[j] = command[command_index];
         j++;
         command_index++;
     }
@@ -123,97 +126,116 @@ int32_t sys_execute(const uint8_t *command){
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
-        ++pid_counter; // increment process counter 
         // laodeer, load bytes to right address
         fd = file_open(filename);
         file_read(fd, (void*)0x8048000, 4096*1024);
     }
     else{
+        all_pcbs[pid_counter].in_use = -1;
         return -1;
     }
 
 // 6.  CONTEXT SWITCH (Zohair)
 
+    all_pcbs[pid_counter].old_esp = tss.esp0;
+    // all_pcbs[pid_counter-1].old_eip = tss.eip;
     // not in correct position
-    // tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
+    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
     // not in correct postion
 
 
-    // asm volatile (
-    //     "pushl %0;"
-    //     "movl %0, %%ebx;"
-    //     "movw %%bx, %%ds;"
-    //     "pushl %1;"
-    //     "pushfl;"
-    //     "popl %%ebx;"
-    //     "orl $0x200, %%ebx;"
-    //     "pushl %%ebx;"
-    //     "pushl %3;"
-    //     "pushl %2;"
-    //     "iret;"
-    //     :
-    //     : "r" (USER_DS), "r" (0x8048000), "r" (eip_data), "r" (USER_CS)
-    //     : "memory"
-    // );
-    // need a return label
 
+    asm volatile (
+        "pushl %0;"
+        "movl %0, %%ebx;"
+        "movw %%bx, %%ds;"
+        "pushl %1;"
+        "pushfl;"
+        "popl %%ebx;"
+        "orl $0x200, %%ebx;"
+        "pushl %%ebx;"
+        "pushl %3;"
+        "pushl %2;"
+        "iret;"
+        :
+        : "r" (USER_DS), "r" (0x83FFFF0), "r" (eip_data), "r" (USER_CS)
+        : "memory"
+    );
+    // need a return label
+    // in halt, restore esp ebp and jump to the return label in assembly
     return 0;
 }
 
 int32_t sys_halt(uint8_t status){
 
+
+// close all the open fdt entries
+// easier to only close fdd 2:6, doing all would be harder
 return 0;
 }
 
-void init_pcb(){
+void init_pcb(int curr_pcb){
     int fdt_index;
-    pid_counter = 0;
-    
+    all_pcbs[curr_pcb].in_use = 1;
     for(fdt_index=0; fdt_index<8;fdt_index++){
-        my_pcb.fdt[fdt_index].exists = -1;
+        all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
-    // stdin members 
-    my_pcb.fdt[0].fop_ = &terminal_struct;
-    my_pcb.fdt[0].file_type = 3;
-    // stdout members 
-    my_pcb.fdt[1].fop_ = &terminal_struct;
-    my_pcb.fdt[1].file_type = 3;
+
+    for (fdt_index = 0; fdt_index < 1024; fdt_index++){
+        all_pcbs[curr_pcb].args[fdt_index] = 0;
+    }
+
+    // stdin members
+    all_pcbs[curr_pcb].fdt[0].fop_ = &terminal_struct;
+    all_pcbs[curr_pcb].fdt[0].file_type = 3;
+    all_pcbs[curr_pcb].fdt[0].exists = 1;
+    all_pcbs[curr_pcb].fdt[0].fop_->open((uint8_t*)"blah");
+
+    // stdout members
+    all_pcbs[curr_pcb].fdt[1].fop_ = &terminal_struct;
+    all_pcbs[curr_pcb].fdt[1].file_type = 3;
+    all_pcbs[curr_pcb].fdt[1].exists = 1;
+    all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
+
+
+
+
 }
 
 
     /*
-    1. PARSE 
+    1. PARSE
         ~ PARSE IS DONE
     2. EXE CHECK
         ~ LINE 82 in filesys.c -- ELF magic # is defined in header (sets flag if match)
     3. PAGING
         ~ Calling set_address helper function to point to correct 4MB offset from 8MB of physcial addr
     4. USER LVL PROGRAM LOADER
-        ~ Copying Data, from filesystem using read data style function. Load into 0x8048000        
+        ~ Copying Data, from filesystem using read data style function. Load into 0x8048000
     5. CREATE PCB
-        ~ Fill array of fd tables 
+        ~ Fill array of fd tables
     6. CONTEXT SWITCH
-        ~ Zohair 
+        ~ Zohair
     */
 
 
     /*
-    sys_open : 
-    -- have to check if file is valid to open 
+    sys_open :
+    -- have to check if file is valid to open
     -- switch statement to see what type of file is being opened
         -fd = 0 is RTC
     --return fd index
 
     Sys_close:
     -- check if file has been opened (using flags??)
-    -- reset file to close & call corresponding close 
+    -- reset file to close & call corresponding close
 
-    Sys_write: 
-    -- make sure file is in use 
+    Sys_write:
+    -- make sure file is in use
     -- call corresponding write file (using fda)
 
-    Sys_read: 
-    -- make sure file is in use 
+    Sys_read:
+    -- make sure file is in use
     -- call corresponding write file (using fda)
 
     In file array need:
@@ -221,4 +243,3 @@ void init_pcb(){
         -flags
         -idk what else yet
     */
-

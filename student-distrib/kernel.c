@@ -156,7 +156,7 @@ void entry(unsigned long magic, unsigned long addr) {
     char_count = 0;
     kb_idx = 0;
     dir_open((uint8_t*)".");
-    
+
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
@@ -165,16 +165,17 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    
+
     printf("Enabling Interrupts\n");
     sti();
-    init_pcb();
+    // init_pcb();
 
 #ifdef RUN_TESTS
     /* Run tests */
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    pid_counter = -1;
     sys_execute((uint8_t*)"shell");
 
     /* Spin (nicely, so we don't chew up cycles) */

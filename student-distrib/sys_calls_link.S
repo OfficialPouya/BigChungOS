@@ -3,27 +3,27 @@
 
 sys_call_handler_asm:
 
-    
-	pushf           # dont wanna mess with eax 
-	pushl %ebp
-    pushl %esi
-	pushl %edi
-	
 
+	  pushf           # dont wanna mess with eax
+	  pushl %ebp
+    pushl %esi
+	  pushl %edi
+
+    subl $1, %eax   # i need this for 0 index
     cmpl $0, %eax
     jle fail_handler
     cmpl $6, %eax   # will become 10 in cp4
     jg fail_handler
-    subl $1, %eax   # i need this for 0 index
 
-    pushl %ecx 
+
     pushl %edx
+    pushl %ecx
     pushl %ebx
     call *jump_table(,%eax,4)
-    popl %ebx 
+    popl %ebx
+    popl %ecx
     popl %edx
-    popl %ecx 
-    
+
     popl %edi
     popl %esi
     popl %ebp

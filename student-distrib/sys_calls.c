@@ -77,8 +77,11 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 
 int32_t sys_execute(const uint8_t *command){
 // 1. PARSE (Chloe :: DONE)
-    int command_index, i, j = 0; // variables to be used as indices 
-    uint8_t filename[FILENAME_LEN]; // array to hold file name 
+    int command_index, i, j; // variables to be used as indices 
+    command_index = 0;
+    i = 0;
+    j = 0;
+    uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name 
     //1. PARSE COMMAND FOR FILE NAME
 
     //check for valid command 
@@ -105,7 +108,7 @@ int32_t sys_execute(const uint8_t *command){
     // stores args in pcb 
     while(command[command_index] != ' ' && command[command_index] != '\0'){
         //store args in pcb 
-        my_pcb->args[j] = command[command_index];
+        my_pcb.args[j] = command[command_index];
         j++;
         command_index++;
     }
@@ -132,26 +135,26 @@ int32_t sys_execute(const uint8_t *command){
 // 6.  CONTEXT SWITCH (Zohair)
 
     // not in correct position
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
+    // tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
     // not in correct postion
 
 
-    asm volatile (
-        "pushl %0;"
-        "movl %0, %%ebx;"
-        "movw %%bx, %%ds;"
-        "pushl %1;"
-        "pushfl;"
-        "popl %%ebx;"
-        "orl $0x200, %%ebx;"
-        "pushl %%ebx;"
-        "pushl %3;"
-        "pushl %2;"
-        "iret;"
-        :
-        : "r" (USER_DS), "r" (0x8400000), "r" (eip_data), "r" (USER_CS)
-        : "memory"
-    );
+    // asm volatile (
+    //     "pushl %0;"
+    //     "movl %0, %%ebx;"
+    //     "movw %%bx, %%ds;"
+    //     "pushl %1;"
+    //     "pushfl;"
+    //     "popl %%ebx;"
+    //     "orl $0x200, %%ebx;"
+    //     "pushl %%ebx;"
+    //     "pushl %3;"
+    //     "pushl %2;"
+    //     "iret;"
+    //     :
+    //     : "r" (USER_DS), "r" (0x8048000), "r" (eip_data), "r" (USER_CS)
+    //     : "memory"
+    // );
     // need a return label
 
     return 0;

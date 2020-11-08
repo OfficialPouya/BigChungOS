@@ -14,7 +14,6 @@
 
 int pid_counter;
 
-pcb my_pcb;
 
 void init_pcb();
 extern void sys_call_handler();
@@ -47,5 +46,6 @@ typedef struct pcb{
     uint8_t args[1024];
 } pcb;
 
+pcb my_pcb;
 
 #endif

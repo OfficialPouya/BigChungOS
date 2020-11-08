@@ -359,5 +359,5 @@ int32_t exec_check(const uint8_t* filename){
     // check if elf or not
     if(*temp_ptr != ELFMAGIC) return -1;
 
-    return (*temp_ptr+6);
+    return (*(temp_ptr+6));
 }

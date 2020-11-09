@@ -261,7 +261,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t dir_open(const uint8_t* filename){
     //if(dir_is_open==1){return 0;}
-    if (*filename != '.') return -1;
+    if (*filename != '.'){return -1;}
     int i, floop;
     int8_t* chars;
     const uint32_t* temp_ptr = boot_block_ptr;

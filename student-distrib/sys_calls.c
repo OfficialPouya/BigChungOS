@@ -41,9 +41,9 @@ int32_t sys_open(const uint8_t *filename) {
     dentry_t temp_dentry;
     dentry_t *curr_dentry = &temp_dentry;
     // be able to see if file exists, if not return -1
-    printf("here 1 %d \n", curr_dentry->filetype);
+    //printf("here 1 %d \n", curr_dentry->filetype);
     if(read_dentry_by_name(filename, curr_dentry) == -1){return -1;}
-    printf("here 2 %d \n", curr_dentry->filetype);
+    //printf("here 2 %d \n", curr_dentry->filetype);
     // since exe & halt are index 0, 1 we start at 2, and there are 8 total calls
     int t_index;
     for(t_index=2; t_index<8; t_index++){
@@ -236,7 +236,7 @@ int32_t sys_execute(const uint8_t *command){
         "ret"
         :
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
-        : "memory"
+        : "ebx", "memory"
     );
     // need to do something with ebp and esp
 
@@ -261,9 +261,10 @@ int32_t sys_halt(uint8_t status){
     all_pcbs[pid_counter].in_use = -1;
     --pid_counter;
     if(pid_counter==-1){
-        all_pcbs[pid_counter].in_use=-1;
-        printf("Restarting Shell... \n"); //restart the base shell
+        //all_pcbs[pid_counter].in_use=-1;
+        //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
+        return 0;
     }
     update_user_addr(pid_counter);
     tss.ss0 = KERNEL_DS;

@@ -149,13 +149,13 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     idt_vector(); // this inits the IDT
     i8259_init(); // this inits the PIC
-    clear();
+    clear(); // to clear stuff off the screen
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
-    char_count = 0;
-    kb_idx = 0;
-    dir_open((uint8_t*)".");
+    char_count = 0; 
+    kb_idx = 0; // set kb index to 0
+    dir_open((uint8_t*)".");  // for opening shell
 
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the

@@ -1,17 +1,38 @@
-
 #include "sys_calls.h"
 
 int fd_index_holder;
 
+/*
+
+*/
 fop rtc_struct = {rtc_open, rtc_close, rtc_read, rtc_write};
 fop file_struct = {file_open, file_close, file_read, file_write};
 fop dir_struct = {dir_open, dir_close, dir_read, dir_write};
 fop terminal_struct = {terminal_open, terminal_close, terminal_read, terminal_write};
 
+
+/*
+ NAME: sys_call_handler
+ DESCRIPTION: just prints statement
+ INPUTS: NONE
+ OUTPUTS: "\nBad System Call\n"
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: NONE
+ */
 void sys_call_handler() {
     printf("\nBad System Call\n");
 }
 
+
+
+/*
+ NAME: sys_open
+ DESCRIPTION: Attempts to open a file from the filename that was passed, holding the spot and passing it
+ INPUTS: filename
+ OUTPUTS: NONE
+ RETURN VALUE: -1 on fail, index_holder on success
+ IMPACTS ON OTHERS: changes fdt, pcb 
+ */
 int32_t sys_open(const uint8_t *filename) {
 
     // check params passed to sys call
@@ -48,6 +69,16 @@ int32_t sys_open(const uint8_t *filename) {
     return -1; // nothing was able to get added
 }
 
+
+
+/*
+ NAME: sys_close
+ DESCRIPTION: closes the fd
+ INPUTS: fd
+ OUTPUTS: NONE
+ RETURN VALUE: -1 Fail, 0 on success
+ IMPACTS ON OTHERS:
+ */
 int32_t sys_close(int32_t fd) {
     if (fd <= 2 || fd >= 6) {return -1;}
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
@@ -57,6 +88,16 @@ int32_t sys_close(int32_t fd) {
     return 0;
 }
 
+
+
+/*
+ NAME: sys_write
+ DESCRIPTION: Writes 'nbytes' bytes from 'buf' into the file associated with 'fd'
+ INPUTS: 'nbytes' bytes into 'buf' from the file corresponding to the given 'fd'.
+ OUTPUTS: none
+ RETURN VALUE: -1 on fail or whatever write returns
+ IMPACTS ON OTHERS: changes the pcb in use
+ */
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf){return -1;}
     // the fd ranges from 0 - 6
@@ -66,18 +107,36 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
 }
 
 
+
+/*
+ NAME: sys_read
+ DESCRIPTION: 'nbytes' bytes into 'buf' from the file corresponding to the given 'fd'.
+ INPUTS:  file descriptor, buffer to read from, number of bytes to read from
+ OUTPUTS: NONE
+ RETURN VALUE: number of bytes read, -1 on fail
+ IMPACTS ON OTHERS: none
+ */
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf){return -1;}
-    if (fd < 0 || fd >= 6 || fd == 1) {return -1;}
+    if (fd < 0 || fd >= 6 || fd == 1 || buf == NULL) {return -1;}
     if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
     return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->read(fd, buf, nbytes);
 }
 
 
+/*
+ NAME: sys_execute
+ DESCRIPTION: executes program
+ INPUTS: command 
+ OUTPUTS: none
+ RETURN VALUE: -1 on fail, 0 on OK
+ IMPACTS ON OTHERS: changes the pcb in use, changes ebp, eax, tss.ss0, pid_counter
+ */
 
 int32_t sys_execute(const uint8_t *command){
-// 1. PARSE (Chloe :: DONE)
+    // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
+    if(pid_counter>5){return -1;}
     command_index = 0;
     i = 0;
     j = 0;
@@ -118,9 +177,9 @@ int32_t sys_execute(const uint8_t *command){
 
 
     // may need to append newline char not positive tho
-// 2. EXE CHECK (PAUL :: Done/Not Checked)
-// 3. PAGING (PAUL :: Done/Not Checked)
-// 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
+    // 2. EXE CHECK (PAUL :: Done/Not Checked)
+    // 3. PAGING (PAUL :: Done/Not Checked)
+    // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
     // helper function in filesys to check first 4 bytes
     int fd;
     int32_t eip_data;
@@ -137,14 +196,10 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     }
 
-// 6.  CONTEXT SWITCH (Zohair)
+    // 6.  CONTEXT SWITCH (Zohair)
 
-    //all_pcbs[pid_counter].old_esp = tss.esp0;
-    // all_pcbs[pid_counter-1].old_eip = tss.eip;
-    // not in correct position
     tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
     tss.ss0 = KERNEL_DS;
-    // not in correct postion
 
     asm volatile(
         "movl %%ebp, %0"
@@ -175,13 +230,34 @@ int32_t sys_execute(const uint8_t *command){
     return 0;
 }
 
+
+
+/*
+ NAME: sys_halt
+ DESCRIPTION: this is to halt the user program, doesnt allow you to halt the base shell
+ INPUTS: status
+ OUTPUTS: none
+ RETURN VALUE: 0 on success
+ IMPACTS ON OTHERS: changes the pcb in use, changes ebp, eax, tss.ss0, pid_counter
+ */
 int32_t sys_halt(uint8_t status){
-    //cli();
     uint32_t status_num = (uint32_t) status;
     all_pcbs[pid_counter].in_use = -1;
     --pid_counter;
+    if(pid_counter==-1){
+        all_pcbs[pid_counter].in_use=-1;
+        printf("Restarting Shell... \n"); //restart the base shell
+        sys_execute((uint8_t *) "shell");
+    }
     update_user_addr(pid_counter);
     tss.ss0 = KERNEL_DS;
+    /*
+    Magic Numbers
+    number '0x800000':
+    number '1':       this is bc pid_counter is -1 indexed
+    number '4096': 
+    number '2':
+    */
     tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
     asm volatile (
         "movl %0, %%ebp;"
@@ -191,8 +267,7 @@ int32_t sys_halt(uint8_t status){
         :
         :"r"(all_pcbs[pid_counter+1].old_esp), "r" (status_num)
     );
-    //sti();
-return 0;
+    return 0;
 }
 
 void init_pcb(int curr_pcb){

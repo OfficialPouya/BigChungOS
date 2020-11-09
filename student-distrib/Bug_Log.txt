@@ -166,8 +166,29 @@ Location of Fix: Filesystem.h + some other ones
 Estimated Time: 1 hour
 
 Bug #19
-Bug: 
-Topic:
-Fix:
-Location of Fix:
-Estimated Time:
+Bug: execute could not exit the function properlly
+Topic: Execute
+Fix: had to check bounds better in wrapper
+Location of Fix: sys_calls_link.S
+Estimated Time: 2 hours
+
+Bug #20
+Bug: Could launch halt on base shell
+Topic: halt
+Fix: check pid_counter, if we are on base shell, relaunch shell 
+Location of Fix: sys_calls.c
+Estimated Time: 30 mins
+
+Bug #21
+Bug: Halt failed
+Topic: Halt
+Fix: Had to handle eax in halt
+Location of Fix: sys_calls
+Estimated Time: 2 hours
+
+Bug #22
+Bug: Could not type after shell loaded
+Topic: execute
+Fix: Had to call sti() after keyboard read
+Location of Fix: terminal.c
+Estimated Time: 2 hours

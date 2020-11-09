@@ -12,7 +12,7 @@ sys_call_handler_asm:
     subl $1, %eax   # i need this for 0 index
     cmpl $0, %eax
     jl fail_handler
-    cmpl $6, %eax   # will become 10 in cp4
+    cmpl $5, %eax   # will become 10 in cp4
     jg fail_handler
 
 

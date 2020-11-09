@@ -4,10 +4,6 @@
 #include "keyboard.h"
 #include "terminal.h"
 
-
-
-
-
 /*
  NAME: terminal_open
  DESCRIPTION: Opens terminal

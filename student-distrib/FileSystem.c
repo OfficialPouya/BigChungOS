@@ -42,7 +42,8 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
         dentry->inode_num = boot_block_main.direntries[index].inode_num;
         return 0;
     }
-    
+    file_type_open = dentry->filetype;
+    printf("%d \n" , file_type_open);
     // if fail, return -1
     return -1;
 }
@@ -259,8 +260,8 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
  IMPACTS ON OTHERS: initializes the boot_block struct
  */
 int32_t dir_open(const uint8_t* filename){
+    //if(dir_is_open==1){return 0;}
     if (*filename != '.') return -1;
-    
     int i, floop;
     int8_t* chars;
     const uint32_t* temp_ptr = boot_block_ptr;

@@ -12,7 +12,7 @@ sys_call_handler_asm:
     subl $1, %eax   # i need this for 0 index
     cmpl $0, %eax
     jl fail_handler
-    cmpl $5, %eax   # will become 10 in cp4
+    cmpl $6, %eax   # will become 10 in cp4
     jg fail_handler
 
 
@@ -33,8 +33,11 @@ sys_call_handler_asm:
 
 fail_handler:
     movl $-1, %eax
-    popal
+    popl %edi
+    popl %esi
+    popl %ebp
+    popf
     iret
 
 jump_table:
-  .long sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close
+  .long sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close, sys_getargs

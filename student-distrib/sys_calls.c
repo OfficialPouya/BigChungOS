@@ -34,23 +34,24 @@ void sys_call_handler() {
  IMPACTS ON OTHERS: changes fdt, pcb 
  */
 int32_t sys_open(const uint8_t *filename) {
-
+    
     // check params passed to sys call
     if (filename[0] == 0) {return -1;}
-    int f_o = file_open(filename);
-    if(f_o == -1){return -1;}
-
+    
     dentry_t temp_dentry;
     dentry_t *curr_dentry = &temp_dentry;
     // be able to see if file exists, if not return -1
+    printf("here 1 %d \n", curr_dentry->filetype);
     if(read_dentry_by_name(filename, curr_dentry) == -1){return -1;}
+    printf("here 2 %d \n", curr_dentry->filetype);
     // since exe & halt are index 0, 1 we start at 2, and there are 8 total calls
     int t_index;
     for(t_index=2; t_index<8; t_index++){
         // used : 1
         // empty : -1
+        
         if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
-            switch (all_pcbs[pid_counter].fdt[t_index].file_type){
+            switch (curr_dentry->filetype){
                 case 0:
                     all_pcbs[pid_counter].fdt[fd_index_holder].fop_ = &rtc_struct;
                     break;
@@ -136,6 +137,7 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 int32_t sys_execute(const uint8_t *command){
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
+    // do not want to run more than 6 processes (5 bc -1 indexed)
     if(pid_counter>5){return -1;}
     command_index = 0;
     i = 0;
@@ -189,21 +191,32 @@ int32_t sys_execute(const uint8_t *command){
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
         // laodeer, load bytes to right address
         fd = file_open(filename);
+        // num 0x8048000: given, starting addr
+        // num 4MB = 4096 * 1024 (at most or whatever file size is) 
         file_read(fd, (void*)0x8048000, 4096*1024);
     }
     else{
         all_pcbs[pid_counter].in_use = -1;
+        --pid_counter;
         return -1;
     }
 
     // 6.  CONTEXT SWITCH (Zohair)
 
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
+    // asm volatile(
+    //     "movl %%ebp, %0"
+    //     :"=r"(all_pcbs[pid_counter].old_esp)
+    // );
+
+
+    // the math: 8MB - (curr pid)*8KB-4B
+    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
-    asm volatile(
-        "movl %%ebp, %0"
-        :"=r"(all_pcbs[pid_counter].old_esp)
+        asm volatile(
+        "movl %%ebp, %0;"
+        "movl %%esp, %1"
+        :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
     );
 
     asm volatile (
@@ -218,6 +231,9 @@ int32_t sys_execute(const uint8_t *command){
         "pushl %3;"
         "pushl %2;"
         "iret;"
+        "from_halt:;"
+        "leave;"
+        "ret"
         :
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
         : "memory"
@@ -254,29 +270,40 @@ int32_t sys_halt(uint8_t status){
     /*
     Magic Numbers
     number '0x800000':
-    number '1':       this is bc pid_counter is -1 indexed
-    number '4096': 
-    number '2':
+    number '1':         this is bc pid_counter is -1 indexed
+    number '4096':      4KB
+    number '2':         to get to 8KB
     */
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
+
+    // the math: 8MB - (curr pid)*8KB-4B
+    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
     asm volatile (
         "movl %0, %%ebp;"
-        "movl %1, %%eax;"
-        "leave;"
-        "ret"
+        "movl %1, %%esp;"
+        "movl %2, %%eax;"
+        "jmp from_halt"
         :
-        :"r"(all_pcbs[pid_counter+1].old_esp), "r" (status_num)
+        :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
     );
     return 0;
 }
 
+/*
+ NAME: init_pcb
+ DESCRIPTION: inits pcb struct
+ INPUTS:  curr_pcb (index into pcb array)
+ OUTPUTS: NONE
+ RETURN VALUE: NONE (void)
+ IMPACTS ON OTHERS: Initalizes PCB and its objects
+ */
 void init_pcb(int curr_pcb){
     int fdt_index;
     all_pcbs[curr_pcb].in_use = 1;
-    for(fdt_index=0; fdt_index<8;fdt_index++){
+    // only 6 processes 
+    for(fdt_index=0; fdt_index<6;fdt_index++){
         all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
-
+    // the size of our array of args is 1024
     for (fdt_index = 0; fdt_index < 1024; fdt_index++){
         all_pcbs[curr_pcb].args[fdt_index] = 0;
     }
@@ -292,13 +319,22 @@ void init_pcb(int curr_pcb){
     all_pcbs[curr_pcb].fdt[1].file_type = 3;
     all_pcbs[curr_pcb].fdt[1].exists = 1;
     all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
-
-
-
-
 }
 
 
+
+
+/*
+ NAME: sys_getargs
+ DESCRIPTION: get arguments for programs like cat
+ INPUTS:  file descriptor, buffer to read from, number of bytes to read from
+ OUTPUTS: NONE
+ RETURN VALUE: -1 for now
+ IMPACTS ON OTHERS: none
+ */
+int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
+    return -1;
+}
     /*
     1. PARSE
         ~ PARSE IS DONE

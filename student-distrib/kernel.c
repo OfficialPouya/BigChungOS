@@ -155,8 +155,9 @@ void entry(unsigned long magic, unsigned long addr) {
     init_keyboard(); // this inits the keyboard
     char_count = 0; 
     kb_idx = 0; // set kb index to 0
+    // dir_is_open = 0;
     dir_open((uint8_t*)".");  // for opening shell
-
+    // dir_is_open = 1;
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */

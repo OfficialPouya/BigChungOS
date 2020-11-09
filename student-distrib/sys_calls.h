@@ -23,7 +23,7 @@ extern int32_t sys_read(int32_t fd, void *buf, int32_t nbytes);
 extern int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes);
 extern int32_t sys_halt(uint8_t status);
 extern int32_t sys_execute(const uint8_t *command);
-
+extern int32_t sys_getargs(uint8_t *buf, int32_t nbytes);
 
 /*
 FOP 
@@ -53,6 +53,7 @@ PCB Struct
 typedef struct pcb{
     int32_t old_esp;
     int32_t old_eip;
+    int32_t old_ebp;
     int in_use;
     fd_table fdt[8]; // we have 8 descriptor tables
     uint8_t args[1024]; // max number of arguments

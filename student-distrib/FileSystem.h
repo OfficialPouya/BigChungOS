@@ -18,6 +18,8 @@
 #define screensize      80
 #define ELFMAGIC        0x464C457F
 
+// int dir_is_open; // val: 0 close 1 open
+int file_type_open;
 typedef struct dentry_t {
     int8_t      filename[FILENAME_LEN];
     int32_t     filetype;

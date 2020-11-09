@@ -109,7 +109,7 @@ void exception13_C(void) {
 } //general protection
 
 void exception14_C(void) {
-    clear();
+    //clear();
     printf("Page Fault\n");
     while(1);
 } //page fault

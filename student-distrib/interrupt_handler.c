@@ -191,7 +191,7 @@ void idt_vector(){
     for (i = 0; i < NUM_IDT_ENTRIES; i++) {
         idt_setup(i);
     }
-    idt_setup(SYSCALL_NUM);
+    // idt_setup(SYSCALL_NUM);
 
     SET_IDT_ENTRY(idt[0], exception0_C);
     SET_IDT_ENTRY(idt[1], exception1_C);

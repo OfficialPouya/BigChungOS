@@ -177,7 +177,9 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Execute the first program ("shell") ... */
     pid_counter = -1;
     sys_execute((uint8_t*)"shell");
-
+    //sys_execute((uint8_t*)"testprint");
+    //sys_execute((uint8_t*)"ls");
+    //sys_execute((uint8_t*)"syserr");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }

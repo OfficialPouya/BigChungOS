@@ -13,7 +13,7 @@
 #include "x86_desc.h"
 
 int pid_counter;
-
+int32_t ret_val;
 
 
 extern void sys_call_handler();

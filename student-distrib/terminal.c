@@ -45,6 +45,7 @@ int32_t terminal_close(int32_t fd) {
  */
 //read
 int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
+    sti();
     while(enter_p_flag == 0);
     int count = 0;
     int how_many = 0;
@@ -61,15 +62,15 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
         how_many=count;
         nbytes = how_many;
     }
-    printf("Number of bytes typed: %d \n", how_many);
+    //printf("Number of bytes typed: %d \n", how_many);
     memmove(buf, &keyboard_buffer, how_many); // copy keyboard buffer into buf
     // set NULL values for the entire keyboard buffer now that the buffer was copied 
     // The value of 128 is the size of the keyboard_buffer
     enter_p_flag = 0;
     kb_idx = 0;
-    
     return how_many;
 }
+
 
 
 /*
@@ -89,8 +90,9 @@ int32_t terminal_write(int32_t fd, const void *buf, int32_t nbytes) {
         putc((*(uint8_t *) ((uint32_t) buf + i)));
         ++count;
     }
+    // printf("HERE");
     memset(keyboard_buffer, '\0', 128); 
-    printf("\n");
+    // printf(" HERE after mem set %d \n", count);
     return count;
 }
 

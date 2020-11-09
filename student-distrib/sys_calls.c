@@ -115,6 +115,8 @@ int32_t sys_execute(const uint8_t *command){
         j++;
         command_index++;
     }
+
+
     // may need to append newline char not positive tho
 // 2. EXE CHECK (PAUL :: Done/Not Checked)
 // 3. PAGING (PAUL :: Done/Not Checked)
@@ -137,13 +139,17 @@ int32_t sys_execute(const uint8_t *command){
 
 // 6.  CONTEXT SWITCH (Zohair)
 
-    all_pcbs[pid_counter].old_esp = tss.esp0;
+    //all_pcbs[pid_counter].old_esp = tss.esp0;
     // all_pcbs[pid_counter-1].old_eip = tss.eip;
     // not in correct position
     tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
+    tss.ss0 = KERNEL_DS;
     // not in correct postion
 
-
+    asm volatile(
+        "movl %%ebp, %0"
+        :"=r"(all_pcbs[pid_counter].old_esp)
+    );
 
     asm volatile (
         "pushl %0;"
@@ -158,19 +164,34 @@ int32_t sys_execute(const uint8_t *command){
         "pushl %2;"
         "iret;"
         :
-        : "r" (USER_DS), "r" (0x83FFFF0), "r" (eip_data), "r" (USER_CS)
+        : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
         : "memory"
     );
+    // need to do something with ebp and esp
+
     // need a return label
     // in halt, restore esp ebp and jump to the return label in assembly
+    // maybe return the esp?
     return 0;
 }
 
 int32_t sys_halt(uint8_t status){
-
-
-// close all the open fdt entries
-// easier to only close fdd 2:6, doing all would be harder
+    //cli();
+    uint32_t status_num = (uint32_t) status;
+    all_pcbs[pid_counter].in_use = -1;
+    --pid_counter;
+    update_user_addr(pid_counter);
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2);
+    asm volatile (
+        "movl %0, %%ebp;"
+        "movl %1, %%eax;"
+        "leave;"
+        "ret"
+        :
+        :"r"(all_pcbs[pid_counter+1].old_esp), "r" (status_num)
+    );
+    //sti();
 return 0;
 }
 

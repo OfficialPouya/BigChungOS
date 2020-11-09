@@ -4,14 +4,14 @@
 sys_call_handler_asm:
 
 
-	  pushf           # dont wanna mess with eax
-	  pushl %ebp
+    pushf           # dont wanna mess with eax
+    pushl %ebp
     pushl %esi
-	  pushl %edi
+    pushl %edi
 
     subl $1, %eax   # i need this for 0 index
     cmpl $0, %eax
-    jle fail_handler
+    jl fail_handler
     cmpl $6, %eax   # will become 10 in cp4
     jg fail_handler
 

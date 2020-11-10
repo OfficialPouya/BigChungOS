@@ -5,7 +5,6 @@ sys_call_handler_asm:
 
 
     pushf           # dont wanna mess with eax
-    pushl %ebp
     pushl %esi
     pushl %edi
 
@@ -26,7 +25,6 @@ sys_call_handler_asm:
 
     popl %edi
     popl %esi
-    popl %ebp
     popf
     iret
 
@@ -35,7 +33,6 @@ fail_handler:
     movl $-1, %eax
     popl %edi
     popl %esi
-    popl %ebp
     popf
     iret
 

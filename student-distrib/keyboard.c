@@ -109,7 +109,7 @@ void keyboard_handler() {
     char key_char;
     int x_pos;
     int y_pos;
-    cli();
+    // cli();
     scan_code = inb(PORT_NUM_KB);
 /*
         
@@ -216,7 +216,7 @@ void keyboard_handler() {
         char_count = 0;
     }
     send_eoi(IRQ_KB);
-    sti();
+    // sti();
 }
 
 

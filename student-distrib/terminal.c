@@ -41,7 +41,7 @@ int32_t terminal_close(int32_t fd) {
  */
 //read
 int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
-    sti();
+    // sti();
     while(enter_p_flag == 0);
     int count = 0;
     int how_many = 0;
@@ -51,15 +51,17 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
     while(keyboard_buffer[count] != '\0' && keyboard_buffer[count] != '\n'){
         ++count;
     }
-    if(count>nbytes){
+    if(count == nbytes){
+        how_many = count;
+    }
+    else if(count>nbytes){
         how_many=nbytes;
         }
-    if(count<nbytes){
+    else{
         how_many=count;
-        nbytes = how_many;
     }
     //printf("Number of bytes typed: %d \n", how_many);
-    memmove(buf, &keyboard_buffer, how_many); // copy keyboard buffer into buf
+    memcpy(buf, keyboard_buffer, how_many+1); // copy keyboard buffer into buf
     // set NULL values for the entire keyboard buffer now that the buffer was copied 
     // The value of 128 is the size of the keyboard_buffer
     enter_p_flag = 0;

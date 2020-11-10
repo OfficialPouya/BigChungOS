@@ -173,6 +173,11 @@ void idt_setup(int i){
 
     if (i == SYSCALL_NUM) {
         idt[i].dpl = 3;
+         idt[i].reserved0 = 0;
+        idt[i].reserved1 = 1;
+        idt[i].reserved2 = 1;
+        idt[i].reserved3 = 1;
+        idt[i].reserved4 = 0;
     }
 }
 

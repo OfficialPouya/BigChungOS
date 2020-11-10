@@ -14,12 +14,8 @@
 #define maxblocksize    1023
 #define blocksizenorm   1024
 #define inodeamnt       8
-#define nextline        0x0A
-#define screensize      80
 #define ELFMAGIC        0x464C457F
 
-// int dir_is_open; // val: 0 close 1 open
-int file_type_open;
 typedef struct dentry_t {
     int8_t      filename[FILENAME_LEN];
     int32_t     filetype;
@@ -40,18 +36,10 @@ typedef struct inode_t {
     int32_t     data_block_num[maxblocksize];
 } inode_t;
 
-typedef struct fd_temp_t {
-    int32_t     inode_num;
-    int32_t     file_index;
-    int32_t     offset;
-    int32_t     filetype;
-    int8_t      filename[FILENAME_LEN];
-} fd_temp_t;
-
 int curr_dir;
-int open_file_count;
 int bytes_read;
-fd_temp_t inode_list[inodeamnt];
+int dir_is_open;
+
 const uint32_t* boot_block_ptr;
 boot_block_t boot_block_main;
 
@@ -70,7 +58,7 @@ int32_t file_close(int32_t fd);
 int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
 
 // reads count bytesof data from file into buf
-int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
+int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes);
 
 // DIRECTORY FUNCTIONS
 // opens a directory file, return 0 with success

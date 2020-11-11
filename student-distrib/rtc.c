@@ -5,8 +5,6 @@
 
 /* global variables */
 int interrupt_flag = 0; //flag to know whether an interrupt has occured 
-int32_t freq=0; // global frequency variable to be used in open, read, and write
-int32_t counter=1; // counter to be used when waiting for x interrupts at frequency 1024. 
 /* init_rtc
 *  DESCRIPTION: Initializes the RTC by setting registers and turning on the appropriate IRQ (IRQ #8)
 *  INPUTS: NONE
@@ -28,12 +26,12 @@ void init_rtc(void){
 *  IMPACTS ON OTHERS: NONE
 */
 void handle_rtc(void){
-     cli();
-     outb(REG_C, RTC_PORT); // select register C
-     inb(CMOS_PORT); // throw away contents
-     send_eoi(RTC_IRQ_LINE);
-     counter++;
-     sti();     
+    cli();
+    outb(REG_C, RTC_PORT); // select register C
+    inb(CMOS_PORT); // throw away contents
+    send_eoi(RTC_IRQ_LINE);
+    interrupt_flag = 0;
+    sti();     
 }
 /* rtc_set_frequency 
 *  DESCRIPTION: helper function to be used by open_rtc and write_rtc to set the frequency of the RTC. 
@@ -43,10 +41,14 @@ void handle_rtc(void){
 */
 int32_t rtc_set_frequency(int32_t frequency){
     char rate; 
-    unsigned char saved_a; 
+    unsigned char saved_a;
+    rate = 0x0F;    // the lowest setting available (2HZ), as temp increases by 2, this decreases by 1
+    int32_t temp;
+    temp = 2;
     //sets rate according to maximum freauency which is 1024 Hz, rate value taken from RTC document on course webpage. 
-    if(frequency == 1024){
-        rate = 0x06;
+    while (frequency != temp && temp != MAX_RATE){
+        temp = temp*MIN_RATE;
+        --rate;
     }
     //sets the frequency of the RTC using the selected rate
     cli();
@@ -55,7 +57,7 @@ int32_t rtc_set_frequency(int32_t frequency){
     outb(REG_A_NMI, RTC_PORT); // select register A
     outb( (saved_a & 0xF0) | rate , CMOS_PORT); // saves the upper 4 bits of register A and sets low 4 bits of register A with the selected rate
     sti();
-    return 0; 
+    return 4; 
 }
 /* rtc_open
 *  DESCRIPTION: Opens the RTC and sets the RTC frequency to 2 and returns 0. 
@@ -65,8 +67,7 @@ int32_t rtc_set_frequency(int32_t frequency){
 */
 int32_t rtc_open(const uint8_t* filename){
     //sets the frequency for virtualization
-    rtc_set_frequency(1024);
-    freq = 2; // initialize frequency to 2 on open
+    rtc_set_frequency(MIN_RATE);
     return 0; 
 }
 /* rtc_read
@@ -77,12 +78,12 @@ int32_t rtc_open(const uint8_t* filename){
 *  IMPACTS ON OTHERS: NONE
 */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-    int32_t x = 1024/freq; // calculates number of interrupts to wait
     //wait until interrupt has occurred 
-    while(counter != x ){
+    interrupt_flag = 1;
+    sti();
+    while(interrupt_flag){
     }
     //once interrupt has occurred, reset counter and return 0 
-    counter = 1;
     return 0;
 }
 /* rtc_write
@@ -92,16 +93,17 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
 *  IMPACTS ON OTHERS: sets the frequency global variable to be used in rtc_read. 
 */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){ 
+    int32_t freq;
     //rtc_write must read 4 bytes, and must take in a frequency from the buffer. 
     if (nbytes != 4 || buf == NULL){
         return -1; 
     }
     freq = *((int32_t*) buf); // get frequency from buffer
-    if(((freq&(freq - 1)) || freq > 1024) != 0){  //checks if frequency is a power of 2 and within bounds of maximum frequency
+    if(((freq&(freq - 1)) || freq > MAX_RATE) != 0){  //checks if frequency is a power of 2 and within bounds of maximum frequency
         return -1;
     }
 
-    return nbytes; 
+    return rtc_set_frequency(freq); 
 }
 
 /* rtc_close
@@ -111,5 +113,6 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
 *  IMPACTS ON OTHERS: NONE
 */
 int32_t rtc_close(int32_t fd){
+    rtc_set_frequency(MIN_RATE);
     return 0;
 }

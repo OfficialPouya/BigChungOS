@@ -3,7 +3,7 @@
 int fd_index_holder;
 
 fop rtc_struct = {rtc_open, rtc_close, rtc_read, rtc_write};
-fop file_struct = {file_open_helper, file_close_helper, file_read_helper, file_write};
+fop file_struct = {file_open, file_close_helper, file_read_helper, file_write};
 fop dir_struct = {dir_open, dir_close, dir_read, dir_write};
 fop terminal_struct = {terminal_open, terminal_close, terminal_read, terminal_write};
 
@@ -28,9 +28,6 @@ void sys_call_handler() {
  IMPACTS ON OTHERS: changes fdt, pcb 
  */
 int32_t sys_open(const uint8_t *filename) {
-    // check params passed to sys call
-    if (filename[0] == ' ') return -1;
-    
     dentry_t temp_dentry;
     int t_index, floop;
     // be able to see if file exists, if not return -1
@@ -42,19 +39,20 @@ int32_t sys_open(const uint8_t *filename) {
         // used : 1
         // empty : -1
         if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
+            // set struct items
             all_pcbs[pid_counter].fdt[t_index].exists = 1;
             all_pcbs[pid_counter].fdt[t_index].file_type = temp_dentry.filetype;
+            for (floop = 0; floop< FILENAME_LEN; floop++){
+                all_pcbs[pid_counter].fdt[t_index].filename[floop] = temp_dentry.filename[floop];
+            }
             switch (temp_dentry.filetype){
                 case 0:
-                    all_pcbs[pid_counter].fdt[fd_index_holder].fop_ = &rtc_struct;
+                    all_pcbs[pid_counter].fdt[t_index].fop_ = &rtc_struct;
                     break;
                 case 1:
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &dir_struct;
                     break;
                 case 2:
-                    for (floop = 0; floop< FILENAME_LEN; floop++){
-                        all_pcbs[pid_counter].fdt[t_index].filename[floop] = temp_dentry.filename[floop];
-                    }
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &file_struct;
                     break;
             }
@@ -76,8 +74,9 @@ int32_t sys_close(int32_t fd) {
     if (fd <= 1 || fd >= MAX_FD_AMNT) return -1;
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
         all_pcbs[pid_counter].fdt[fd].exists = -1;
+        return 0;
     }
-    return 0;
+    else return -1;
 }
 
 /*
@@ -90,7 +89,7 @@ int32_t sys_close(int32_t fd) {
  */
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf) return -1;
-    // the fd ranges from 0 - 6
+    // the fd ranges from 0 - 7
     if (fd <= 0 || fd >= MAX_FD_AMNT) return -1;
     if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
     return all_pcbs[pid_counter].fdt[fd].fop_->write(fd, buf, nbytes);
@@ -123,16 +122,13 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 int32_t sys_execute(const uint8_t *command){
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
-    // do not want to run more than 6 processes (5 bc -1 indexed)
-    if(pid_counter>5){return -1;}
+    // do not want to run more than 6 processes 
+    if(pid_counter > 6) return -1;
     command_index = 0;
     i = 0;
     j = 0;
     uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
     //1. PARSE COMMAND FOR FILE NAME
-    ++pid_counter; // increment process counter
-
-    init_pcb(pid_counter);
     //check for valid command
     if(command == NULL){
         all_pcbs[pid_counter].in_use = -1;
@@ -172,6 +168,8 @@ int32_t sys_execute(const uint8_t *command){
     int fd;
     int32_t eip_data;
     if(-1 != (eip_data = exec_check(filename))){
+        ++pid_counter;
+        init_pcb(pid_counter);
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
@@ -182,8 +180,6 @@ int32_t sys_execute(const uint8_t *command){
         sys_read(fd, (void*)0x8048000, 4096*1024);
     }
     else{
-        all_pcbs[pid_counter].in_use = -1;
-        --pid_counter;
         return -1;
     }
 
@@ -196,7 +192,7 @@ int32_t sys_execute(const uint8_t *command){
 
 
     // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
+    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
         asm volatile(
@@ -255,13 +251,13 @@ int32_t sys_halt(uint8_t status){
     /*
     Magic Numbers
     number '0x800000':
-    number '1':         this is bc pid_counter is -1 indexed
+    number '1':         this is bc 0 * anything will be 0
     number '4096':      4KB
     number '2':         to get to 8KB
     */
 
     // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
+    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"
@@ -285,7 +281,7 @@ void init_pcb(int curr_pcb){
     int fdt_index;
     all_pcbs[curr_pcb].in_use = 1;
     // only 6 processes 
-    for(fdt_index=0; fdt_index<MAX_FD_AMNT;fdt_index++){
+    for(fdt_index=0; fdt_index<MAX_FD_AMNT; fdt_index++){
         all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
     // the size of our array of args is 1024
@@ -338,33 +334,6 @@ int32_t file_close_helper(int32_t fd){
     }
 
     // file not open
-    return -1;
-}
-
-/*
- NAME: file_close_helper
- DESCRIPTION: closes files
- INPUTS:  clsoes files
- OUTPUTS: NONE
- RETURN VALUE: NONE (void)
- IMPACTS ON OTHERS: updates fd table much easier
- */
-int32_t file_open_helper(const uint8_t* filename){
-    dentry_t temp;
-    int i, floop;
-    // check if filename exists, then handle opening in sys_calls
-    if (read_dentry_by_name(filename, &temp) == -1) return -1;
-    // else check fds and place in open one.
-    for (i = 2; i < MAX_FD_AMNT; i++){
-        if(all_pcbs[pid_counter].fdt[i].exists == -1){
-            all_pcbs[pid_counter].fdt[i].exists = 1;
-            for (floop = 0; floop< FILENAME_LEN; floop++){
-                all_pcbs[pid_counter].fdt[i].filename[floop] = temp.filename[floop];
-            }
-            return 0;
-        }
-    }
-    // no space available
     return -1;
 }
 

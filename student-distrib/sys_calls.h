@@ -28,7 +28,6 @@ extern int32_t sys_getargs(uint8_t *buf, int32_t nbytes);
 
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes);
 int32_t file_close_helper(int32_t fd);
-int32_t file_open_helper(const uint8_t* filename);
 
 /*
 FOP 
@@ -46,7 +45,7 @@ File Descriptor Table
 typedef struct fd_table{
     fop*        fop_;
     int32_t     file_type;
-    uint8_t      filename[FILENAME_LEN];
+    uint8_t     filename[FILENAME_LEN];
     int         exists; // bool type var: 1 or -1
 }fd_table;
 

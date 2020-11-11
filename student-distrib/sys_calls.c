@@ -149,8 +149,6 @@ int32_t sys_execute(const uint8_t *command){
         command_len_check++;
         if (command_len_check > 31){
           printf("filename to execute is too long\n");
-          all_pcbs[pid_counter].in_use = -1;
-          --pid_counter;
           return -1;
         }
 

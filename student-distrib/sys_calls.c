@@ -31,25 +31,27 @@ void sys_call_handler() {
  INPUTS: filename
  OUTPUTS: NONE
  RETURN VALUE: -1 on fail, index_holder on success
- IMPACTS ON OTHERS: changes fdt, pcb 
+ IMPACTS ON OTHERS: changes fdt, pcb
  */
 int32_t sys_open(const uint8_t *filename) {
-    
+
     // check params passed to sys call
     if (filename[0] == 0) {return -1;}
-    
+
     dentry_t temp_dentry;
     dentry_t *curr_dentry = &temp_dentry;
+
     // be able to see if file exists, if not return -1
-    printf("here 1 %d \n", curr_dentry->filetype);
+    //printf("here 1 %d \n", curr_dentry->filetype);
     if(read_dentry_by_name(filename, curr_dentry) == -1){return -1;}
-    printf("here 2 %d \n", curr_dentry->filetype);
+    //printf("here 2 %d \n", curr_dentry->filetype);
+
     // since exe & halt are index 0, 1 we start at 2, and there are 8 total calls
     int t_index;
-    for(t_index=2; t_index<8; t_index++){
+    for(t_index=2; t_index<FDT_SIZE; t_index++){
+
         // used : 1
         // empty : -1
-        
         if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
             switch (curr_dentry->filetype){
                 case 0:
@@ -81,7 +83,7 @@ int32_t sys_open(const uint8_t *filename) {
  IMPACTS ON OTHERS:
  */
 int32_t sys_close(int32_t fd) {
-    if (fd <= 2 || fd >= 6) {return -1;}
+    if (fd < 0 || fd >= FDT_SIZE) {return -1;}
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
         all_pcbs[pid_counter].fdt[fd_index_holder].exists = -1;
         all_pcbs[pid_counter].fdt[fd_index_holder].fop_->close(fd);
@@ -101,8 +103,9 @@ int32_t sys_close(int32_t fd) {
  */
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf){return -1;}
+
     // the fd ranges from 0 - 6
-    if (fd <= 0 || fd >= 6) {return -1;}
+    if (fd <= 0 || fd >= FDT_SIZE) {return -1;}
     if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
     return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->write(fd, buf, nbytes);
 }
@@ -119,7 +122,7 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
  */
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf){return -1;}
-    if (fd < 0 || fd >= 6 || fd == 1 || buf == NULL) {return -1;}
+    if (fd < 0 || fd >= FDT_SIZE || fd == 1 || buf == NULL) {return -1;}
     if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
     return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->read(fd, buf, nbytes);
 }
@@ -128,50 +131,70 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 /*
  NAME: sys_execute
  DESCRIPTION: executes program
- INPUTS: command 
+ INPUTS: command
  OUTPUTS: none
  RETURN VALUE: -1 on fail, 0 on OK
  IMPACTS ON OTHERS: changes the pcb in use, changes ebp, eax, tss.ss0, pid_counter
  */
 
 int32_t sys_execute(const uint8_t *command){
+
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
+    int command_len_check = 0;
+
     // do not want to run more than 6 processes (5 bc -1 indexed)
-    if(pid_counter>5){return -1;}
+    if(pid_counter>PCB_SIZE-1){return -1;}
     command_index = 0;
     i = 0;
     j = 0;
     uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
+
     //1. PARSE COMMAND FOR FILE NAME
+
     ++pid_counter; // increment process counter
 
     init_pcb(pid_counter);
+
     //check for valid command
     if(command == NULL){
         all_pcbs[pid_counter].in_use = -1;
         return -1;
     }
+
     // iterate through initial white space
     while(command[command_index] == ' '){
         command_index++;
     }
+
     // get file name from command
     while(command[command_index] != ' ' && command[command_index] != '\0'){
+        command_len_check++;
+        if (command_len_check > 31){
+          printf("filename to execute is too long\n");
+          all_pcbs[pid_counter].in_use = -1;
+          --pid_counter;
+          return -1;
+        }
+
         filename[i] = command[command_index];
         i++;
         command_index++;
+
     }
-    // add newline char at end of file name
+
+    // add null char at end of file name
     filename[i] = '\0';
 
     //iterate through second set of white space before args
     while(command[command_index] == ' '){
         command_index++;
     }
+    command_len_check = 0;
     // stores args in pcb
     while(command[command_index] != ' ' && command[command_index] != '\0'){
         //store args in pcb
+
         all_pcbs[pid_counter].args[j] = command[command_index];
         j++;
         command_index++;
@@ -183,16 +206,20 @@ int32_t sys_execute(const uint8_t *command){
     // 3. PAGING (PAUL :: Done/Not Checked)
     // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
     // helper function in filesys to check first 4 bytes
+
     int fd;
     int32_t eip_data;
     if(-1 != (eip_data = exec_check(filename))){
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
+
         // laodeer, load bytes to right address
         fd = file_open(filename);
+        // fd fails despite good param, issue should be here
+
         // num 0x8048000: given, starting addr
-        // num 4MB = 4096 * 1024 (at most or whatever file size is) 
+        // num 4MB = 4096 * 1024 (at most or whatever file size is)
         file_read(fd, (void*)0x8048000, 4096*1024);
     }
     else{
@@ -202,12 +229,6 @@ int32_t sys_execute(const uint8_t *command){
     }
 
     // 6.  CONTEXT SWITCH (Zohair)
-
-    // asm volatile(
-    //     "movl %%ebp, %0"
-    //     :"=r"(all_pcbs[pid_counter].old_esp)
-    // );
-
 
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
@@ -236,13 +257,9 @@ int32_t sys_execute(const uint8_t *command){
         "ret"
         :
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
-        : "memory"
+        : "ebx", "memory"
     );
-    // need to do something with ebp and esp
 
-    // need a return label
-    // in halt, restore esp ebp and jump to the return label in assembly
-    // maybe return the esp?
     return 0;
 }
 
@@ -258,12 +275,20 @@ int32_t sys_execute(const uint8_t *command){
  */
 int32_t sys_halt(uint8_t status){
     uint32_t status_num = (uint32_t) status;
+    int fdt_loop;
+    for (fdt_loop = 0; fdt_loop < FDT_SIZE; fdt_loop++){
+      sys_close(fdt_loop);
+    }
     all_pcbs[pid_counter].in_use = -1;
     --pid_counter;
+
+
+
     if(pid_counter==-1){
-        all_pcbs[pid_counter].in_use=-1;
-        printf("Restarting Shell... \n"); //restart the base shell
+        //all_pcbs[pid_counter].in_use=-1;
+        //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
+        return 0;
     }
     update_user_addr(pid_counter);
     tss.ss0 = KERNEL_DS;
@@ -299,12 +324,14 @@ int32_t sys_halt(uint8_t status){
 void init_pcb(int curr_pcb){
     int fdt_index;
     all_pcbs[curr_pcb].in_use = 1;
-    // only 6 processes 
-    for(fdt_index=0; fdt_index<6;fdt_index++){
+
+    // only 6 processes
+    for(fdt_index=0; fdt_index<FDT_SIZE;fdt_index++){
         all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
+
     // the size of our array of args is 1024
-    for (fdt_index = 0; fdt_index < 1024; fdt_index++){
+    for (fdt_index = 0; fdt_index < NUM_ARGS; fdt_index++){
         all_pcbs[curr_pcb].args[fdt_index] = 0;
     }
 

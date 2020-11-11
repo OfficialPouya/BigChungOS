@@ -2,14 +2,10 @@
 
 int fd_index_holder;
 
-/*
-
-*/
 fop rtc_struct = {rtc_open, rtc_close, rtc_read, rtc_write};
-fop file_struct = {file_open, file_close, file_read, file_write};
+fop file_struct = {file_open, file_close_helper, file_read_helper, file_write};
 fop dir_struct = {dir_open, dir_close, dir_read, dir_write};
 fop terminal_struct = {terminal_open, terminal_close, terminal_read, terminal_write};
-
 
 /*
  NAME: sys_call_handler
@@ -23,8 +19,6 @@ void sys_call_handler() {
     printf("\nBad System Call\n");
 }
 
-
-
 /*
  NAME: sys_open
  DESCRIPTION: Attempts to open a file from the filename that was passed, holding the spot and passing it
@@ -34,28 +28,26 @@ void sys_call_handler() {
  IMPACTS ON OTHERS: changes fdt, pcb
  */
 int32_t sys_open(const uint8_t *filename) {
-
-    // check params passed to sys call
-    if (filename[0] == 0) {return -1;}
-
     dentry_t temp_dentry;
-    dentry_t *curr_dentry = &temp_dentry;
-
+    int t_index, floop;
     // be able to see if file exists, if not return -1
     //printf("here 1 %d \n", curr_dentry->filetype);
-    if(read_dentry_by_name(filename, curr_dentry) == -1){return -1;}
+    if(read_dentry_by_name(filename, &temp_dentry) == -1) return -1;
     //printf("here 2 %d \n", curr_dentry->filetype);
-
     // since exe & halt are index 0, 1 we start at 2, and there are 8 total calls
-    int t_index;
-    for(t_index=2; t_index<FDT_SIZE; t_index++){
-
+    for(t_index=2; t_index<MAX_FD_AMNT; t_index++){
         // used : 1
         // empty : -1
         if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
-            switch (curr_dentry->filetype){
+            // set struct items
+            all_pcbs[pid_counter].fdt[t_index].exists = 1;
+            all_pcbs[pid_counter].fdt[t_index].file_type = temp_dentry.filetype;
+            for (floop = 0; floop< FILENAME_LEN; floop++){
+                all_pcbs[pid_counter].fdt[t_index].filename[floop] = temp_dentry.filename[floop];
+            }
+            switch (temp_dentry.filetype){
                 case 0:
-                    all_pcbs[pid_counter].fdt[fd_index_holder].fop_ = &rtc_struct;
+                    all_pcbs[pid_counter].fdt[t_index].fop_ = &rtc_struct;
                     break;
                 case 1:
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &dir_struct;
@@ -64,15 +56,11 @@ int32_t sys_open(const uint8_t *filename) {
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &file_struct;
                     break;
             }
-        all_pcbs[pid_counter].fdt[t_index].exists = 1; // now it exists
-        fd_index_holder = t_index;
-        return fd_index_holder;
+            return t_index;
         }
     }
     return -1; // nothing was able to get added
 }
-
-
 
 /*
  NAME: sys_close
@@ -83,15 +71,13 @@ int32_t sys_open(const uint8_t *filename) {
  IMPACTS ON OTHERS:
  */
 int32_t sys_close(int32_t fd) {
-    if (fd < 0 || fd >= FDT_SIZE) {return -1;}
+    if (fd <= 1 || fd >= MAX_FD_AMNT) return -1;
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
-        all_pcbs[pid_counter].fdt[fd_index_holder].exists = -1;
-        all_pcbs[pid_counter].fdt[fd_index_holder].fop_->close(fd);
+        all_pcbs[pid_counter].fdt[fd].exists = -1;
+        return 0;
     }
-    return 0;
+    else return -1;
 }
-
-
 
 /*
  NAME: sys_write
@@ -102,15 +88,12 @@ int32_t sys_close(int32_t fd) {
  IMPACTS ON OTHERS: changes the pcb in use
  */
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
-    if(!buf){return -1;}
-
-    // the fd ranges from 0 - 6
-    if (fd <= 0 || fd >= FDT_SIZE) {return -1;}
-    if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
-    return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->write(fd, buf, nbytes);
+    if(!buf) return -1;
+    // the fd ranges from 0 - 7
+    if (fd <= 0 || fd >= MAX_FD_AMNT) return -1;
+    if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
+    return all_pcbs[pid_counter].fdt[fd].fop_->write(fd, buf, nbytes);
 }
-
-
 
 /*
  NAME: sys_read
@@ -121,12 +104,11 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
  IMPACTS ON OTHERS: none
  */
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
-    if (!buf){return -1;}
-    if (fd < 0 || fd >= FDT_SIZE || fd == 1 || buf == NULL) {return -1;}
-    if(all_pcbs[pid_counter].fdt[fd_index_holder].exists == -1){return -1;}
-    return all_pcbs[pid_counter].fdt[fd_index_holder].fop_->read(fd, buf, nbytes);
+    if (!buf) return -1;
+    if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL) return -1;
+    if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
+    return all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
 }
-
 
 /*
  NAME: sys_execute
@@ -151,11 +133,6 @@ int32_t sys_execute(const uint8_t *command){
     uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
 
     //1. PARSE COMMAND FOR FILE NAME
-
-    ++pid_counter; // increment process counter
-
-    init_pcb(pid_counter);
-
     //check for valid command
     if(command == NULL){
         all_pcbs[pid_counter].in_use = -1;
@@ -210,28 +187,26 @@ int32_t sys_execute(const uint8_t *command){
     int fd;
     int32_t eip_data;
     if(-1 != (eip_data = exec_check(filename))){
+        ++pid_counter;
+        init_pcb(pid_counter);
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
 
         // laodeer, load bytes to right address
-        fd = file_open(filename);
-        // fd fails despite good param, issue should be here
-
+        fd = sys_open(filename);
         // num 0x8048000: given, starting addr
-        // num 4MB = 4096 * 1024 (at most or whatever file size is)
-        file_read(fd, (void*)0x8048000, 4096*1024);
+        // num 4MB = 4096 * 1024 (at most or whatever file size is) 
+        sys_read(fd, (void*)0x8048000, 4096*1024);
     }
     else{
-        all_pcbs[pid_counter].in_use = -1;
-        --pid_counter;
         return -1;
     }
 
     // 6.  CONTEXT SWITCH (Zohair)
 
     // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
+    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
         asm volatile(
@@ -263,8 +238,6 @@ int32_t sys_execute(const uint8_t *command){
     return 0;
 }
 
-
-
 /*
  NAME: sys_halt
  DESCRIPTION: this is to halt the user program, doesnt allow you to halt the base shell
@@ -276,7 +249,7 @@ int32_t sys_execute(const uint8_t *command){
 int32_t sys_halt(uint8_t status){
     uint32_t status_num = (uint32_t) status;
     int fdt_loop;
-    for (fdt_loop = 0; fdt_loop < FDT_SIZE; fdt_loop++){
+    for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
       sys_close(fdt_loop);
     }
     all_pcbs[pid_counter].in_use = -1;
@@ -295,13 +268,13 @@ int32_t sys_halt(uint8_t status){
     /*
     Magic Numbers
     number '0x800000':
-    number '1':         this is bc pid_counter is -1 indexed
+    number '1':         this is bc 0 * anything will be 0
     number '4096':      4KB
     number '2':         to get to 8KB
     */
 
     // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((1+pid_counter)*4096*2)-4;
+    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"
@@ -324,9 +297,8 @@ int32_t sys_halt(uint8_t status){
 void init_pcb(int curr_pcb){
     int fdt_index;
     all_pcbs[curr_pcb].in_use = 1;
-
-    // only 6 processes
-    for(fdt_index=0; fdt_index<FDT_SIZE;fdt_index++){
+    // only 6 processes 
+    for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
         all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
 
@@ -348,8 +320,40 @@ void init_pcb(int curr_pcb){
     all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
 }
 
+/*
+ NAME: file_read_helper
+ DESCRIPTION: helps out the file reader
+ INPUTS:  prototype file reader args, fd#, buf, and bytes to read
+ OUTPUTS: NONE
+ RETURN VALUE: NONE (void)
+ IMPACTS ON OTHERS: passes more useful args to file read
+ */
+int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
+    if (all_pcbs[pid_counter].fdt[fd].exists == 1){
+        // call actual file reading func
+        return file_read(all_pcbs[pid_counter].fdt[fd].filename, buf, nbytes);
+    }
 
+    else return -1;
+}
 
+/*
+ NAME: file_close_helper
+ DESCRIPTION: closes files
+ INPUTS:  clsoes files
+ OUTPUTS: NONE
+ RETURN VALUE: NONE (void)
+ IMPACTS ON OTHERS: updates fd table much easier
+ */
+int32_t file_close_helper(int32_t fd){
+    if (all_pcbs[pid_counter].fdt[fd].exists == 1){
+        all_pcbs[pid_counter].fdt[fd].exists = -1;
+        return 0;
+    }
+
+    // file not open
+    return -1;
+}
 
 /*
  NAME: sys_getargs

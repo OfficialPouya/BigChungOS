@@ -40,10 +40,8 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
         // copies the fieltypes and filenames
         dentry->filetype = boot_block_main.direntries[index].filetype;
         dentry->inode_num = boot_block_main.direntries[index].inode_num;
-        return 0;
+        return index;
     }
-    file_type_open = dentry->filetype;
-    printf("%d \n" , file_type_open);
     // if fail, return -1
     return -1;
 }
@@ -58,8 +56,7 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     const uint32_t* temp_ptr = boot_block_ptr;  // grabs the pointer to first block
     uint8_t* char_ptr;                          // used to temporarily loop thorugh chars
-    int i, loop, flag;//, counter;
-    flag = 0;       // check if exe or not
+    int i, loop;
     i = 0;
     bytes_read = 0; // sets this back to 0 before reading more
 
@@ -79,45 +76,13 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
         }
         
         char_ptr = (uint8_t*)temp_ptr;
-        // check if elf or not
-        // if(*temp_ptr == ELFMAGIC) flag = 1; 
-
-        // // if executable, do this
-        // if (flag){
-        //     counter = 0;
-        //     while (i > 0) {
-        //         // skip over null and endline chars
-        //         if (*char_ptr == 0x00 || *char_ptr == nextline){
-        //             char_ptr++;
-        //             i--;
-        //         }
-        //         // put other chars into buffer
-        //         else {
-        //             *(buf+bytes_read) = *char_ptr;
-        //             char_ptr++;
-        //             bytes_read++;
-        //             i--;
-        //             counter++;
-        //             // need to add new line, since we are avoiding all given ones
-        //             if (counter == screensize){
-        //                 //*(buf+bytes_read) = nextline;
-        //                 //bytes_read++;
-        //                 counter = 0;
-        //             } 
-        //         }
-        //     }
-        // }
-
-        // if not executable, do this
-        //else {
-            while (i > 0) {
-                // place all chars into buffer
-                *(buf+bytes_read) = *char_ptr;
-                char_ptr++;
-                bytes_read++;
-                i--;
-            }
-        //}
+        while (i > 0) {
+            // place all chars into buffer
+            *(buf+bytes_read) = *char_ptr;
+            char_ptr++;
+            bytes_read++;
+            i--;
+        }
     }
 
     return 0;
@@ -131,28 +96,8 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  IMPACTS ON OTHERS: Will affect inode_list, unlocks file to be read
  */
 int32_t file_open(const uint8_t* filename){
-    dentry_t temp;
-    int i, floop;
-    // looks for file, grabs inode number, marks as opened
-    if (read_dentry_by_name(filename, &temp) == 0 && open_file_count < 8){
-        for (i = 3; i < inodeamnt; i++){
-        // looks through exisiting list
-            if (temp.inode_num != inode_list[i].inode_num && (inode_list[i].inode_num == 0 || inode_list[i].inode_num == -1)){  
-            // checks if inode already exists, and that it is empty
-                inode_list[i].inode_num = temp.inode_num;
-                inode_list[i].offset = 0; 
-                inode_list[i].filetype = temp.filetype;
-                for (floop = 0; floop < FILENAME_LEN; floop++){
-                    inode_list[i].filename[floop] = temp.filename[floop];  
-                }
-                open_file_count++; // used to keep count of open files
-                return i;
-            }
-        }
-    }
-
-    // if file does not exist, or if too many files are open
-    return -1;
+    // check if filename exists, then handle opening in sys_calls
+    return 0; // read_dentry_by_name(filename, &temp);
 }
 
 /*
@@ -162,28 +107,8 @@ int32_t file_open(const uint8_t* filename){
  IMPACTS ON OTHERS: Will affect inode_list, locks file to be read
  */
 int32_t file_close(int32_t fd){
-    dentry_t temp;
-    int i, floop;
-    // looks for file, grabs inode number, attempts to close
-    if (read_dentry_by_name((uint8_t*)inode_list[fd].filename, &temp) == 0 && open_file_count > 3){
-        for (i = 3; i < inodeamnt; i++){
-        // looks through exisitng list
-            if (strncmp((int8_t*)temp.filename, (int8_t*)inode_list[i].filename, FILENAME_LEN) == 0){
-            // checks if inode exists, as open
-                inode_list[i].inode_num = -1;
-                inode_list[i].offset = 0; 
-                inode_list[i].filetype = -1;
-                for (floop = 0; floop < FILENAME_LEN; floop++){
-                    inode_list[i].filename[floop] = (uint8_t)"";  
-                }   
-                open_file_count--;  // used to keep track of open files
-                return 0;
-            }
-        }
-    }
-
-    // if file does not exist, or if none are open
-    return -1;
+    // handle this in sys_calls with access to fd table
+    return 0;
 }
 
 /*
@@ -203,23 +128,19 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes){
  IO: NONE
  IMPACTS ON OTHERS: Will return an error if you try to read this file again
  */
-int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
+int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
     dentry_t temp_dentry;
     inode_t temp_inode;
-    int i, x, found;
-    found = -1;         // set to fail condition, if unchanged is fail
+    int i, x;
     const uint32_t* temp_ptr = boot_block_ptr;
 
-    // looks for file, grabs inode number, marks as opened
-    if (read_dentry_by_name((uint8_t*)inode_list[fd].filename, &temp_dentry) == 0 && open_file_count > 3){
-        for (i = 3; i < inodeamnt; i++){
-            // checks to make sure the file to be read is already open
-            if (temp_dentry.inode_num == inode_list[i].inode_num){  
-                found = i;
-            }
-        }
-        if (found == -1) return -1; // file not currently open, fail
+    // set all num to 0 to protect agaisnt leftover writes
+    for (i = 0; i < maxblocksize; i++){
+        temp_inode.data_block_num[i] = 0;
     }
+
+    // looks for file, grabs inode number, marks as opened
+    if (read_dentry_by_name(filename, &temp_dentry) == -1) return -1;
 
     // find inode here
     temp_ptr = temp_ptr + blocksizenorm * (1+temp_dentry.inode_num);
@@ -236,7 +157,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
             i--;    // decrement counter for data blocks left
         }
         // pass this inode data to this fucntion to fill bufffer
-        return read_data(temp_inode, inode_list[found].offset, buf, nbytes); 
+        return read_data(temp_inode, 0, buf, nbytes); 
     }
 
     else{
@@ -249,7 +170,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
             i--;    // decrement counter for data blocks left
         }
         // pass this inode data to this fucntion to fill bufffer
-        return read_data(temp_inode, inode_list[found].offset, buf, temp_inode.length); 
+        return read_data(temp_inode, 0, buf, temp_inode.length); 
     } 
 }
 
@@ -259,19 +180,22 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
  IO: NONE
  IMPACTS ON OTHERS: initializes the boot_block struct
  */
-int32_t dir_open(const uint8_t* filename){
-    //if(dir_is_open==1){return 0;}
+int32_t dir_open(const uint8_t* filename){  
     if (*filename != '.') return -1;
+    if (dir_is_open) {
+        curr_dir = 0;
+        return 0;
+    }
+
     int i, floop;
     int8_t* chars;
     const uint32_t* temp_ptr = boot_block_ptr;
-    open_file_count = 3;                        // initialize the amnt of files open
-    curr_dir = 0;                               // initializes directory index
-    boot_block_main.dir_count = *temp_ptr;      // set ptr to beginnning of file sys, dentries count
-    boot_block_main.inode_count = *(temp_ptr+1);// grab the next 4 bytes, inode blk count
-    boot_block_main.data_count = *(temp_ptr+2); // grab the enxt 4 bytes, data blk count
+    curr_dir = 0;                                   // initializes directory index
+    boot_block_main.dir_count = *temp_ptr;          // set ptr to beginnning of file sys, dentries count
+    boot_block_main.inode_count = *(temp_ptr+1);    // grab the next 4 bytes, inode blk count
+    boot_block_main.data_count = *(temp_ptr+2);     // grab the enxt 4 bytes, data blk count
 
-    temp_ptr = temp_ptr + inodeamnt*2;          // move ptr to beginning of dentries
+    temp_ptr = temp_ptr + inodeamnt*2;              // move ptr to beginning of dentries
 
     // fills all dentries
     for(i = 0; i < boot_block_main.dir_count; i++){
@@ -283,7 +207,7 @@ int32_t dir_open(const uint8_t* filename){
         boot_block_main.direntries[i].inode_num = *(temp_ptr+inodeamnt+1);  // moves pointer to point to inode num
         temp_ptr = temp_ptr + inodeamnt*2;                                  // moves pointer to next dentry to copy
     }
-
+    dir_is_open = 1;
     return 0;
 }
 
@@ -317,24 +241,26 @@ int32_t dir_write(int32_t fd, const void* buf, int32_t nbytes){
  IMPACTS ON OTHERS: None
  */
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
+    if (dir_is_open == 0) return -1;
     int floop;
     dentry_t temp;
     uint8_t* temp_ptr = buf;
     // loops through all dentries in boot blk
     if(curr_dir < boot_block_main.dir_count){
         read_dentry_by_index(curr_dir, &temp);
-        printf("file_name: ");                              // prints filename 
+        //printf("file_name: ");                              // prints filename 
         for (floop = 0; floop < FILENAME_LEN; floop++){
-			printf("%c", temp.filename[floop]);
+			//printf("%c", temp.filename[floop]);
             *(temp_ptr+floop) = temp.filename[floop];
         }
-        printf(", file_type: ");                            // print file type
-		printf("%d", temp.filetype);
-		printf(", inode_num: %d\n"   , temp.inode_num);     // prints inode number for file
+        //printf(", file_type: ");                            // print file type
+		//printf("%d", temp.filetype);
+		//printf(", inode_num: %d\n"   , temp.inode_num);     // prints inode number for file
         curr_dir++;
         return FILENAME_LEN;
     }
 
+    curr_dir = 0;
     return 0;
 }
 
@@ -349,9 +275,7 @@ int32_t exec_check(const uint8_t* filename){
     inode_t temp_inode;
     const uint32_t* temp_ptr;
     // looks for file, grabs inode number
-    if (read_dentry_by_name(filename, &temp) != 0){
-        return -1;
-    }
+    if (read_dentry_by_name(filename, &temp) == -1) return -1;
 
     temp_ptr = boot_block_ptr + blocksizenorm * (1+temp.inode_num);
     temp_inode.data_block_num[0] = *(temp_ptr + 1);

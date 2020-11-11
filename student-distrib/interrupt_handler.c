@@ -222,12 +222,3 @@ void idt_vector(){
     SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
     SET_IDT_ENTRY(idt[SYSCALL_NUM], sys_call_handler_asm);
 }
-
-
-
-
-
-
-
-
-

@@ -4,7 +4,6 @@ void idt_setup(int);
 void idt_vector();
 
 // these fucntions have specific response to exceptions
-
 void exception0_C(void);
 void exception1_C(void);
 void exception2_C(void);

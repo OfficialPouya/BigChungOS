@@ -5,6 +5,9 @@
 
 /* Macros to be used in RTC functions. Values and names found on osdev */ 
 
+#define MAX_RATE 1024
+#define MIN_RATE 2
+
 #define RTC_PORT  0x70 
 #define CMOS_PORT 0x71
 

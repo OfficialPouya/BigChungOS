@@ -48,7 +48,7 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
     if(nbytes==0){return how_many;}
     if(keyboard_buffer[0]=='\n'){return how_many;}    
     
-    while(keyboard_buffer[count] != '\0' && keyboard_buffer[count] != '\n'){
+    while(keyboard_buffer[count] != '\0'){
         ++count;
     }
     if(count == nbytes){

@@ -172,7 +172,10 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     // if enter has been pressed
     // or new line in file
-    if(c == '\n' || c == '\r') {
+    if (c == '\n' && screen_x == 0){
+       return;
+    }
+    else if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
         // checks if we have reached bottom of screen

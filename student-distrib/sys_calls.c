@@ -362,7 +362,13 @@ int32_t file_close_helper(int32_t fd){
  IMPACTS ON OTHERS: none
  */
 int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
-    return -1;
+    int floop;
+    if (all_pcbs[pid_counter-1].args[0] == '\0') return -1;
+    memcpy (buf, all_pcbs[pid_counter-1].args, nbytes);
+    for (floop = 0; floop < FILENAME_LEN; floop++){
+        all_pcbs[pid_counter-1].args[floop] = '\0';
+    }
+    return 0;
 }
     /*
     1. PARSE

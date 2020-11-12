@@ -15,6 +15,7 @@
 #define MAX_FD_AMNT 8
 #define NUM_ARGS 1024
 #define PCB_SIZE 6
+#define MAX_BYTES 0x3B8000
 
 int pid_counter;
 int32_t ret_val;

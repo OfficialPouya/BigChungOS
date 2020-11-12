@@ -165,7 +165,7 @@ void entry(unsigned long magic, unsigned long addr) {
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
 
-    printf("Enabling Interrupts\n");
+    // printf("Enabling Interrupts\n");
     sti();
     // init_pcb();
 
@@ -174,8 +174,16 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    pid_counter = -1;
-    sys_execute((uint8_t*)"shell");
+    pid_counter = 0;
+    asm volatile(
+        "xorl %%eax, %%eax;"
+        "movl $2, %%eax;"
+        "int $0x80"
+        :
+        :
+        : "eax"
+    );
+    // sys_execute((uint8_t*)"shell");
     //sys_execute((uint8_t*)"testprint");
     //sys_execute((uint8_t*)"ls");
     //sys_execute((uint8_t*)"syserr");

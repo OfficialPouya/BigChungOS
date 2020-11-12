@@ -144,11 +144,11 @@ void exception19_C(void) {
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //simd floating point exception
 
-void sys_call_handler_C(void) {
-    clear();
-    printf("Sys Call Happened\n");
-    while(1);
-} //intel reserved do not use
+// void sys_call_handler_C(void) {
+//     clear();
+//     printf("Sys Call Happened\n");
+//     while(1);
+// } //intel reserved do not use
 
 
 

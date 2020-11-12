@@ -105,9 +105,10 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
  */
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf) return -1;
-    if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL) return -1;
-    if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
-    return all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
+    if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL){return -1;}
+    if(all_pcbs[pid_counter].fdt[fd].exists == -1){return -1;}
+    int32_t ret = all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
+    return ret;
 }
 
 /*
@@ -120,99 +121,83 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
  */
 
 int32_t sys_execute(const uint8_t *command){
-
     // 1. PARSE (Chloe :: DONE)
-    int command_index, i, j; // variables to be used as indices
-    int command_len_check = 0;
+    // int command_index, i, j; // variables to be used as indices
+    // int command_len_check = 0;
 
-    // do not want to run more than 6 processes (5 bc -1 indexed)
-    if(pid_counter>PCB_SIZE-1){return -1;}
-    command_index = 0;
-    i = 0;
-    j = 0;
+    // // do not want to run more than 6 processes (5 bc -1 indexed)
+    // if(pid_counter>PCB_SIZE-1){return -1;}
+    // command_index = 0;
+    // i = 0;
+    // j = 0;
     uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
 
-    //1. PARSE COMMAND FOR FILE NAME
-    //check for valid command
-    if(command == NULL){
-        all_pcbs[pid_counter].in_use = -1;
-        return -1;
-    }
+    // //1. PARSE COMMAND FOR FILE NAME
+    // //check for valid command
+    // if(command == NULL){
+    //     all_pcbs[pid_counter].in_use = -1;
+    //     return -1;
+    // }
 
-    // iterate through initial white space
-    while(command[command_index] == ' '){
-        command_index++;
-    }
+    // // iterate through initial white space
+    // while(command[command_index] == ' '){
+    //     command_index++;
+    // }
 
-    // get file name from command
-    while(command[command_index] != ' ' && command[command_index] != '\0'){
-        command_len_check++;
-        if (command_len_check > 31){
-          printf("filename to execute is too long\n");
-          return -1;
-        }
+    // // get file name from command
+    // while(command[command_index] != ' ' && command[command_index] != '\0'){
+    //     command_len_check++;
+    //     if (command_len_check > 31){
+    //       printf("filename to execute is too long\n");
+    //       return -1;
+    //     }
 
-        filename[i] = command[command_index];
-        i++;
-        command_index++;
+    //     filename[i] = command[command_index];
+    //     i++;
+    //     command_index++;
 
-    }
+    // }
 
-    // add null char at end of file name
-    filename[i] = '\0';
+    // // add null char at end of file name
+    // filename[i] = '\0';
 
-    //iterate through second set of white space before args
-    while(command[command_index] == ' '){
-        command_index++;
-    }
-    command_len_check = 0;
-    // stores args in pcb
-    while(command[command_index] != ' ' && command[command_index] != '\0'){
-        //store args in pcb
+    // //iterate through second set of white space before args
+    // while(command[command_index] == ' '){
+    //     command_index++;
+    // }
+    // command_len_check = 0;
+    // // stores args in pcb
+    // while(command[command_index] != ' ' && command[command_index] != '\0'){
+    //     //store args in pcb
 
-        all_pcbs[pid_counter].args[j] = command[command_index];
-        j++;
-        command_index++;
-    }
-
-
-    // may need to append newline char not positive tho
-    // 2. EXE CHECK (PAUL :: Done/Not Checked)
-    // 3. PAGING (PAUL :: Done/Not Checked)
-    // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
-    // helper function in filesys to check first 4 bytes
-
-    int fd;
+    //     all_pcbs[pid_counter].args[j] = command[command_index];
+    //     j++;
+    //     command_index++;
+    // }
+    filename[0]='s';
+    filename[1]='h';
+    filename[2]='e';
+    filename[3]='l';
+    filename[4]='l';
+    filename[5]='\0';
     int32_t eip_data;
-    if(-1 != (eip_data = exec_check(filename))){
-        ++pid_counter;
-        init_pcb(pid_counter);
-        // then do what needs to be done with exec
-        //paging, call change address fucntion
-        update_user_addr(pid_counter); // put process number here, will change pointer to correct page
+    if(-1 == (eip_data = exec_check(filename))) {return -1;}
+    update_user_addr(pid_counter);
+    while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
 
-        // laodeer, load bytes to right address
-        fd = sys_open(filename);
-        // num 0x8048000: given, starting addr
-        // num 4MB = 4096 * 1024 (at most or whatever file size is) 
-        sys_read(fd, (void*)0x8048000, 4096*1024);
-    }
-    else{
-        return -1;
-    }
-
-    // 6.  CONTEXT SWITCH (Zohair)
-
+    
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
-        asm volatile(
+    init_pcb(pid_counter);
+    
+    asm volatile(
         "movl %%ebp, %0;"
         "movl %%esp, %1"
         :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
     );
-
+    ++pid_counter;
     asm volatile (
         "pushl %0;"
         "movl %0, %%ebx;"
@@ -224,15 +209,12 @@ int32_t sys_execute(const uint8_t *command){
         "pushl %%ebx;"
         "pushl %3;"
         "pushl %2;"
-        "iret;"
-        "from_halt:;"
-        "leave;"
-        "ret"
+        "iret"
         :
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
         : "ebx", "memory"
     );
-
+    
     return 0;
 }
 
@@ -248,20 +230,22 @@ int32_t sys_halt(uint8_t status){
     uint32_t status_num = (uint32_t) status;
     int fdt_loop;
     for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
-      sys_close(fdt_loop);
+      all_pcbs[pid_counter].fdt[fdt_loop].exists=-1;
     }
     all_pcbs[pid_counter].in_use = -1;
     --pid_counter;
 
 
 
-    if(pid_counter==-1){
-        //all_pcbs[pid_counter].in_use=-1;
-        //printf("Restarting Shell... \n"); //restart the base shell
-        sys_execute((uint8_t *) "shell");
-        return 0;
-    }
+    // if(pid_counter==0){
+    //     //all_pcbs[pid_counter].in_use=-1;
+    //     //printf("Restarting Shell... \n"); //restart the base shell
+    //     sys_execute((uint8_t *) "shell");
+    //     return 0;
+    // }
     update_user_addr(pid_counter);
+    // the math: 8MB - (curr pid)*8KB-4B
+    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
     /*
     Magic Numbers
@@ -271,15 +255,13 @@ int32_t sys_halt(uint8_t status){
     number '2':         to get to 8KB
     */
 
-    // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
+
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"
-        "movl %2, %%eax;"
-        "jmp from_halt"
+        "movl %2, %%eax"
         :
-        :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
+        :"r"(all_pcbs[pid_counter].old_ebp), "r"(all_pcbs[pid_counter].old_esp) ,"r" (status_num)
     );
     return 0;
 }
@@ -370,43 +352,17 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
     }
     return 0;
 }
-    /*
-    1. PARSE
-        ~ PARSE IS DONE
-    2. EXE CHECK
-        ~ LINE 82 in filesys.c -- ELF magic # is defined in header (sets flag if match)
-    3. PAGING
-        ~ Calling set_address helper function to point to correct 4MB offset from 8MB of physcial addr
-    4. USER LVL PROGRAM LOADER
-        ~ Copying Data, from filesystem using read data style function. Load into 0x8048000
-    5. CREATE PCB
-        ~ Fill array of fd tables
-    6. CONTEXT SWITCH
-        ~ Zohair
-    */
 
 
-    /*
-    sys_open :
-    -- have to check if file is valid to open
-    -- switch statement to see what type of file is being opened
-        -fd = 0 is RTC
-    --return fd index
+// int get_pid_num(){
+//     int x;
+//     for (x = 0; x < PCB_SIZE; x++) {
+//         if (all_pcbs[x].fdt == -1) {
+//             all_pcbs[x].pcb_in_use = 0;
+//             return x;
+//         }
+//     }
+//     return -1;
+// }
 
-    Sys_close:
-    -- check if file has been opened (using flags??)
-    -- reset file to close & call corresponding close
 
-    Sys_write:
-    -- make sure file is in use
-    -- call corresponding write file (using fda)
-
-    Sys_read:
-    -- make sure file is in use
-    -- call corresponding write file (using fda)
-
-    In file array need:
-        -file operation
-        -flags
-        -idk what else yet
-    */

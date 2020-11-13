@@ -123,38 +123,57 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 int32_t sys_execute(const uint8_t *command){
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
+    int command_len_check = 0;
     // do not want to run more than 6 processes 
-    if(pid_counter > 6) return -1;
+    if(pid_counter>PCB_SIZE){return -1;}
     command_index = 0;
     i = 0;
     j = 0;
     uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
+
     //1. PARSE COMMAND FOR FILE NAME
     //check for valid command
     if(command == NULL){
         all_pcbs[pid_counter].in_use = -1;
         return -1;
     }
+
     // iterate through initial white space
     while(command[command_index] == ' '){
         command_index++;
     }
+
     // get file name from command
     while(command[command_index] != ' ' && command[command_index] != '\0'){
+        command_len_check++;
+        if (command_len_check > 32){
+          printf("Command is too long :(\n");
+          return -1;
+        }
+
         filename[i] = command[command_index];
         i++;
         command_index++;
+
     }
-    // add newline char at end of file name
+
+    // add null char at end of file name
     filename[i] = '\0';
 
     //iterate through second set of white space before args
     while(command[command_index] == ' '){
         command_index++;
     }
+    command_len_check = 0;
     // stores args in pcb
     while(command[command_index] != ' ' && command[command_index] != '\0'){
         //store args in pcb
+        command_len_check++;
+        if (command_len_check > 32){
+          printf("Filename is too long :(\n");
+          return -1;
+        }
+
         all_pcbs[pid_counter].args[j] = command[command_index];
         j++;
         command_index++;
@@ -176,18 +195,13 @@ int32_t sys_execute(const uint8_t *command){
         // laodeer, load bytes to right address
         // num 0x8048000: given, starting addr
         // num 4MB = 4096 * 1024 (at most or whatever file size is) 
-        file_read(filename, (void*)0x8048000, 4096*1024);
+        while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
     }
     else{
         return -1;
     }
 
     // 6.  CONTEXT SWITCH (Zohair)
-
-    // asm volatile(
-    //     "movl %%ebp, %0"
-    //     :"=r"(all_pcbs[pid_counter].old_esp)
-    // );
 
 
     // the math: 8MB - (curr pid)*8KB-4B
@@ -238,6 +252,8 @@ int32_t sys_halt(uint8_t status){
         return 0;
     }
     update_user_addr(pid_counter);
+    // the math: 8MB - (curr pid)*8KB-4B
+    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
     /*
     Magic Numbers
@@ -247,8 +263,7 @@ int32_t sys_halt(uint8_t status){
     number '2':         to get to 8KB
     */
 
-    // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
+
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"

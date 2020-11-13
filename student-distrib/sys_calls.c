@@ -125,7 +125,12 @@ int32_t sys_execute(const uint8_t *command){
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
     // do not want to run more than 6 processes 
-    if(pid_counter>PCB_SIZE){return -1;}
+    if(pid_counter+2>PCB_SIZE){
+        printf("MAX Program Count reached \n");
+        // --pid_counter;
+        // sys_execute((uint8_t *) "shell");
+        return -1;
+    }
     command_index = 0;
     i = 0;
     j = 0;
@@ -210,7 +215,7 @@ int32_t sys_execute(const uint8_t *command){
 
     asm volatile(
         "movl %%ebp, %0;"
-        "movl %%esp, %1"
+        "movl %%esp, %1;"
         :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
     );
 
@@ -249,7 +254,6 @@ int32_t sys_halt(uint8_t status){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
-        return 0;
     }
     update_user_addr(pid_counter);
     // the math: 8MB - (curr pid)*8KB-4B
@@ -372,5 +376,12 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
 //     }
 //     return -1;
 // }
+
+int32_t sys_vidmap(uint8_t **screen_start){
+
+    *screen_start = (uint8_t*)(0x84b8000);
+    flush_tlb();
+    return 0;
+}
 
 

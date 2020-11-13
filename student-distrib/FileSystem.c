@@ -84,7 +84,6 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
             i--;
         }
     }
-
     return 0;
 }
 
@@ -286,3 +285,4 @@ int32_t exec_check(const uint8_t* filename){
 
     return (*(temp_ptr+6));
 }
+

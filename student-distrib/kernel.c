@@ -15,7 +15,7 @@
 #include "FileSystem.h"
 #include "sys_calls.h"
 
-#define RUN_TESTS
+#define RUN_TESTS 0
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -165,9 +165,8 @@ void entry(unsigned long magic, unsigned long addr) {
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
 
-    printf("Enabling Interrupts\n");
+    // printf("Enabling Interrupts\n");
     sti();
-    // init_pcb();
 
 #ifdef RUN_TESTS
     /* Run tests */

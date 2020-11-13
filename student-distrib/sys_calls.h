@@ -12,7 +12,10 @@
 #include "memory.h"
 #include "x86_desc.h"
 
-#define MAX_FD_AMNT    8 
+#define MAX_FD_AMNT 8
+#define NUM_ARGS 1024
+#define PCB_SIZE 6
+#define MAX_BYTES 0x3B8000
 
 int pid_counter;
 int32_t ret_val;
@@ -30,7 +33,7 @@ int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes);
 int32_t file_close_helper(int32_t fd);
 
 /*
-FOP 
+FOP
 */
 typedef struct fop{
     int32_t     (*open)(const uint8_t* filename);
@@ -50,7 +53,7 @@ typedef struct fd_table{
 }fd_table;
 
 /*
-PCB Struct 
+PCB Struct
 */
 typedef struct pcb{
     int32_t old_esp;
@@ -58,7 +61,7 @@ typedef struct pcb{
     int32_t old_ebp;
     int in_use;
     fd_table fdt[MAX_FD_AMNT]; // we have 8 descriptor tables
-    uint8_t args[1024]; // max number of arguments
+    uint8_t args[NUM_ARGS]; // max number of arguments
 } pcb;
 
 // pcb first_pcb;
@@ -66,7 +69,7 @@ typedef struct pcb{
 void init_pcb(int curr_pcb);
 
 /*
-Array of PCBs to keep track of them  
+Array of PCBs to keep track of them
 */
 pcb all_pcbs[6]; // we have 0-5
 

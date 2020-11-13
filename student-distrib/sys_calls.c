@@ -25,7 +25,7 @@ void sys_call_handler() {
  INPUTS: filename
  OUTPUTS: NONE
  RETURN VALUE: -1 on fail, index_holder on success
- IMPACTS ON OTHERS: changes fdt, pcb 
+ IMPACTS ON OTHERS: changes fdt, pcb
  */
 int32_t sys_open(const uint8_t *filename) {
     dentry_t temp_dentry;
@@ -105,15 +105,16 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
  */
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf) return -1;
-    if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL) return -1;
-    if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
-    return all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
+    if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL){return -1;}
+    if(all_pcbs[pid_counter].fdt[fd].exists == -1){return -1;}
+    int32_t ret = all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
+    return ret;
 }
 
 /*
  NAME: sys_execute
  DESCRIPTION: executes program
- INPUTS: command 
+ INPUTS: command
  OUTPUTS: none
  RETURN VALUE: -1 on fail, 0 on OK
  IMPACTS ON OTHERS: changes the pcb in use, changes ebp, eax, tss.ss0, pid_counter
@@ -165,7 +166,6 @@ int32_t sys_execute(const uint8_t *command){
     // 3. PAGING (PAUL :: Done/Not Checked)
     // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
     // helper function in filesys to check first 4 bytes
-    int fd;
     int32_t eip_data;
     if(-1 != (eip_data = exec_check(filename))){
         ++pid_counter;
@@ -174,10 +174,9 @@ int32_t sys_execute(const uint8_t *command){
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
         // laodeer, load bytes to right address
-        fd = sys_open(filename);
         // num 0x8048000: given, starting addr
         // num 4MB = 4096 * 1024 (at most or whatever file size is) 
-        sys_read(fd, (void*)0x8048000, 4096*1024);
+        file_read(filename, (void*)0x8048000, 4096*1024);
     }
     else{
         return -1;
@@ -195,7 +194,7 @@ int32_t sys_execute(const uint8_t *command){
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
-        asm volatile(
+    asm volatile(
         "movl %%ebp, %0;"
         "movl %%esp, %1"
         :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
@@ -203,22 +202,14 @@ int32_t sys_execute(const uint8_t *command){
 
     asm volatile (
         "pushl %0;"
-        "movl %0, %%ebx;"
-        "movw %%bx, %%ds;"
         "pushl %1;"
         "pushfl;"
-        "popl %%ebx;"
-        "orl $0x200, %%ebx;"
-        "pushl %%ebx;"
-        "pushl %3;"
         "pushl %2;"
-        "iret;"
-        "from_halt:;"
-        "leave;"
-        "ret"
+        "pushl %3;"
+        "iret"
         :
-        : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
-        : "ebx", "memory"
+        : "r" (USER_DS), "r" (0x83FFFFC), "r" (USER_CS), "r" (eip_data)
+        : "memory"
     );
     // need to do something with ebp and esp
 
@@ -261,8 +252,7 @@ int32_t sys_halt(uint8_t status){
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"
-        "movl %2, %%eax;"
-        "jmp from_halt"
+        "movl %2, %%eax"
         :
         :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
     );
@@ -281,11 +271,12 @@ void init_pcb(int curr_pcb){
     int fdt_index;
     all_pcbs[curr_pcb].in_use = 1;
     // only 6 processes 
-    for(fdt_index=0; fdt_index<MAX_FD_AMNT; fdt_index++){
+    for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
         all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
+
     // the size of our array of args is 1024
-    for (fdt_index = 0; fdt_index < 1024; fdt_index++){
+    for (fdt_index = 0; fdt_index < NUM_ARGS; fdt_index++){
         all_pcbs[curr_pcb].args[fdt_index] = 0;
     }
 
@@ -346,45 +337,25 @@ int32_t file_close_helper(int32_t fd){
  IMPACTS ON OTHERS: none
  */
 int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
-    return -1;
+    int floop;
+    if (all_pcbs[pid_counter-1].args[0] == '\0') return -1;
+    memcpy (buf, all_pcbs[pid_counter-1].args, nbytes);
+    for (floop = 0; floop < FILENAME_LEN; floop++){
+        all_pcbs[pid_counter-1].args[floop] = '\0';
+    }
+    return 0;
 }
-    /*
-    1. PARSE
-        ~ PARSE IS DONE
-    2. EXE CHECK
-        ~ LINE 82 in filesys.c -- ELF magic # is defined in header (sets flag if match)
-    3. PAGING
-        ~ Calling set_address helper function to point to correct 4MB offset from 8MB of physcial addr
-    4. USER LVL PROGRAM LOADER
-        ~ Copying Data, from filesystem using read data style function. Load into 0x8048000
-    5. CREATE PCB
-        ~ Fill array of fd tables
-    6. CONTEXT SWITCH
-        ~ Zohair
-    */
 
 
-    /*
-    sys_open :
-    -- have to check if file is valid to open
-    -- switch statement to see what type of file is being opened
-        -fd = 0 is RTC
-    --return fd index
+// int get_pid_num(){
+//     int x;
+//     for (x = 0; x < PCB_SIZE; x++) {
+//         if (all_pcbs[x].fdt == -1) {
+//             all_pcbs[x].pcb_in_use = 0;
+//             return x;
+//         }
+//     }
+//     return -1;
+// }
 
-    Sys_close:
-    -- check if file has been opened (using flags??)
-    -- reset file to close & call corresponding close
 
-    Sys_write:
-    -- make sure file is in use
-    -- call corresponding write file (using fda)
-
-    Sys_read:
-    -- make sure file is in use
-    -- call corresponding write file (using fda)
-
-    In file array need:
-        -file operation
-        -flags
-        -idk what else yet
-    */

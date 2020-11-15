@@ -52,6 +52,7 @@ typedef struct fd_table{
     int32_t     file_type;
     uint8_t     filename[FILENAME_LEN];
     int         exists; // bool type var: 1 or -1
+    uint32_t    file_bytes_read;
 }fd_table;
 
 /*

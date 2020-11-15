@@ -303,6 +303,11 @@ void init_pcb(int curr_pcb){
         all_pcbs[curr_pcb].args[fdt_index] = 0;
     }
 
+    // all files have starting read position = 0
+    for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
+        all_pcbs[curr_pcb].fdt[fdt_index].file_bytes_read = 0;
+    }
+
     // stdin members
     all_pcbs[curr_pcb].fdt[0].fop_ = &terminal_struct;
     all_pcbs[curr_pcb].fdt[0].file_type = 3;
@@ -325,9 +330,13 @@ void init_pcb(int curr_pcb){
  IMPACTS ON OTHERS: passes more useful args to file read
  */
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
+    uint32_t temp;
     if (all_pcbs[pid_counter].fdt[fd].exists == 1){
+        bytes_read = all_pcbs[pid_counter].fdt[fd].file_bytes_read;
         // call actual file reading func
-        return file_read(all_pcbs[pid_counter].fdt[fd].filename, buf, nbytes);
+        temp = file_read(all_pcbs[pid_counter].fdt[fd].filename, buf, nbytes);
+        all_pcbs[pid_counter].fdt[fd].file_bytes_read += temp;
+        return temp;
     }
 
     else return -1;
@@ -344,6 +353,7 @@ int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
 int32_t file_close_helper(int32_t fd){
     if (all_pcbs[pid_counter].fdt[fd].exists == 1){
         all_pcbs[pid_counter].fdt[fd].exists = -1;
+        all_pcbs[pid_counter].fdt[fd].file_bytes_read = 0;
         return 0;
     }
 
@@ -382,6 +392,8 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
 // }
 
 int32_t sys_vidmap(uint8_t **screen_start){
+    // number 0x8000000 and 0x8400000 is the range of user program page
+    if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
     *screen_start = (uint8_t*)(0x84b8000);
     return 0;
 }

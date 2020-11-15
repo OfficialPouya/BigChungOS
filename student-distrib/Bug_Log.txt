@@ -244,6 +244,20 @@ Estimated Time: 1hr
 Bug #29
 Bug: do not read entire file for cat
 Topic: file_read
-Fix:
-Location of Fix:
-Estimated Time:
+Fix: Needed to fix the algorithm for reading files, in small chunks rather than bigger chunks
+Location of Fix: Filesystem
+Estimated Time: 5 hours
+
+Bug #30
+Bug: VIDMAP not working
+Topic: sys_Calls
+Fix: We didnt have the vidmap syscall in the syscall jump table, even though syscall was getting called, it was never accessible through jump table.
+Location of Fix: sys_call.S
+Estimated Time: 30 min
+
+Bug #31
+Bug: fish looked buggy
+Topic: file_read
+Fix: Had to add unique file read counters in the FD's for open files, global file read counter does not work
+Location of Fix: Filesystem.c/h
+Estimated Time: 1 hour

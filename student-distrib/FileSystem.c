@@ -79,19 +79,23 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
             i = inode.length - bytes_read;
         }
 
+        if(i > length){
+            i = length;
+        }
+
         // find current position in data block with bytes_read%4096;
         char_ptr = char_ptr + (bytes_read%4096);
         while (i > 0) {
             // place all chars into buffer
-            *(buf+bytes_read) = *char_ptr;
+            *(buf+length_read) = *char_ptr;
             char_ptr++;
             bytes_read++;
             length_read++;
             i--;
-            printf("%d \n", bytes_read);
         }
+        if (length_read == length) return length_read;
     }
-    return bytes_read;
+    return length_read;
 }
 
 /*

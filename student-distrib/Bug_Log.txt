@@ -192,3 +192,58 @@ Topic: execute
 Fix: Had to call sti() after keyboard read
 Location of Fix: terminal.c
 Estimated Time: 2 hours
+
+/*
+|===================================================|
+|					CP 4 BUGS						|
+|===================================================|
+*/
+
+Bug #23
+Bug: No new line after hello program
+Topic: terminal
+Fix: got rid of (if statment for \n)
+Location of Fix: terminal.c
+Estimated Time: 15 mins
+
+Bug #24
+Bug: page fault made OS unusable
+Topic: exception handling
+Fix: exceptions now cause user program to halt
+Location of Fix: interrupt_hanlder.c
+Estimated Time: 30 mins
+
+Bug #25
+Bug: no limit for how many user programs could be ran
+Topic: execute 
+Fix: added if statement to print out error message and limit number of programs based on pid_counter
+Location of Fix: sys_calls.c
+Estimated Time: 30 mins
+
+Bug #26
+Bug: wrong way to execute 
+Topic: execute
+Fix: got rid of system calls in execute, used file_read instead 
+Location of Fix: sys_calls.c
+Estimated Time: 2hrs
+
+Bug #27
+Bug: maxing out kb buffer would cause page fault
+Topic: args 
+Fix: added more conditional statements in parseing part of execute
+Location of Fix: sys_calls.c
+Estimated Time: 2.5 hours
+
+Bug #28
+Bug: verylargefilewithverylongname.tx was read when verylargefilewithverylongname.txt was typed
+Topic: file_read
+Fix: added conditional statements to make sure for 100% match, nothing more, nothing less
+Location of Fix: filesys.c
+Estimated Time: 1hr
+
+Bug #29
+Bug: do not read entire file for cat
+Topic: file_read
+Fix:
+Location of Fix:
+Estimated Time:

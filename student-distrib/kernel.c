@@ -156,6 +156,7 @@ void entry(unsigned long magic, unsigned long addr) {
     char_count = 0; 
     kb_idx = 0; // set kb index to 0
     bytes_read = 0;
+    flag_exception = 0; // see if expetion raised 
     dir_open((uint8_t*)".");  // for opening shell
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the

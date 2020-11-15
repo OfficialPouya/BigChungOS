@@ -275,6 +275,10 @@ int32_t sys_halt(uint8_t status){
         :
         :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
     );
+    if(flag_exception==1){
+        flag_exception = 0;
+        return 256; // return errno. 
+    }
     return 0;
 }
 

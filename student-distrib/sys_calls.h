@@ -18,6 +18,7 @@
 #define MAX_BYTES 0x3B8000
 
 int pid_counter;
+int flag_exception;
 int32_t ret_val;
 
 extern void sys_call_handler();

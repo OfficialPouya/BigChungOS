@@ -180,7 +180,7 @@ void keyboard_handler() {
         }
     }
     // Scan code 0x0E is Backspace
-    if(scan_code==0X0E && kb_idx > 0){
+    if(scan_code==0x0E && kb_idx > 0){
         rm_c();
         kb_idx--; 
         char_count--;
@@ -257,6 +257,7 @@ int special_key_check(unsigned int code){
     if(code == 0x43){return 1;} // F9
     if(code == 0x44){return 1;} // F10
     if(code == 0x8E){return 1;} // Backspace
+    if(code == 0x0E){return 1;} // Backspace
     if(code == 0x0F){return 1;} // tab press
     if(code == 0x8F){return 1;} // tab release
     return 2;

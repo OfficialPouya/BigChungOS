@@ -56,32 +56,39 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     const uint32_t* temp_ptr = boot_block_ptr;  // grabs the pointer to first block
     uint8_t* char_ptr;                          // used to temporarily loop thorugh chars
-    int i, loop;
+    int i, loop, min_block, max_block, length_read;
     i = 0;
-    //bytes_read = 0; // sets this back to 0 before reading more
+    loop = 0;
+    length_read = 0;
+    
+    min_block = bytes_read/4096;
+    max_block = (inode.length/4096) + 1;
 
-    for (loop = 0; loop < (length/(blocksizenorm*4)+1); loop++){
+    for (loop = min_block; loop < max_block; loop++){
         // skips past boot_blk, past all inodes, and then points to correct data_blk
         temp_ptr = boot_block_ptr + blocksizenorm * (1 + boot_block_main.inode_count + inode.data_block_num[loop]);
-        
-        // sets the amount of iterations for the data blks
-        // lets loop write full 4096 sized block
-        if ((loop+1) * (blocksizenorm*4) < length){
-            i = (blocksizenorm*4);
-        }              
-        
-        // only allows left over bytes to be read
-        else {
-            i = (blocksizenorm*4)-(((loop+1) * (blocksizenorm*4))-length);
-        }
-        
         char_ptr = (uint8_t*)temp_ptr;
+
+        // length_read does not exceed length amnt
+        // bytes_read does not exceed inode_length 
+        // skip to next data block every (4096 bytes_read)
+        if(inode.length > (4096)*(loop+1)){
+            i = ((4096)*(loop+1)) - bytes_read;
+        }
+        else{
+            i = inode.length - bytes_read;
+        }
+
+        // find current position in data block with bytes_read%4096;
+        char_ptr = char_ptr + (bytes_read%4096);
         while (i > 0) {
             // place all chars into buffer
             *(buf+bytes_read) = *char_ptr;
             char_ptr++;
             bytes_read++;
+            length_read++;
             i--;
+            printf("%d \n", bytes_read);
         }
     }
     return bytes_read;
@@ -145,40 +152,22 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
     temp_ptr = temp_ptr + blocksizenorm * (1+temp_dentry.inode_num);
 
     temp_inode.length = *temp_ptr;
-    // if requested read amount less than available
-    if ((nbytes)<temp_inode.length) {
-        i = nbytes/(blocksizenorm*4) + 1;
-        x = 0;
-        while (i>0) {
-            // update temp inode struct with correct amnt of data blks
-            temp_inode.data_block_num[x] = *(temp_ptr + x + 1);
-            x++;    //increment struct array ptr to fill next data blk number
-            i--;    // decrement counter for data blocks left
-        }
-        // pass this inode data to this fucntion to fill bufffer
-        if(bytes_read == nbytes){
-            bytes_read = 0;
-            return 0;
-        }
-        return read_data(temp_inode, 0, buf, nbytes); 
+
+    i = temp_inode.length/(blocksizenorm*4) + 1;
+    x = 0;
+    while (i>0) {
+        // update temp inode struct with correct amnt of data blks
+        temp_inode.data_block_num[x] = *(temp_ptr + x + 1);
+        x++;    //increment struct array ptr to fill next data blk number
+        i--;    // decrement counter for data blocks left
     }
-    // if requested read amount more than available
-    else{
-        i = temp_inode.length/(blocksizenorm*4) + 1;
-        x = 0;
-        while (i>0) {
-            // update temp inode struct with correct amnt of data blks
-            temp_inode.data_block_num[x] = *(temp_ptr + x + 1);
-            x++;    //increment struct array ptr to fill next data blk number
-            i--;    // decrement counter for data blocks left
-        }
-        // pass this inode data to this fucntion to fill bufffer
-        if(bytes_read == temp_inode.length){
-            bytes_read = 0;
-            return 0;
-        }
-        return read_data(temp_inode, 0, buf, temp_inode.length); 
-    } 
+    // pass this inode data to this fucntion to fill bufffer
+    if(bytes_read == temp_inode.length){
+        bytes_read = 0;
+        return 0;
+    }
+
+    return read_data(temp_inode, 0, buf, nbytes); 
 }
 
 /*

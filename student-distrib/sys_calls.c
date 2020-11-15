@@ -378,9 +378,7 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
 // }
 
 int32_t sys_vidmap(uint8_t **screen_start){
-
     *screen_start = (uint8_t*)(0x84b8000);
-    flush_tlb();
     return 0;
 }
 

@@ -112,6 +112,7 @@ void exception13_C(void) {
 void exception14_C(void) {
     //clear();
     printf("Page Fault\n");
+    while(1);
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //page fault
 

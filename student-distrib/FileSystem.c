@@ -61,8 +61,8 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     loop = 0;
     length_read = 0;
     
-    min_block = bytes_read/4096;
-    max_block = (inode.length/4096) + 1;
+    min_block = bytes_read/(COMMON_SIZE*4);
+    max_block = (inode.length/(COMMON_SIZE*4)) + 1;
 
     for (loop = min_block; loop < max_block; loop++){
         // skips past boot_blk, past all inodes, and then points to correct data_blk
@@ -72,8 +72,8 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
         // length_read does not exceed length amnt
         // bytes_read does not exceed inode_length 
         // skip to next data block every (4096 bytes_read)
-        if(inode.length > (4096)*(loop+1)){
-            i = ((4096)*(loop+1)) - bytes_read;
+        if(inode.length > ((COMMON_SIZE*4))*(loop+1)){
+            i = (((COMMON_SIZE*4))*(loop+1)) - bytes_read;
         }
         else{
             i = inode.length - bytes_read;
@@ -84,7 +84,7 @@ int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length
         }
 
         // find current position in data block with bytes_read%4096;
-        char_ptr = char_ptr + (bytes_read%4096);
+        char_ptr = char_ptr + (bytes_read%(COMMON_SIZE*4));
         while (i > 0) {
             // place all chars into buffer
             *(buf+length_read) = *char_ptr;

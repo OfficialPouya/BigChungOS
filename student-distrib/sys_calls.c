@@ -154,7 +154,7 @@ int32_t sys_execute(const uint8_t *command){
     // get file name from command
     while(command[command_index] != ' ' && command[command_index] != '\0' && command[command_index] != '\n'){
         command_len_check++;
-        if (command_len_check > 32){
+        if (command_len_check > FILENAME_LEN){
           printf("Command is too long :(\n");
           return -1;
         }
@@ -230,7 +230,7 @@ int32_t sys_execute(const uint8_t *command){
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (USER_CS), "r" (eip_data)
         : "memory"
     );
-
+    // 0x83FFFFC, is the bottom of the USER page - 4B.
     return 0;
 }
 
@@ -273,7 +273,7 @@ int32_t sys_halt(uint8_t status){
     );
     if(flag_exception==1){
         flag_exception = 0;
-        return 256; // return errno. 
+        return EXCEPTION_ERROR; // return errno. 
     }
     return 0;
 }

@@ -160,7 +160,7 @@ void flush_tlb(void) {
  IMPACTS ON OTHERS: Changes address pointed by 128MB page
  */
 void update_user_addr(int process_num){
-    page_directory[32] &= 0xFFFFF;
+    page_directory[32] &= 0xFFFFF;      // Save all lower 20 bits
     page_directory[32] |= (USERPG+(KERNELPG*process_num));
     flush_tlb();
 }

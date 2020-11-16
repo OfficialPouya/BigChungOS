@@ -127,6 +127,7 @@ int32_t sys_execute(const uint8_t *command){
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
     // do not want to run more than 6 processes 
+    // the + 2 is there bc -1 index of pid counter, and we dont want to page fault so +2
     if(pid_counter+2>PCB_SIZE){
         printf("MAX Program Count reached \n");
         // --pid_counter;
@@ -176,7 +177,7 @@ int32_t sys_execute(const uint8_t *command){
     while(command[command_index] != ' ' && command[command_index] != '\0' && command[command_index] != '\n'){
         //store args in pcb
         command_len_check++;
-        if (command_len_check > 32){
+        if (command_len_check > MAX_COMMAND_LENGTH){
           printf("Filename is too long :(\n");
           return -1;
         }
@@ -208,9 +209,6 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     }
 
-    // 6.  CONTEXT SWITCH (Zohair)
-
-
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
@@ -232,11 +230,7 @@ int32_t sys_execute(const uint8_t *command){
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (USER_CS), "r" (eip_data)
         : "memory"
     );
-    // need to do something with ebp and esp
 
-    // need a return label
-    // in halt, restore esp ebp and jump to the return label in assembly
-    // maybe return the esp?
     return 0;
 }
 
@@ -261,6 +255,7 @@ int32_t sys_halt(uint8_t status){
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
+    
     /*
     Magic Numbers
     number '0x800000':
@@ -268,7 +263,6 @@ int32_t sys_halt(uint8_t status){
     number '4096':      4KB
     number '2':         to get to 8KB
     */
-
 
     asm volatile (
         "movl %0, %%ebp;"
@@ -312,13 +306,13 @@ void init_pcb(int curr_pcb){
 
     // stdin members
     all_pcbs[curr_pcb].fdt[0].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[0].file_type = 3;
+    all_pcbs[curr_pcb].fdt[0].file_type = 3; // the file_type for stdin and out 
     all_pcbs[curr_pcb].fdt[0].exists = 1;
     all_pcbs[curr_pcb].fdt[0].fop_->open((uint8_t*)"blah");
 
     // stdout members
     all_pcbs[curr_pcb].fdt[1].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[1].file_type = 3;
+    all_pcbs[curr_pcb].fdt[1].file_type = 3; // the file_type for stdin and out 
     all_pcbs[curr_pcb].fdt[1].exists = 1;
     all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
 }

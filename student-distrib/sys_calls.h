@@ -16,7 +16,7 @@
 #define NUM_ARGS 1024
 #define PCB_SIZE 6
 #define MAX_BYTES 0x3B8000
-
+#define MAX_COMMAND_LENGTH 32
 int pid_counter;
 int flag_exception;
 int32_t ret_val;

@@ -56,6 +56,7 @@ int32_t sys_open(const uint8_t *filename) {
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &file_struct;
                     break;
             }
+            all_pcbs[pid_counter].fdt[t_index].fop_->open(filename);
             return t_index;
         }
     }
@@ -149,7 +150,7 @@ int32_t sys_execute(const uint8_t *command){
     }
 
     // get file name from command
-    while(command[command_index] != ' ' && command[command_index] != '\0'){
+    while(command[command_index] != ' ' && command[command_index] != '\0' && command[command_index] != '\n'){
         command_len_check++;
         if (command_len_check > 32){
           printf("Command is too long :(\n");
@@ -171,7 +172,7 @@ int32_t sys_execute(const uint8_t *command){
     }
     command_len_check = 0;
     // stores args in pcb
-    while(command[command_index] != ' ' && command[command_index] != '\0'){
+    while(command[command_index] != ' ' && command[command_index] != '\0' && command[command_index] != '\n'){
         //store args in pcb
         command_len_check++;
         if (command_len_check > 32){

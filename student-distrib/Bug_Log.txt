@@ -261,3 +261,17 @@ Topic: file_read
 Fix: Had to add unique file read counters in the FD's for open files, global file read counter does not work
 Location of Fix: Filesystem.c/h
 Estimated Time: 1 hour
+
+Bug #32
+Bug: Keyboard buffer not clearing up corerectly with backspace
+Topic: keyboard
+Fix: made current kb_idx value to be new line ('\n') then decremented and made that index be '\n' (null)
+Location of Fix: keyboard.c
+Estimated Time: 30 mins
+
+Bug #33
+Bug: CAT RTC didnt have the wait time
+Topic: RTC & Sys calls
+Fix: opened file 
+Location of Fix: sys_calls.c
+Estimated Time: 1 hr

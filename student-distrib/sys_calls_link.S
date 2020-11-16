@@ -4,7 +4,7 @@
 sys_call_handler_asm:
 
 
-    pushf           # dont wanna mess with eax
+    # pushf           # dont wanna mess with eax
     pushl %esi
     pushl %edi
 
@@ -14,6 +14,9 @@ sys_call_handler_asm:
     cmpl $10, %eax   # will become 10 in cp4
     jg fail_handler
 
+    pushl %edx
+    pushl %ecx
+    pushl %ebx
 
     pushl %edx
     pushl %ecx
@@ -23,9 +26,13 @@ sys_call_handler_asm:
     popl %ecx
     popl %edx
 
+    popl %ebx
+    popl %ecx
+    popl %edx
+
     popl %edi
     popl %esi
-    popf
+    # popf
     iret
 
 
@@ -33,7 +40,7 @@ fail_handler:
     movl $-1, %eax
     popl %edi
     popl %esi
-    popf
+    # popf
     iret
 
 jump_table:

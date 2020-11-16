@@ -182,10 +182,11 @@ void keyboard_handler() {
     // Scan code 0x0E is Backspace
     if(scan_code==0x0E && kb_idx > 0){
         rm_c();
+        // keyboard_buffer[kb_idx]='\n';
         kb_idx--; 
         char_count--;
-        keyboard_buffer[kb_idx]='\0';
-        keyboard_buffer[kb_idx+1]='\n';
+        keyboard_buffer[kb_idx]='\n';
+
     }
 
     

@@ -74,6 +74,7 @@ int32_t sys_open(const uint8_t *filename) {
 int32_t sys_close(int32_t fd) {
     if (fd <= 1 || fd >= MAX_FD_AMNT) return -1;
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
+        all_pcbs[pid_counter].fdt[fd].fop_->close(fd);
         all_pcbs[pid_counter].fdt[fd].exists = -1;
         return 0;
     }
@@ -374,6 +375,7 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
     int floop;
     if (all_pcbs[pid_counter-1].args[0] == '\0') return -1;
     memcpy (buf, all_pcbs[pid_counter-1].args, nbytes);
+    buf[nbytes+1]='\0';
     for (floop = 0; floop < FILENAME_LEN; floop++){
         all_pcbs[pid_counter-1].args[floop] = '\0';
     }

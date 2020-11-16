@@ -251,13 +251,14 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
         //printf("file_name: ");                              // prints filename 
         for (floop = 0; floop < FILENAME_LEN; floop++){
 			//printf("%c", temp.filename[floop]);
+            if (temp.filename[floop] == '\0') break;
             *(temp_ptr+floop) = temp.filename[floop];
         }
         //printf(", file_type: ");                            // print file type
 		//printf("%d", temp.filetype);
 		//printf(", inode_num: %d\n"   , temp.inode_num);     // prints inode number for file
         curr_dir++;
-        return FILENAME_LEN;
+        return floop;
     }
 
     curr_dir = 0;

@@ -7,14 +7,16 @@
 #include "types.h"
 #include "x86_desc.h"
 
-#define FILENAME_LEN    32  
-#define reserved24B     24 
-#define reserved52B     52 
+#define FILENAME_LEN    32
+#define reserved24B     24
+#define reserved52B     52
 #define maxdirentries   63
 #define maxblocksize    1023
 #define blocksizenorm   1024
 #define inodeamnt       8
 #define ELFMAGIC        0x464C457F
+
+// NEED TO REWRITE THIS FILE
 
 typedef struct dentry_t {
     int8_t      filename[FILENAME_LEN];
@@ -45,7 +47,7 @@ boot_block_t boot_block_main;
 
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
-int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+int32_t read_data (inode_t* inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 // FILE FUNCTIONS
 // initialize any temp structs, return 0 success

@@ -7,9 +7,14 @@
 #include "x86_desc.h"
 
 #define KB_BUFFER_SIZE 128
-
+#define NUMBER_OF_TERMINALS 3
+#define KB_FOUR_OFFSET 4096
+#define MAIN_VIDEO 0xB8000
+#define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET) 
+#define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
+#define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
 void pit_handler();
-
+uint8_t on_screen; // flag 0,1,2 which terminal should be shown
 typedef struct terminal_t {
     uint8_t screen_x; // screen logical location x
     uint8_t screen_y; // screen logical location y
@@ -18,7 +23,6 @@ typedef struct terminal_t {
     uint8_t* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;
     char buf_kb[KB_BUFFER_SIZE];
-    char prev_buf[KB_BUFFER_SIZE];
     int curr_process;
     tss_t save_tss;
     uint8_t save_x;
@@ -26,4 +30,8 @@ typedef struct terminal_t {
 
 } terminal_t;
 
+terminal_t terminals[NUMBER_OF_TERMINALS];
+
+void start_terminals();
+void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal);
 #endif

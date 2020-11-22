@@ -8,11 +8,13 @@
 #include "new_link.h"
 #include "sys_calls_link.h"
 #include "sys_calls.h"
+#include "sched.h"
 #define SYSCALL_NUM 128 // 0x80
 #define KEYBOARD_ADDR 0x21 // addr for kb 
 #define RTC_ADDR 0x28 // addr for rtc 
 #define NUM_IDT_ENTRIES 256 // we need to fill IDT all the way no matter what 
-#define HALT_BY_EXCEPTION 256
+#define HALT_BY_EXCEPTION 256 // defined in docs
+#define PIT_ADDR 0x20
 
 /*
  NAME: exception0_C - exception19_C
@@ -218,8 +220,7 @@ void idt_vector(){
     for (i = 0; i < NUM_IDT_ENTRIES; i++) {
         idt_setup(i);
     }
-    // idt_setup(SYSCALL_NUM);
-
+    
     SET_IDT_ENTRY(idt[0], exception0_C);
     SET_IDT_ENTRY(idt[1], exception1_C);
     SET_IDT_ENTRY(idt[2], exception2_C);
@@ -241,6 +242,8 @@ void idt_vector(){
     SET_IDT_ENTRY(idt[18], exception18_C);
     SET_IDT_ENTRY(idt[19], exception19_C);
     SET_IDT_ENTRY(idt[RTC_ADDR], rtc_asm);
+    SET_IDT_ENTRY(idt[PIT_ADDR], pit_asm);
     SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
     SET_IDT_ENTRY(idt[SYSCALL_NUM], sys_call_handler_asm);
+    
 }

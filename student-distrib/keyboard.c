@@ -216,10 +216,25 @@ void keyboard_handler() {
         kb_idx = 0;
         char_count = 0;
     }
+
+    if(flag_keys[3]==1){
+        if(scan_code == 0x3B){
+            clear();
+            printf("terminal 1 selected");
+        }
+        else if(scan_code == 0x3C){
+            clear();
+            printf("terminal 2 selected");
+        }
+        else if(scan_code == 0x3D){
+            clear();
+            printf("terminal 3 selected");
+        }
+    }
     send_eoi(IRQ_KB);
     // sti();
 }
-
+    
 
 
 

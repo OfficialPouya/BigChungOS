@@ -172,6 +172,7 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     // if enter has been pressed
     // or new line in file
+    if(c == '\0'){return;}
     if (c == '\n' && screen_x == 0){
        return;
     }

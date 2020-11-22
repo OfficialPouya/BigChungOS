@@ -275,3 +275,45 @@ Topic: RTC & Sys calls
 Fix: opened file 
 Location of Fix: sys_calls.c
 Estimated Time: 1 hr
+
+/*
+|===================================================|
+|					CP 5 BUGS						|
+|===================================================|
+*/
+
+Bug #34
+Bug: Read NULL bytes
+Topic: terminal write
+Fix: added if statement to return on NULL chars
+Location of Fix: lib.c
+Estimated Time: 5 mins
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+

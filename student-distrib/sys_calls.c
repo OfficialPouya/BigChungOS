@@ -377,17 +377,14 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
 }
 
 
-// int get_pid_num(){
-//     int x;
-//     for (x = 0; x < PCB_SIZE; x++) {
-//         if (all_pcbs[x].fdt == -1) {
-//             all_pcbs[x].pcb_in_use = 0;
-//             return x;
-//         }
-//     }
-//     return -1;
-// }
-
+/*
+ NAME: vid_map
+ DESCRIPTION: Maps a page in the user program to the video memory in physical memory
+ INPUTS:  start screen
+ OUTPUTS: NONE
+ RETURN VALUE: 0 on success -1 on fail
+ IMPACTS ON OTHERS: none
+ */
 int32_t sys_vidmap(uint8_t **screen_start){
     // number 0x8000000 and 0x8400000 is the range of user program page
     if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;

@@ -2,16 +2,10 @@
 
 
 
-/*
- NAME: pit_asm
- DESCRIPTION: calls the C code that stores register values before calling our c function for the pit handler
- INPUTS: NONE
- OUTPUTS: NONE
- RETURN VALUE: NONE
- IMPACTS ON OTHERS: PIT is called everytime it ticks (20 Hz / 50ms)
- */
-
-
+void init_PIT(uint32_t freq){
+    // stuff -[paul]
+    return;
+}
 
 /*
  NAME: pit_handler
@@ -22,17 +16,21 @@
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(){
-    // uint32_t esp;
-    // uint32_t ebp;
-    // //saving parent esp and ebp
-    // asm volatile ( 
-    // "movl %%esp, %0 \n\
-    //      movl %%ebp, %1"
-    // :"=r"(esp), "=r"(ebp) //outputs
-    // : //input operands
-    // :"memory" //clobbers
-    // ); 
-    //what we have to do after
+    /*
+    * check which terminal to go to 
+
+    if(terminals[curr_terminal].pid_shell == 0)  <-- no programs are running in terminal 
+        * then start shell
+
+
+    else 
+        * switch to next terminal based on curr_terminal
+        * restore  
+    
+
+    
+    * return
+    */
 
     //save the current tss state
     //update the scheduled terminal
@@ -41,6 +39,7 @@ void pit_handler(){
     //map into a video buffer (not main)
     return;
 }
+
 
 
 /*
@@ -71,6 +70,7 @@ void start_terminals(){
         memset(terminals[idx].video_buffer, 0, KB_FOUR_OFFSET);
     }   
     on_screen = 0;
+    curr_terminal = 0;
 }
 
 
@@ -110,7 +110,8 @@ void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal){
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     memcpy((void *) MAIN_VIDEO, terminals[target_terminal].video_buffer, KB_FOUR_OFFSET);
     memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-    // somehow update the video page for target terminal 0xB8000......
+    // magic num 0xB8 index inside page table
+    // page_table1[0xB8] |= MAIN_VIDEO;
     flush_tlb();
     on_screen = target_terminal;
     return;

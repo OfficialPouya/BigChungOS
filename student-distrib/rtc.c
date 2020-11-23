@@ -44,9 +44,9 @@ int32_t rtc_set_frequency(int32_t frequency){
     unsigned char saved_a;
     rate = 0x0F;    // the lowest setting available (2HZ), as temp increases by 2, this decreases by 1
     int32_t temp;
-    temp = 2;
+    temp = 4;
     //sets rate according to maximum freauency which is 1024 Hz, rate value taken from RTC document on course webpage. 
-    while (frequency != temp && temp != MAX_RATE){
+    while (frequency > temp && temp < MAX_RATE){
         temp = temp*MIN_RATE;
         --rate;
     }

@@ -172,6 +172,11 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     // if enter has been pressed
     // or new line in file
+<<<<<<< HEAD
+=======
+    if (c == '\0')
+      return;
+>>>>>>> master
     if (c == '\n' && screen_x == 0){
        return;
     }
@@ -181,15 +186,15 @@ void putc(uint8_t c) {
         // checks if we have reached bottom of screen
         if(screen_y>=NUM_ROWS){
             int idx=0;
-            // this copies the lines over 
-            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);       
+            // this copies the lines over
+            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
                 // clear out the new line that was just created. (over right with NULL)
                 screen_y = NUM_ROWS -1;
                 while(idx<NUM_COLS){
                     *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
                     *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
                     ++idx;
-                }       
+                }
         }
     }
 
@@ -203,14 +208,14 @@ void putc(uint8_t c) {
         // checks if we have reached bottom of screen
         if(screen_y>=NUM_ROWS){
             int idx=0;
-            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);       
+            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
                 // clear out the new line that was just created. (over right with NULL)
                 screen_y = NUM_ROWS -1;
                 while(idx<NUM_COLS){
                     *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
                     *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
                     ++idx;
-                }       
+                }
         }
 
     }
@@ -251,8 +256,8 @@ void rm_c(void) {
 // https://wiki.osdev.org/Text_Mode_Cursor
 // Look at moving cursor section
 void update_cursor(int x, int y) {
-    // With this code, you get: pos = y * VGA_WIDTH + x. 
-    // To obtain the coordinates, 
+    // With this code, you get: pos = y * VGA_WIDTH + x.
+    // To obtain the coordinates,
     // just calculate: y = pos / VGA_WIDTH; x = pos % VGA_WIDTH;.
     uint16_t pos = y * NUM_COLS + x;
 
@@ -561,3 +566,46 @@ void test_interrupts(void) {
         video_mem[i << 1]++;
     }
 }
+
+
+
+
+/*
+|===================================================|
+|				Helper Functions		    		|
+|===================================================|
+*/
+
+/*
+ NAME: get_screen_pos
+ DESCRIPTION: return either screen x or screen y
+ INPUTS:  0 or 1 
+ OUTPUTS: NONE
+ RETURN VALUE: screen x or screen y, else fail
+ IMPACTS ON OTHERS: none
+ */
+int get_screen_pos(int arg){
+    int ret_val = -1;
+    if(arg == 0){ret_val = screen_x;}
+    if(arg == 1){ret_val = screen_y;}
+    return ret_val;
+}
+
+/*
+ NAME: update_screen
+ DESCRIPTION: updates screen x and y based on new termianls info then updates cursor
+ INPUTS:  x and y
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Changes screen_x and screen_y
+ */
+void update_screen(int x, int y){
+    screen_x = x;
+    screen_y = y;
+    update_cursor(screen_x, screen_y);
+
+    return;
+}
+
+
+

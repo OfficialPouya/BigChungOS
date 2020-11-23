@@ -88,8 +88,10 @@ int32_t terminal_write(int32_t fd, const void *buf, int32_t nbytes) {
         putc((*(uint8_t *) ((uint32_t) buf + i)));
         ++count;
     }
+
     // printf("HERE");
     memset(keyboard_buffer, '\0', 128); 
+    kb_idx = 0;
     // printf(" HERE after mem set %d \n", count);
     return count;
 }

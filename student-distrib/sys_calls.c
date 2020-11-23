@@ -56,6 +56,7 @@ int32_t sys_open(const uint8_t *filename) {
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &file_struct;
                     break;
             }
+            all_pcbs[pid_counter].fdt[t_index].fop_->open(filename);
             return t_index;
         }
     }
@@ -73,6 +74,7 @@ int32_t sys_open(const uint8_t *filename) {
 int32_t sys_close(int32_t fd) {
     if (fd <= 1 || fd >= MAX_FD_AMNT) return -1;
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
+        all_pcbs[pid_counter].fdt[fd].fop_->close(fd);
         all_pcbs[pid_counter].fdt[fd].exists = -1;
         return 0;
     }
@@ -122,6 +124,7 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 
 int32_t sys_execute(const uint8_t *command){
     // 1. PARSE (Chloe :: DONE)
+<<<<<<< HEAD
     // int command_index, i, j; // variables to be used as indices
     // int command_len_check = 0;
 
@@ -186,35 +189,127 @@ int32_t sys_execute(const uint8_t *command){
     while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
 
     
+=======
+    int command_index, i, j; // variables to be used as indices
+    int command_len_check = 0;
+    // do not want to run more than 6 processes 
+    // the + 2 is there bc -1 index of pid counter, and we dont want to page fault so +2
+    if(pid_counter+2>PCB_SIZE){
+        printf("MAX Program Count reached \n");
+        // --pid_counter;
+        // sys_execute((uint8_t *) "shell");
+        return -1;
+    }
+    command_index = 0;
+    i = 0;
+    j = 0;
+    uint8_t filename[FILENAME_LEN] = { 0 }; // array to hold file name
+
+    //1. PARSE COMMAND FOR FILE NAME
+    //check for valid command
+    if(command == NULL){
+        all_pcbs[pid_counter].in_use = -1;
+        return -1;
+    }
+
+    // iterate through initial white space
+    while(command[command_index] == ' '){
+        command_index++;
+    }
+
+    // get file name from command
+    while(command[command_index] != ' ' && command[command_index] != '\0' && command[command_index] != '\n'){
+        command_len_check++;
+        if (command_len_check > FILENAME_LEN){
+          printf("Command is too long :(\n");
+          return -1;
+        }
+
+        filename[i] = command[command_index];
+        i++;
+        command_index++;
+
+    }
+
+    // add null char at end of file name
+    filename[i] = '\0';
+
+    //iterate through second set of white space before args
+    while(command[command_index] == ' '){
+        command_index++;
+    }
+    command_len_check = 0;
+    // stores args in pcb
+    while(command[command_index] != ' ' && command[command_index] != '\0' && command[command_index] != '\n'){
+        //store args in pcb
+        command_len_check++;
+        if (command_len_check > MAX_COMMAND_LENGTH){
+          printf("Filename is too long :(\n");
+          return -1;
+        }
+
+        all_pcbs[pid_counter].args[j] = command[command_index];
+        j++;
+        command_index++;
+    }
+
+
+    // may need to append newline char not positive tho
+    // 2. EXE CHECK (PAUL :: Done/Not Checked)
+    // 3. PAGING (PAUL :: Done/Not Checked)
+    // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
+    // helper function in filesys to check first 4 bytes
+    int32_t eip_data;
+    if(-1 != (eip_data = exec_check(filename))){
+        ++pid_counter;
+        init_pcb(pid_counter);
+        // then do what needs to be done with exec
+        //paging, call change address fucntion
+        update_user_addr(pid_counter); // put process number here, will change pointer to correct page
+        // laodeer, load bytes to right address
+        // num 0x8048000: given, starting addr
+        // num 4MB = 4096 * 1024 (at most or whatever file size is) 
+        while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
+    }
+    else{
+        return -1;
+    }
+
+>>>>>>> master
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
+<<<<<<< HEAD
     init_pcb(pid_counter);
     
+=======
+>>>>>>> master
     asm volatile(
         "movl %%ebp, %0;"
-        "movl %%esp, %1"
+        "movl %%esp, %1;"
         :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
     );
     ++pid_counter;
     asm volatile (
         "pushl %0;"
-        "movl %0, %%ebx;"
-        "movw %%bx, %%ds;"
         "pushl %1;"
         "pushfl;"
-        "popl %%ebx;"
-        "orl $0x200, %%ebx;"
-        "pushl %%ebx;"
-        "pushl %3;"
         "pushl %2;"
+<<<<<<< HEAD
+=======
+        "pushl %3;"
+>>>>>>> master
         "iret"
         :
-        : "r" (USER_DS), "r" (0x83FFFFC), "r" (eip_data), "r" (USER_CS)
-        : "ebx", "memory"
+        : "r" (USER_DS), "r" (0x83FFFFC), "r" (USER_CS), "r" (eip_data)
+        : "memory"
     );
+<<<<<<< HEAD
     
+=======
+    // 0x83FFFFC, is the bottom of the USER page - 4B.
+>>>>>>> master
     return 0;
 }
 
@@ -234,6 +329,7 @@ int32_t sys_halt(uint8_t status){
     }
     all_pcbs[pid_counter].in_use = -1;
     --pid_counter;
+<<<<<<< HEAD
 
 
 
@@ -243,10 +339,18 @@ int32_t sys_halt(uint8_t status){
     //     sys_execute((uint8_t *) "shell");
     //     return 0;
     // }
+=======
+    if(pid_counter==-1){
+        //all_pcbs[pid_counter].in_use=-1;
+        //printf("Restarting Shell... \n"); //restart the base shell
+        sys_execute((uint8_t *) "shell");
+    }
+>>>>>>> master
     update_user_addr(pid_counter);
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
+    
     /*
     Magic Numbers
     number '0x800000':
@@ -255,7 +359,10 @@ int32_t sys_halt(uint8_t status){
     number '2':         to get to 8KB
     */
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"
@@ -263,6 +370,10 @@ int32_t sys_halt(uint8_t status){
         :
         :"r"(all_pcbs[pid_counter].old_ebp), "r"(all_pcbs[pid_counter].old_esp) ,"r" (status_num)
     );
+    if(flag_exception==1){
+        flag_exception = 0;
+        return EXCEPTION_ERROR; // return errno. 
+    }
     return 0;
 }
 
@@ -287,15 +398,20 @@ void init_pcb(int curr_pcb){
         all_pcbs[curr_pcb].args[fdt_index] = 0;
     }
 
+    // all files have starting read position = 0
+    for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
+        all_pcbs[curr_pcb].fdt[fdt_index].file_bytes_read = 0;
+    }
+
     // stdin members
     all_pcbs[curr_pcb].fdt[0].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[0].file_type = 3;
+    all_pcbs[curr_pcb].fdt[0].file_type = 3; // the file_type for stdin and out 
     all_pcbs[curr_pcb].fdt[0].exists = 1;
     all_pcbs[curr_pcb].fdt[0].fop_->open((uint8_t*)"blah");
 
     // stdout members
     all_pcbs[curr_pcb].fdt[1].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[1].file_type = 3;
+    all_pcbs[curr_pcb].fdt[1].file_type = 3; // the file_type for stdin and out 
     all_pcbs[curr_pcb].fdt[1].exists = 1;
     all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
 }
@@ -309,9 +425,13 @@ void init_pcb(int curr_pcb){
  IMPACTS ON OTHERS: passes more useful args to file read
  */
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
+    uint32_t temp;
     if (all_pcbs[pid_counter].fdt[fd].exists == 1){
+        bytes_read = all_pcbs[pid_counter].fdt[fd].file_bytes_read;
         // call actual file reading func
-        return file_read(all_pcbs[pid_counter].fdt[fd].filename, buf, nbytes);
+        temp = file_read(all_pcbs[pid_counter].fdt[fd].filename, buf, nbytes);
+        all_pcbs[pid_counter].fdt[fd].file_bytes_read += temp;
+        return temp;
     }
 
     else return -1;
@@ -328,6 +448,7 @@ int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
 int32_t file_close_helper(int32_t fd){
     if (all_pcbs[pid_counter].fdt[fd].exists == 1){
         all_pcbs[pid_counter].fdt[fd].exists = -1;
+        all_pcbs[pid_counter].fdt[fd].file_bytes_read = 0;
         return 0;
     }
 
@@ -347,6 +468,10 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
     int floop;
     if (all_pcbs[pid_counter-1].args[0] == '\0') return -1;
     memcpy (buf, all_pcbs[pid_counter-1].args, nbytes);
+<<<<<<< HEAD
+=======
+    buf[nbytes+1]='\0';
+>>>>>>> master
     for (floop = 0; floop < FILENAME_LEN; floop++){
         all_pcbs[pid_counter-1].args[floop] = '\0';
     }
@@ -354,6 +479,7 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
 }
 
 
+<<<<<<< HEAD
 // int get_pid_num(){
 //     int x;
 //     for (x = 0; x < PCB_SIZE; x++) {
@@ -366,3 +492,19 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
 // }
 
 
+=======
+/*
+ NAME: vid_map
+ DESCRIPTION: Maps a page in the user program to the video memory in physical memory
+ INPUTS:  start screen
+ OUTPUTS: NONE
+ RETURN VALUE: 0 on success -1 on fail
+ IMPACTS ON OTHERS: none
+ */
+int32_t sys_vidmap(uint8_t **screen_start){
+    // number 0x8000000 and 0x8400000 is the range of user program page
+    if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
+    *screen_start = (uint8_t*)(0x84b8000);
+    return 0;
+}
+>>>>>>> master

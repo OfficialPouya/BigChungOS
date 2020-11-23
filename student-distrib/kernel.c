@@ -14,8 +14,8 @@
 #include "memory.h"
 #include "FileSystem.h"
 #include "sys_calls.h"
-
-#define RUN_TESTS
+#include "sched.h"
+#define RUN_TESTS 0
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -155,6 +155,8 @@ void entry(unsigned long magic, unsigned long addr) {
     init_keyboard(); // this inits the keyboard
     char_count = 0; 
     kb_idx = 0; // set kb index to 0
+    bytes_read = 0;
+    flag_exception = 0; // see if expetion raised 
     dir_open((uint8_t*)".");  // for opening shell
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
@@ -167,13 +169,13 @@ void entry(unsigned long magic, unsigned long addr) {
 
     // printf("Enabling Interrupts\n");
     sti();
-    // init_pcb();
 
 #ifdef RUN_TESTS
     /* Run tests */
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+<<<<<<< HEAD
     pid_counter = 0;
     asm volatile(
         "xorl %%eax, %%eax;"
@@ -184,6 +186,13 @@ void entry(unsigned long magic, unsigned long addr) {
         : "eax"
     );
     // sys_execute((uint8_t*)"shell");
+=======
+    pid_counter = -1;
+    start_terminals();
+    init_PIT(20); // starting PIT freq is 20
+
+    //sys_execute((uint8_t*)"shell");
+>>>>>>> master
     //sys_execute((uint8_t*)"testprint");
     //sys_execute((uint8_t*)"ls");
     //sys_execute((uint8_t*)"syserr");

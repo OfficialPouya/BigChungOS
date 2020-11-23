@@ -180,12 +180,13 @@ void keyboard_handler() {
         }
     }
     // Scan code 0x0E is Backspace
-    if(scan_code==0X0E && kb_idx > 0){
+    if(scan_code==0x0E && kb_idx > 0){
         rm_c();
+        // keyboard_buffer[kb_idx]='\n';
         kb_idx--; 
         char_count--;
-        keyboard_buffer[kb_idx]='\0';
-        keyboard_buffer[kb_idx+1]='\n';
+        keyboard_buffer[kb_idx]='\n';
+
     }
 
     
@@ -215,10 +216,25 @@ void keyboard_handler() {
         kb_idx = 0;
         char_count = 0;
     }
+
+    if(flag_keys[3]==1){
+        if(scan_code == 0x3B){
+            clear();
+            printf("terminal 1 selected");
+        }
+        else if(scan_code == 0x3C){
+            clear();
+            printf("terminal 2 selected");
+        }
+        else if(scan_code == 0x3D){
+            clear();
+            printf("terminal 3 selected");
+        }
+    }
     send_eoi(IRQ_KB);
     // sti();
 }
-
+    
 
 
 
@@ -257,8 +273,25 @@ int special_key_check(unsigned int code){
     if(code == 0x43){return 1;} // F9
     if(code == 0x44){return 1;} // F10
     if(code == 0x8E){return 1;} // Backspace
+    if(code == 0x0E){return 1;} // Backspace
     if(code == 0x0F){return 1;} // tab press
     if(code == 0x8F){return 1;} // tab release
     return 2;
 }
+
+/*
+ NAME: get_kb_info
+ DESCRIPTION: returns info about kb
+ INPUTS: 0 or 1
+ OUTPUTS: none
+ RETURN VALUE: kb_idx, char_count or -1
+ IMPACTS ON OTHERS: NONE
+ */
+get_kb_info(int arg){
+    int ret_val = -1;
+    if(arg == 0){ret_val = kb_idx;}
+    if(arg == 1){ret_val = char_count;}
+    return ret_val;
+}
+
 

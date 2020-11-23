@@ -17,7 +17,7 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     for(i = 0; i < boot_block_main.dir_count; i++){
         // compare input filename, with all filenames in the direcotry
         if (strncmp((int8_t*)boot_block_main.direntries[i].filename, (int8_t*)fname, FILENAME_LEN) == 0){
-            return read_dentry_by_index(i, dentry); 
+            return read_dentry_by_index(i, dentry);
         }
     }
 
@@ -53,38 +53,58 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
  IO: inode struct, offset amnt, buf pointer, and output length
  IMPACTS ON OTHERS: Writes to buf
  */
-int32_t read_data (inode_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+
+ // does not match spec regarding first parameter
+int32_t read_data (inode_t* inode, uint32_t offset, uint8_t* buf, uint32_t length){
     const uint32_t* temp_ptr = boot_block_ptr;  // grabs the pointer to first block
     uint8_t* char_ptr;                          // used to temporarily loop thorugh chars
-    int i, loop;
+    int i, loop, min_block, max_block, length_read;
     i = 0;
-    bytes_read = 0; // sets this back to 0 before reading more
+    loop = 0;
+    length_read = 0;
 
-    for (loop = 0; loop < (length/(blocksizenorm*4)+1); loop++){
+    min_block = bytes_read/(COMMON_SIZE*4);
+    // we add plus one to get the remaining bytes in the file
+    max_block = (inode->length/(COMMON_SIZE*4)) + 1;
+
+    for (loop = min_block; loop < max_block; loop++){
         // skips past boot_blk, past all inodes, and then points to correct data_blk
-        temp_ptr = boot_block_ptr + blocksizenorm * (1 + boot_block_main.inode_count + inode.data_block_num[loop]);
-        
-        // sets the amount of iterations for the data blks
-        // lets loop write full 4096 sized block
-        if ((loop+1) * (blocksizenorm*4) < length){
-            i = (blocksizenorm*4);
-        }              
-        
-        // only allows left over bytes to be read
-        else {
-            i = (blocksizenorm*4)-(((loop+1) * (blocksizenorm*4))-length);
-        }
-        
+        temp_ptr = boot_block_ptr + blocksizenorm * (1 + boot_block_main.inode_count + inode->data_block_num[loop]);
         char_ptr = (uint8_t*)temp_ptr;
+
+        // length_read does not exceed length amnt
+        // bytes_read does not exceed inode_length
+        // skip to next data block every (4096 bytes_read)
+        if(inode->length > ((COMMON_SIZE*4))*(loop+1)){
+            i = (((COMMON_SIZE*4))*(loop+1)) - bytes_read;
+        }
+        else{
+            i = inode->length - bytes_read;
+        }
+
+        if(i > length - length_read){
+            i = length - length_read;
+        }
+
+        // find current position in data block with bytes_read%4096;
+        char_ptr = char_ptr + (bytes_read%(COMMON_SIZE*4));
         while (i > 0) {
             // place all chars into buffer
-            *(buf+bytes_read) = *char_ptr;
+            *(buf+length_read) = *char_ptr;
             char_ptr++;
+
             bytes_read++;
+            length_read++;
             i--;
         }
+        // return if we hit the length bytes read
+        if (length_read == length) return length_read;
     }
+<<<<<<< HEAD
     return bytes_read;
+=======
+    return length_read;
+>>>>>>> master
 }
 
 /*
@@ -131,12 +151,18 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
     dentry_t temp_dentry;
     inode_t temp_inode;
     int i, x;
+    int retVal;
     const uint32_t* temp_ptr = boot_block_ptr;
 
     // set all num to 0 to protect agaisnt leftover writes
+    if (nbytes < 0)
+      return -1;
     for (i = 0; i < maxblocksize; i++){
         temp_inode.data_block_num[i] = 0;
     }
+
+    // make sure to read from fdt instead of using dentries every time
+    // not to spec, may work but bad practice
 
     // looks for file, grabs inode number, marks as opened
     if (read_dentry_by_name(filename, &temp_dentry) == -1) return -1;
@@ -146,6 +172,7 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
 
     temp_inode.length = *temp_ptr;
 
+<<<<<<< HEAD
     if (nbytes<temp_inode.length) {
         i = nbytes/(blocksizenorm*4) + 1;
         x = 0;
@@ -179,6 +206,26 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
         }
         return read_data(temp_inode, 0, buf, temp_inode.length); 
     } 
+=======
+    i = temp_inode.length/(blocksizenorm*4) + 1;
+    x = 0;
+    // can replace with memcpy lol
+    while (i>0) {
+        // update temp inode struct with correct amnt of data blks
+        temp_inode.data_block_num[x] = *(temp_ptr + x + 1);
+        x++;    //increment struct array ptr to fill next data blk number
+        i--;    // decrement counter for data blocks left
+    }
+    // pass this inode data to this fucntion to fill buffer
+    if(bytes_read == temp_inode.length){
+        bytes_read = 0;
+        return 0;
+    }
+
+
+    retVal= read_data(&temp_inode, 0, buf, nbytes);
+    return retVal;
+>>>>>>> master
 }
 
 /*
@@ -187,7 +234,7 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
  IO: NONE
  IMPACTS ON OTHERS: initializes the boot_block struct
  */
-int32_t dir_open(const uint8_t* filename){  
+int32_t dir_open(const uint8_t* filename){
     if (*filename != '.') return -1;
     if (dir_is_open) {
         curr_dir = 0;
@@ -255,16 +302,17 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
     // loops through all dentries in boot blk
     if(curr_dir < boot_block_main.dir_count){
         read_dentry_by_index(curr_dir, &temp);
-        //printf("file_name: ");                              // prints filename 
+        //printf("file_name: ");                              // prints filename
         for (floop = 0; floop < FILENAME_LEN; floop++){
 			//printf("%c", temp.filename[floop]);
+            if (temp.filename[floop] == '\0') break;
             *(temp_ptr+floop) = temp.filename[floop];
         }
         //printf(", file_type: ");                            // print file type
 		//printf("%d", temp.filetype);
 		//printf(", inode_num: %d\n"   , temp.inode_num);     // prints inode number for file
         curr_dir++;
-        return FILENAME_LEN;
+        return floop;
     }
 
     curr_dir = 0;

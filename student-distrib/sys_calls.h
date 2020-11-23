@@ -16,8 +16,14 @@
 #define NUM_ARGS 1024
 #define PCB_SIZE 6
 #define MAX_BYTES 0x3B8000
+<<<<<<< HEAD
 
+=======
+#define MAX_COMMAND_LENGTH 32
+#define EXCEPTION_ERROR 256
+>>>>>>> master
 int pid_counter;
+int flag_exception;
 int32_t ret_val;
 
 extern void sys_call_handler();
@@ -28,6 +34,7 @@ extern int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes);
 extern int32_t sys_halt(uint8_t status);
 extern int32_t sys_execute(const uint8_t *command);
 extern int32_t sys_getargs(uint8_t *buf, int32_t nbytes);
+extern int32_t sys_vidmap(uint8_t **screen_start);
 
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes);
 int32_t file_close_helper(int32_t fd);
@@ -50,6 +57,7 @@ typedef struct fd_table{
     int32_t     file_type;
     uint8_t     filename[FILENAME_LEN];
     int         exists; // bool type var: 1 or -1
+    uint32_t    file_bytes_read;
 }fd_table;
 
 /*

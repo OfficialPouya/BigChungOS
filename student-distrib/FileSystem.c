@@ -100,11 +100,7 @@ int32_t read_data (inode_t* inode, uint32_t offset, uint8_t* buf, uint32_t lengt
         // return if we hit the length bytes read
         if (length_read == length) return length_read;
     }
-<<<<<<< HEAD
-    return bytes_read;
-=======
     return length_read;
->>>>>>> master
 }
 
 /*
@@ -172,41 +168,6 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
 
     temp_inode.length = *temp_ptr;
 
-<<<<<<< HEAD
-    if (nbytes<temp_inode.length) {
-        i = nbytes/(blocksizenorm*4) + 1;
-        x = 0;
-        while (i>0) {
-            // update temp inode struct with correct amnt of data blks
-            temp_inode.data_block_num[x] = *(temp_ptr + x + 1);
-            x++;    //increment struct array ptr to fill next data blk number
-            i--;    // decrement counter for data blocks left
-        }
-        // pass this inode data to this fucntion to fill bufffer
-        if (bytes_read == nbytes) {
-            bytes_read = 0;
-            return 0;
-        }
-        return read_data(temp_inode, 0, buf, nbytes); 
-    }
-
-    else{
-        i = temp_inode.length/(blocksizenorm*4) + 1;
-        x = 0;
-        while (i>0) {
-            // update temp inode struct with correct amnt of data blks
-            temp_inode.data_block_num[x] = *(temp_ptr + x + 1);
-            x++;    //increment struct array ptr to fill next data blk number
-            i--;    // decrement counter for data blocks left
-        }
-        // pass this inode data to this fucntion to fill bufffer
-        if (bytes_read == temp_inode.length) {
-            bytes_read = 0;
-            return 0;
-        }
-        return read_data(temp_inode, 0, buf, temp_inode.length); 
-    } 
-=======
     i = temp_inode.length/(blocksizenorm*4) + 1;
     x = 0;
     // can replace with memcpy lol
@@ -225,7 +186,6 @@ int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes){
 
     retVal= read_data(&temp_inode, 0, buf, nbytes);
     return retVal;
->>>>>>> master
 }
 
 /*

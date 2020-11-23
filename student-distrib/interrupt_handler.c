@@ -8,20 +8,13 @@
 #include "new_link.h"
 #include "sys_calls_link.h"
 #include "sys_calls.h"
-<<<<<<< HEAD
-=======
 #include "sched.h"
->>>>>>> master
 #define SYSCALL_NUM 128 // 0x80
 #define KEYBOARD_ADDR 0x21 // addr for kb 
 #define RTC_ADDR 0x28 // addr for rtc 
 #define NUM_IDT_ENTRIES 256 // we need to fill IDT all the way no matter what 
-<<<<<<< HEAD
-#define HALT_BY_EXCEPTION 256
-=======
 #define HALT_BY_EXCEPTION 256 // defined in docs
 #define PIT_ADDR 0x20
->>>>>>> master
 
 /*
  NAME: exception0_C - exception19_C
@@ -37,206 +30,143 @@
 void exception0_C(void) {
     clear();
     printf("Divide-by-zero Error\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //divide error
 
 void exception1_C(void) {
     clear();
     printf("Debug\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //reserved  (reserved)
 
 void exception2_C(void) {
     clear();
     printf("Non-maskable Interrupt\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //nonmaskable external interrupt
 
 void exception3_C(void) {
     clear();
     printf("Breakpoint\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //breakpoint
 
 void exception4_C(void) {
     clear();
     printf("Overflow\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //overflow
 
 void exception5_C(void) {
     clear();
     printf("Bound Range Exceeded\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //bound range exceeded
 
 void exception6_C(void) {
     clear();
     printf("Invalid Opcode\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //invalid opcode
 
 void exception7_C(void) {
     clear();
     printf("Device Not Available\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //device not available
 
 void exception8_C(void) {
     clear();
     printf("Double Fault\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //double fault --> return zero always
 
 void exception9_C(void){
     clear();
     printf("Coprocessor Segment Overrun\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //coprocessor segment overrun (reserved)
 
 void exception10_C(void) {
     clear();
     printf("Invalid TSS\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //invalid tss
 
 void exception11_C(void) {
     clear();
     printf("Segment Not Present\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //segment not present
 
 void exception12_C(void) {
     clear();
     printf("Stack-Segment Fault\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //stack segment fault
 
 void exception13_C(void) {
     clear();
     printf("General Protection Fault\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //general protection
 
 void exception14_C(void) {
     clear();
     printf("Page Fault\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //page fault
 
 void exception15_C(void) {
     printf("Reserved\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //intel reserved do not use
 
 void exception16_C(void) {
     clear();
     printf("x87 FPU Floating-Point Error\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //x87 FPU error
 
 void exception17_C(void) {
     clear();
     printf("Alignment Check\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //alignment check ---> return zero
 
 void exception18_C(void) {
     clear();
     printf("Machine Check\n");
-<<<<<<< HEAD
-=======
     flag_exception = 1;
->>>>>>> master
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //machine check
 
 void exception19_C(void) {
     clear();
     printf("SIMD Floating-Point Error\n");
-<<<<<<< HEAD
-    sys_halt((uint8_t) HALT_BY_EXCEPTION);
-} //simd floating point exception
-
-=======
     flag_exception = 1;
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //simd floating point exception
 
 
->>>>>>> master
 // void sys_call_handler_C(void) {
 //     clear();
 //     printf("Sys Call Happened\n");
@@ -267,11 +197,7 @@ void idt_setup(int i){
 
     if (i == SYSCALL_NUM) {
         idt[i].dpl = 3;
-<<<<<<< HEAD
-         idt[i].reserved0 = 0;
-=======
         idt[i].reserved0 = 0;
->>>>>>> master
         idt[i].reserved1 = 1;
         idt[i].reserved2 = 1;
         idt[i].reserved3 = 1;

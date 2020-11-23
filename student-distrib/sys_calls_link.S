@@ -4,11 +4,7 @@
 sys_call_handler_asm:
 
 
-<<<<<<< HEAD
-    pushf           # dont wanna mess with eax
-=======
     # pushf           # dont wanna mess with eax
->>>>>>> master
     pushl %esi
     pushl %edi
 
@@ -36,11 +32,7 @@ sys_call_handler_asm:
 
     popl %edi
     popl %esi
-<<<<<<< HEAD
-    popf
-=======
     # popf
->>>>>>> master
     iret
 
 
@@ -48,11 +40,7 @@ fail_handler:
     movl $-1, %eax
     popl %edi
     popl %esi
-<<<<<<< HEAD
-    popf
-=======
     # popf
->>>>>>> master
     iret
 
 jump_table:

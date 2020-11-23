@@ -175,24 +175,11 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-<<<<<<< HEAD
-    pid_counter = 0;
-    asm volatile(
-        "xorl %%eax, %%eax;"
-        "movl $2, %%eax;"
-        "int $0x80"
-        :
-        :
-        : "eax"
-    );
-    // sys_execute((uint8_t*)"shell");
-=======
     pid_counter = -1;
     start_terminals();
     init_PIT(20); // starting PIT freq is 20
 
     //sys_execute((uint8_t*)"shell");
->>>>>>> master
     //sys_execute((uint8_t*)"testprint");
     //sys_execute((uint8_t*)"ls");
     //sys_execute((uint8_t*)"syserr");

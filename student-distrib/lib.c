@@ -563,3 +563,46 @@ void test_interrupts(void) {
         video_mem[i << 1]++;
     }
 }
+
+
+
+
+/*
+|===================================================|
+|				Helper Functions		    		|
+|===================================================|
+*/
+
+/*
+ NAME: get_screen_pos
+ DESCRIPTION: return either screen x or screen y
+ INPUTS:  0 or 1 
+ OUTPUTS: NONE
+ RETURN VALUE: screen x or screen y, else fail
+ IMPACTS ON OTHERS: none
+ */
+int get_screen_pos(int arg){
+    int ret_val = -1;
+    if(arg == 0){ret_val = screen_x;}
+    if(arg == 1){ret_val = screen_y;}
+    return ret_val;
+}
+
+/*
+ NAME: update_screen
+ DESCRIPTION: updates screen x and y based on new termianls info then updates cursor
+ INPUTS:  x and y
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Changes screen_x and screen_y
+ */
+void update_screen(int x, int y){
+    screen_x = x;
+    screen_y = y;
+    update_cursor(screen_x, screen_y);
+
+    return;
+}
+
+
+

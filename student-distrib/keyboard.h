@@ -20,5 +20,5 @@ void init_keyboard();
 int special_key_check(unsigned int code);
 // handle keyboard I/O
 void keyboard_handler();
-
+int get_kb_info(int arg);
 #endif

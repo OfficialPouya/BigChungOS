@@ -391,5 +391,3 @@ int32_t sys_vidmap(uint8_t **screen_start){
     *screen_start = (uint8_t*)(0x84b8000);
     return 0;
 }
-
-

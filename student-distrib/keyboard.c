@@ -279,3 +279,19 @@ int special_key_check(unsigned int code){
     return 2;
 }
 
+/*
+ NAME: get_kb_info
+ DESCRIPTION: returns info about kb
+ INPUTS: 0 or 1
+ OUTPUTS: none
+ RETURN VALUE: kb_idx, char_count or -1
+ IMPACTS ON OTHERS: NONE
+ */
+get_kb_info(int arg){
+    int ret_val = -1;
+    if(arg == 0){ret_val = kb_idx;}
+    if(arg == 1){ret_val = char_count;}
+    return ret_val;
+}
+
+

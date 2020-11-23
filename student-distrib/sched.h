@@ -5,7 +5,7 @@
 
 #include "sys_calls.h"
 #include "x86_desc.h"
-
+#include "keyboard.h"
 #define KB_BUFFER_SIZE 128
 #define NUMBER_OF_TERMINALS 3
 #define KB_FOUR_OFFSET 4096
@@ -25,9 +25,7 @@ typedef struct terminal_t {
     char buf_kb[KB_BUFFER_SIZE];
     int curr_process;
     tss_t save_tss;
-    uint8_t save_x;
-    uint8_t save_y;
-
+    int num_chars;
 } terminal_t;
 
 terminal_t terminals[NUMBER_OF_TERMINALS];

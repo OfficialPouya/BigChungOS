@@ -66,6 +66,8 @@ typedef struct pcb{
     int in_use;
     fd_table fdt[MAX_FD_AMNT]; // we have 8 descriptor tables
     uint8_t args[NUM_ARGS]; // max number of arguments
+    int32_t esp_task;
+    int32_t ebp_task; 
 } pcb;
 
 // pcb first_pcb;

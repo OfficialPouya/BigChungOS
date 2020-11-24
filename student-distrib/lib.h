@@ -28,6 +28,7 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 
 int get_screen_pos(int arg);
 void update_screen(int x, int y);
+void update_screen_axis(int x, int y);
 
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);

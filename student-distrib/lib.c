@@ -600,9 +600,19 @@ void update_screen(int x, int y){
     screen_x = x;
     screen_y = y;
     update_cursor(screen_x, screen_y);
-
     return;
 }
 
-
-
+/*
+ NAME: update_screen
+ DESCRIPTION: updates screen x and y based on new termianls info
+ INPUTS:  x and y
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Changes screen_x and screen_y
+ */
+void update_screen_axis(int x, int y){
+    screen_x = x;
+    screen_y = y;
+    return;
+}

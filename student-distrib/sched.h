@@ -13,10 +13,10 @@
 #define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET) 
 #define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
 #define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
-#define max_pit_freq 1193182
+#define MAX_PIT_FREQ 1193182
 void init_PIT(uint32_t freq);
 void pit_handler();
-
+volatile interrupt_counter_pit;
 uint8_t on_screen; // flag 0,1,2 which terminal should be shown
 uint8_t curr_terminal;
 typedef struct terminal_t {
@@ -36,4 +36,5 @@ terminal_t terminals[NUMBER_OF_TERMINALS];
 
 void start_terminals();
 void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal);
+void pit_helper(uint32_t ebp,uint32_t esp);
 #endif

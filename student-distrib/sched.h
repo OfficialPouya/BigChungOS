@@ -10,15 +10,16 @@
 #define NUMBER_OF_TERMINALS 3
 #define KB_FOUR_OFFSET 4096
 #define MAIN_VIDEO 0xB8000
-#define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET) 
+#define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET)
 #define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
 #define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
 #define MAX_PIT_FREQ 1193182
 void init_PIT(uint32_t freq);
 void pit_handler();
-volatile interrupt_counter_pit;
+volatile int interrupt_counter_pit;
 uint8_t on_screen; // flag 0,1,2 which terminal should be shown
 uint8_t curr_terminal;
+int test_val;
 typedef struct terminal_t {
     uint8_t screen_x; // screen logical location x
     uint8_t screen_y; // screen logical location y

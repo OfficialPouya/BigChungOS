@@ -153,11 +153,11 @@ void entry(unsigned long magic, unsigned long addr) {
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
-    char_count = 0; 
+    char_count = 0;
     kb_idx = 0; // set kb index to 0
     bytes_read = 0;
-    flag_exception = 0; // see if expetion raised 
-    dir_open((uint8_t*)".");  // for opening shell
+    flag_exception = 0; // see if expetion raised
+    // dir_open((uint8_t*)".");  // for opening shell
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
@@ -176,8 +176,8 @@ void entry(unsigned long magic, unsigned long addr) {
 #endif
     /* Execute the first program ("shell") ... */
     pid_counter = -1;
-    start_terminals();
-    init_PIT(20); // starting PIT freq is 20
+    // start_terminals();
+    init_PIT(100); // starting PIT freq is 20
 
     //sys_execute((uint8_t*)"shell");
     //sys_execute((uint8_t*)"testprint");

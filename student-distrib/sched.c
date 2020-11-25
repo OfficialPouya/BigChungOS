@@ -10,14 +10,14 @@ void init_PIT(uint32_t freq){
     uint8_t lower;
     uint8_t higher;
     div = MAX_PIT_FREQ / freq;
-    lower = div & 0xFF;
-    higher = (div >> 8) & 0xFF;
-    test_val = 1;
+    lower = div & 0xFF;     // get lowest byte
+    higher = (div >> 8) & 0xFF;     // get highest byte
+    test_val = 1; // used to see if pit was working
     // https://wiki.osdev.org/Programmable_Interval_Timer
-    outb(0x30 | 0x6,0x43); // x43 for mode 3, 0x30 was example given, 0x6 is
-                          // channel 0
-    outb(lower, 0x40);      // send low byte to channel 0
-    outb(higher, 0x40);  // send high byte of div to channel 0
+    outb(ACCESS_LO_HI | OP_SQUARE_WAVE, MODE_THREE_SELECT); // x43 for mode 3, 0x30 gives us access mode, 0x6 is
+                          // operating mode (square wave generator)
+    outb(lower, CHANNEL_ZERO_PORT);      // send low byte to channel 0
+    outb(higher, CHANNEL_ZERO_PORT);  // send high byte of div to channel 0
     // paul is doing the rest
 
     enable_irq(0); // PIT IRQ num is 0

@@ -14,6 +14,15 @@
 #define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
 #define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
 #define MAX_PIT_FREQ 1193182
+// These are used to initialize the PIT
+#define OP_SQUARE_WAVE 0x6
+#define MODE_THREE_SELECT 0x43
+#define CHANNEL_ZERO_PORT 0x40
+// This is 0x30 to make a bitwise OR easier to do, the 4 MSB set access mode
+// and channel operation
+#define ACCESS_LO_HI 0x30
+
+
 void init_PIT(uint32_t freq);
 void pit_handler();
 volatile int interrupt_counter_pit;

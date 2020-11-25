@@ -3,13 +3,23 @@ volatile uint8_t pit_count = 0; // counter for our 3 initial shells
 
 
 void init_PIT(uint32_t freq){
-    uint32_t div;
+  uint32_t div;
     uint8_t lower;
     uint8_t higher;
     div = MAX_PIT_FREQ / freq;
-    // paul is doing the rest 
+    lower = div & 0xFF;     // get lowest byte
+    higher = (div >> 8) & 0xFF;     // get highest byte
+    test_val = 1; // used to see if pit was working
+    // https://wiki.osdev.org/Programmable_Interval_Timer
+    outb(ACCESS_LO_HI | OP_SQUARE_WAVE, MODE_THREE_SELECT); // x43 for mode 3, 0x30 gives us access mode, 0x6 is
+    // operating mode (square wave generator)
+    outb(lower, CHANNEL_ZERO_PORT);      // send low byte to channel 0
+    outb(higher, CHANNEL_ZERO_PORT);  // send high byte of div to channel 0
+    // paul is doing the rest
+
     enable_irq(0); // PIT IRQ num is 0
     return;
+
 }
 
 /*
@@ -31,7 +41,7 @@ void pit_handler(){
     // load the new scheduled tss
     tss = terminals[curr_terminal].save_tss;
     ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
+    esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
 
     // page the video mem that we want to write to
     if(curr_terminal == on_screen){
@@ -53,6 +63,8 @@ void pit_handler(){
     :
     : "r"(ebp), "r"(esp)
     );
+    printf("pit test #%d\n", test_val);
+    test_val++;
     send_eoi(0); // PIT IRQ is 0
     return;
 }
@@ -141,7 +153,6 @@ void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal){
 |				Helper Functions		    		|
 |===================================================|
 */
-
 
 /*
  NAME: pit_helper

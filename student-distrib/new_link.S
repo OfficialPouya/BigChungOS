@@ -1,5 +1,6 @@
 .globl rtc_asm
 .globl keyboard_asm
+.globl pit_asm
 
 
 /*
@@ -31,4 +32,19 @@ rtc_asm:
 	call handle_rtc
 	popal
 	iret
-	
+
+
+/*
+ NAME: pit_asm
+ DESCRIPTION: calls the C code that stores register values before calling our c function for the pit handler
+ INPUTS: NONE
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: PIT is called everytime it ticks (20 Hz / 50ms)
+ */
+pit_asm:
+    pushal
+    call pit_handler
+    popal
+    iret
+ 

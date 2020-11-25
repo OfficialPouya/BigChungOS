@@ -6,7 +6,7 @@
 
 #ifndef _TYPES_H
 #define _TYPES_H
-
+#pragma once
 #define NULL 0
 
 #ifndef ASM

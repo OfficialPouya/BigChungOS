@@ -11,7 +11,7 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
-.globl page_directory, page_table1
+.globl page_directory, page_table1, page_table2
 
 .align 4
 
@@ -129,6 +129,15 @@ page_directory:
 # align on 4KB boundaries;
     .align  COMMON_SIZE*4
 page_table1:
+    .rept COMMON_SIZE
+    .long 0
+    .endr
+
+# this saves space in x86_desc.S for page table2;
+# exact space is equal to 1024 entries * 32 bits each;
+# align on 4KB boundaries;
+    .align  COMMON_SIZE*4
+page_table2:
     .rept COMMON_SIZE
     .long 0
     .endr

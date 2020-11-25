@@ -182,6 +182,12 @@ extern uint32_t page_directory[COMMON_SIZE];
    with "1" */
 extern uint32_t page_table1[COMMON_SIZE];
 
+/* This defines a page_table with 1024 PTE 
+   Will distinguish these entries in memory.c during
+   initialization. This is used to provide user with 
+   mapping to address to vidmem */
+extern uint32_t page_table2[COMMON_SIZE];
+
 /* Sets runtime parameters for an IDT entry */
 #define SET_IDT_ENTRY(str, handler)                              \
 do {                                                             \

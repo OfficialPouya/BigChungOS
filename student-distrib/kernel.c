@@ -12,7 +12,10 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "memory.h"
-#define RUN_TESTS
+#include "FileSystem.h"
+#include "sys_calls.h"
+#include "sched.h"
+#define RUN_TESTS 0
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -57,6 +60,10 @@ void entry(unsigned long magic, unsigned long addr) {
         module_t* mod = (module_t*)mbi->mods_addr;
         while (mod_count < mbi->mods_count) {
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
+
+            // grab address of module/file system start address.
+            boot_block_ptr = (unsigned*)mod->mod_start;
+
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
             for (i = 0; i < 16; i++) {
@@ -142,10 +149,15 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     idt_vector(); // this inits the IDT
     i8259_init(); // this inits the PIC
+    clear(); // to clear stuff off the screen
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
-    
+    char_count = 0;
+    kb_idx = 0; // set kb index to 0
+    bytes_read = 0;
+    flag_exception = 0; // see if expetion raised
+    // dir_open((uint8_t*)".");  // for opening shell
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
@@ -154,8 +166,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    
-    printf("Enabling Interrupts\n");
+
+    // printf("Enabling Interrupts\n");
     sti();
 
 #ifdef RUN_TESTS
@@ -163,7 +175,14 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    pid_counter = -1;
+    // start_terminals();
+    init_PIT(100); // starting PIT freq is 20
 
+    //sys_execute((uint8_t*)"shell");
+    //sys_execute((uint8_t*)"testprint");
+    //sys_execute((uint8_t*)"ls");
+    //sys_execute((uint8_t*)"syserr");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }

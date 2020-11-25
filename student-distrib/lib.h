@@ -4,11 +4,13 @@
 
 #ifndef _LIB_H
 #define _LIB_H
-
+#pragma once
 #include "types.h"
 
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
+void update_cursor(int x, int y);
+void rm_c(void);
 int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
@@ -23,6 +25,10 @@ void* memmove(void* dest, const void* src, uint32_t n);
 int32_t strncmp(const int8_t* s1, const int8_t* s2, uint32_t n);
 int8_t* strcpy(int8_t* dest, const int8_t*src);
 int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
+
+int get_screen_pos(int arg);
+void update_screen(int x, int y);
+void update_screen_axis(int x, int y);
 
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);

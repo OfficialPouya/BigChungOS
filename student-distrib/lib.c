@@ -2,7 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
-
+#include "keyboard.h"
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
@@ -22,6 +22,8 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+    screen_x=0;
+    screen_y=0;
 }
 
 /* Standard printf().
@@ -168,17 +170,104 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    if(c == '\n' || c == '\r') {
+    // if enter has been pressed
+    // or new line in file
+    if (c == '\0')
+      return;
+    if (c == '\n' && screen_x == 0){
+       return;
+    }
+    else if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
-    } else {
+        // checks if we have reached bottom of screen
+        if(screen_y>=NUM_ROWS){
+            int idx=0;
+            // this copies the lines over
+            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
+                // clear out the new line that was just created. (over right with NULL)
+                screen_y = NUM_ROWS -1;
+                while(idx<NUM_COLS){
+                    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                    ++idx;
+                }
+        }
+    }
+
+    else{
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        // calculation for screen pos
+        screen_y = (screen_y + (screen_x / NUM_COLS));
+        screen_x = screen_x % NUM_COLS;
+        // checks if we have reached bottom of screen
+        if(screen_y>=NUM_ROWS){
+            int idx=0;
+            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
+                // clear out the new line that was just created. (over right with NULL)
+                screen_y = NUM_ROWS -1;
+                while(idx<NUM_COLS){
+                    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                    ++idx;
+                }
+        }
+
     }
+    // to update cursor
+    update_cursor(screen_x, screen_y);
+
 }
+
+
+
+/*
+ NAME: rm_c
+ DESCRIPTION: removes the last char from video mem
+ INPUTS: none
+ OUTPUTS: NULL value in video mem
+ RETURN VALUE: none
+ IMPACTS ON OTHERS: changes whats on the screen, udpates screen_x & screen_y
+ */
+//This is PUTC Modified
+void rm_c(void) {
+    // remove 1 space from the
+    //printf("HERE");
+    if(screen_y==0 && screen_x == 0){return;}
+    if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
+    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
+    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
+    // move the current x back 1
+    if (screen_x) {screen_x--;}
+    else if (screen_y){
+        screen_x = NUM_COLS - 1;
+        screen_y--;
+    }
+    update_cursor(screen_x, screen_y);
+}
+
+
+
+// https://wiki.osdev.org/Text_Mode_Cursor
+// Look at moving cursor section
+void update_cursor(int x, int y) {
+    // With this code, you get: pos = y * VGA_WIDTH + x.
+    // To obtain the coordinates,
+    // just calculate: y = pos / VGA_WIDTH; x = pos % VGA_WIDTH;.
+    uint16_t pos = y * NUM_COLS + x;
+
+    // draw cursors new location
+    outb(0x0F, 0x3D4);
+    outb((unsigned char)(pos &0xFF), 0x3D5);
+    outb(0x0E, 0x3D4);
+    outb((unsigned char )((pos >>8) & 0xFF), 0x3D5);
+
+}
+
+
+
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert
@@ -473,4 +562,57 @@ void test_interrupts(void) {
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         video_mem[i << 1]++;
     }
+}
+
+
+
+
+/*
+|===================================================|
+|				Helper Functions		    		|
+|===================================================|
+*/
+
+/*
+ NAME: get_screen_pos
+ DESCRIPTION: return either screen x or screen y
+ INPUTS:  0 or 1 
+ OUTPUTS: NONE
+ RETURN VALUE: screen x or screen y, else fail
+ IMPACTS ON OTHERS: none
+ */
+int get_screen_pos(int arg){
+    int ret_val = -1;
+    if(arg == 0){ret_val = screen_x;}
+    if(arg == 1){ret_val = screen_y;}
+    return ret_val;
+}
+
+/*
+ NAME: update_screen
+ DESCRIPTION: updates screen x and y based on new termianls info then updates cursor
+ INPUTS:  x and y
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Changes screen_x and screen_y
+ */
+void update_screen(int x, int y){
+    screen_x = x;
+    screen_y = y;
+    update_cursor(screen_x, screen_y);
+    return;
+}
+
+/*
+ NAME: update_screen
+ DESCRIPTION: updates screen x and y based on new termianls info
+ INPUTS:  x and y
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Changes screen_x and screen_y
+ */
+void update_screen_axis(int x, int y){
+    screen_x = x;
+    screen_y = y;
+    return;
 }

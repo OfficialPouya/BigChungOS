@@ -1,6 +1,7 @@
 /* memory.h - This initializes the paging structures.
  * vim:ts=4 noexpandtab
  */
+#pragma once
 
 #include "types.h"
 #include "x86_desc.h"
@@ -19,7 +20,14 @@
 
 // Save the kernel addr and video memory addr
 #define KERNELPG    0x400000
+#define USERPG      0x800000
 #define VIDMEM      0xB8000
 
 /* Enabe paging */
 void paging_init(void);
+
+/* quick function to call to flush TLB */
+void flush_tlb(void);
+
+/* enter process # of desired program space */
+void update_user_addr(int process_num);

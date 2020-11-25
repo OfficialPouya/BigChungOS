@@ -8,6 +8,12 @@ Location of Fix:
 Estimated Time:
 ==============
 
+/*
+|===================================================|
+|					CP 1 BUGS						|
+|===================================================|
+*/
+
 Bug #1
 Bug: IDT was causing Error 13, general fault
 Topic: IDT
@@ -24,14 +30,12 @@ Location of Fix: interrupt_hanlder.c new_link.S
 Estimated Time: 1hr
 
 
-
 Bug #3
 Bug: initiliazed PIC before IDT, unexpected behavior
 Topic: IDT
 Fix: chagned init order
 Location of Fix: kernel.C
 Estimated Time: 30 mins
-
 
 
 Bug #4
@@ -42,12 +46,14 @@ Fix: check after printing if there is a scan code with diff
 Location of Fix: keyboard.c
 Estimated Time: 1hr
 
+
 Bug #5
 Bug: Bootlooping when paging "enabled"
 Topic: Paging
 Fix: Fix the order in which the control registers are set to enable paging. Solution further explained in code @ memory.c
 Location of Fix: memory.c
 Estimated Time: 1 hour
+
 
 Bug #6
 Bug: Bootlooping when testing paging funcitoanlity
@@ -56,6 +62,233 @@ Fix: We're aware that in order to test paging, you need to "break it", but I thi
 Location of Fix: IDT file
 Estimated Time: 1hr
 
+/*
+|===================================================|
+|					CP 2 BUGS						|
+|===================================================|
+*/
+
+Bug #7
+Bug: Keyboard will print diff char on release
+Topic: Keyboard
+Fix: Listned for keypress and key release
+Location of Fix: keyboard.c
+Estimated Time: 1hr
+
+
+Bug #8
+Bug: Backspace was causing page faults
+Topic: Keyboard
+Fix: make sure not to go into negative video mem space. Added IF statement to check if kb_idx is > 0
+Location of Fix: keyboard.c
+Estimated Time: 20 mins
+
+
+Bug #9
+Bug: character max was met before typing 127 chars
+Topic: keyboard
+Fix: had to decrement kb_idx after deleting printed char
+Location of Fix: keyboard.c 
+Estimated Time: 30 mins
+
+
+Bug #10
+Bug: After shifting text up for scrolling the last line would be copied over
+Topic: terminal 
+Fix: clear the line with putting ' '
+Location of Fix: lib.c 
+Estimated Time: 30 mins 
+
+
+Bug #11
+Bug: Frequency of RTC never changing to correct value during testing and only going to highest frequency. 
+Topic: RTC
+Fix: I was passing in the wrong type as the buffer into the write function for RTC in testing. To fix this, I made sure the temporary variable
+used for this argument was of the correct type (int32_t).
+Location of Fix: tests.c
+Estimated Time: 1.5 hours
+
+
+Bug #12
+Bug: Executbale files not printing correct
+Topic: Filesystem
+Fix: We were treating executables just like text files. This is an issue because text files had new lines characters to bring curos to next line. Executable does not have these, so the file overwrote itself on same row until seeing new line character. Had to implement counter to add new line when reading executable.
+Location of Fix: Filesystem.c
+Estimated Time: 4 hours
+
+
+Bug #13
+Bug: Grabbing more data than necessary
+Topic: Filesystem
+Fix: When sstarting to travere the files system, i found that pointer types matter for traversing. For example if you incremnet a 32 bit bointer, you are increasing adresses by 4 bytes. When incrementing 8 bit pointer you are increasing address by one byte.
+Location of Fix: Filesystem.c
+Estimated Time: 1 hour
+
+Bug #14
+Bug: tab would break the buffer
+Topic: keyboard
+Fix: added an if statemnt for the tab scan code 
+Location of Fix: keyboard.c
+Estimated Time: 15 mins
+
+Bug #15
+Bug: last space in last line would not be re-written with ' '
+Topic: putc
+Fix: made sure to re-write the entire line while(idx<NUM_COLS) instead of while(idx<NUM_COLS-1){
+Location of Fix: lib.c
+Estimated Time: 30 mins
+
+/*
+|===================================================|
+|					CP 3 BUGS						|
+|===================================================|
+*/
+
+Bug #16
+Bug: filesys functions did not follow correct arg format
+Topic: Filesystem
+Fix: Had to change function header and logic
+Location of Fix: Filesystem.c & Filesystem.h
+Estimated Time: 7-8 hours
+
+Bug #17
+Bug: design error
+Topic: sys_call wrapper was not being used corerectly
+Fix: isntead of having different call cases for each function, a jumptable is used
+Location of Fix: sys_calls_link.S
+Estimated Time: 1 hour
+
+Bug #18
+Bug: redefinition of structres
+Topic: library usage
+Fix: add pragma once and ifndef, define, and endif in .h file
+Location of Fix: Filesystem.h + some other ones 
+Estimated Time: 1 hour
+
+Bug #19
+Bug: execute could not exit the function properlly
+Topic: Execute
+Fix: had to check bounds better in wrapper
+Location of Fix: sys_calls_link.S
+Estimated Time: 2 hours
+
+Bug #20
+Bug: Could launch halt on base shell
+Topic: halt
+Fix: check pid_counter, if we are on base shell, relaunch shell 
+Location of Fix: sys_calls.c
+Estimated Time: 30 mins
+
+Bug #21
+Bug: Halt failed
+Topic: Halt
+Fix: Had to handle eax in halt
+Location of Fix: sys_calls
+Estimated Time: 2 hours
+
+Bug #22
+Bug: Could not type after shell loaded
+Topic: execute
+Fix: Had to call sti() after keyboard read
+Location of Fix: terminal.c
+Estimated Time: 2 hours
+
+/*
+|===================================================|
+|					CP 4 BUGS						|
+|===================================================|
+*/
+
+Bug #23
+Bug: No new line after hello program
+Topic: terminal
+Fix: got rid of (if statment for \n)
+Location of Fix: terminal.c
+Estimated Time: 15 mins
+
+Bug #24
+Bug: page fault made OS unusable
+Topic: exception handling
+Fix: exceptions now cause user program to halt
+Location of Fix: interrupt_hanlder.c
+Estimated Time: 30 mins
+
+Bug #25
+Bug: no limit for how many user programs could be ran
+Topic: execute 
+Fix: added if statement to print out error message and limit number of programs based on pid_counter
+Location of Fix: sys_calls.c
+Estimated Time: 30 mins
+
+Bug #26
+Bug: wrong way to execute 
+Topic: execute
+Fix: got rid of system calls in execute, used file_read instead 
+Location of Fix: sys_calls.c
+Estimated Time: 2hrs
+
+Bug #27
+Bug: maxing out kb buffer would cause page fault
+Topic: args 
+Fix: added more conditional statements in parseing part of execute
+Location of Fix: sys_calls.c
+Estimated Time: 2.5 hours
+
+Bug #28
+Bug: verylargefilewithverylongname.tx was read when verylargefilewithverylongname.txt was typed
+Topic: file_read
+Fix: added conditional statements to make sure for 100% match, nothing more, nothing less
+Location of Fix: filesys.c
+Estimated Time: 1hr
+
+Bug #29
+Bug: do not read entire file for cat
+Topic: file_read
+Fix: Needed to fix the algorithm for reading files, in small chunks rather than bigger chunks
+Location of Fix: Filesystem
+Estimated Time: 5 hours
+
+Bug #30
+Bug: VIDMAP not working
+Topic: sys_Calls
+Fix: We didnt have the vidmap syscall in the syscall jump table, even though syscall was getting called, it was never accessible through jump table.
+Location of Fix: sys_call.S
+Estimated Time: 30 min
+
+Bug #31
+Bug: fish looked buggy
+Topic: file_read
+Fix: Had to add unique file read counters in the FD's for open files, global file read counter does not work
+Location of Fix: Filesystem.c/h
+Estimated Time: 1 hour
+
+Bug #32
+Bug: Keyboard buffer not clearing up corerectly with backspace
+Topic: keyboard
+Fix: made current kb_idx value to be new line ('\n') then decremented and made that index be '\n' (null)
+Location of Fix: keyboard.c
+Estimated Time: 30 mins
+
+Bug #33
+Bug: CAT RTC didnt have the wait time
+Topic: RTC & Sys calls
+Fix: opened file 
+Location of Fix: sys_calls.c
+Estimated Time: 1 hr
+
+/*
+|===================================================|
+|					CP 5 BUGS						|
+|===================================================|
+*/
+
+Bug #34
+Bug: Read NULL bytes
+Topic: terminal write
+Fix: added if statement to return on NULL chars
+Location of Fix: lib.c
+Estimated Time: 5 mins
+
 Bug #
 Bug:
 Topic:
@@ -63,7 +296,12 @@ Fix:
 Location of Fix:
 Estimated Time:
 
-
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
 
 Bug #
 Bug:
@@ -71,3 +309,11 @@ Topic:
 Fix:
 Location of Fix:
 Estimated Time:
+
+Bug #
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+

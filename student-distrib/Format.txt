@@ -1,0 +1,62 @@
+Format
+==============
+Bug #1
+Bug: IDT was causing Error 13, general fault
+Topic: IDT
+Fix: We had to init every single value in table, not just the ones we had (256 instead of 50)
+Location of Fix: interrupt_hanlder.c
+Estimated Time:
+
+
+
+Bug #1
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #2
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #3
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #4
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #5
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:
+
+
+
+Bug #6
+Bug:
+Topic:
+Fix:
+Location of Fix:
+Estimated Time:

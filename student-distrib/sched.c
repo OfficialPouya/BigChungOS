@@ -32,40 +32,64 @@ void init_PIT(uint32_t freq){
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(void){
-    // uint32_t esp;
-    // uint32_t ebp;
-    // pit_helper(ebp, esp);
-    // /*
-    //     * load the new scheduled tss
-    //     * page the video mem that we want to write to  OR  map into the video buff 
-    // */
-    // // load the new scheduled tss
-    // tss = terminals[curr_terminal].save_tss;
-    // ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    // esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
+    uint32_t esp;
+    uint32_t ebp;
+    asm volatile(
+        "movl %%ebp, %0;"
+        "movl %%esp, %1"
+    : "=r"(ebp), "=r"(esp)
+    :
+    );
+    // save the current scheduled tss
+    terminals[curr_terminal].save_tss = tss;
+    all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
+    all_pcbs[terminals[curr_terminal].curr_process].esp_task = esp;
+    terminals[curr_terminal].screen_x = get_screen_pos(0);
+    terminals[curr_terminal].screen_y = get_screen_pos(1);
 
-    // // page the video mem that we want to write to
-    // if(curr_terminal == on_screen){
-    //     // map the video page [idk how to do this PAUL]
-    // }
-    // else{
-    //     // map into the buffer [idk how to do this PAUL]
-    // }
-    // int sc_x;
-    // int sc_y;
-    // sc_x = terminals[curr_terminal].screen_x;
-    // sc_y = terminals[curr_terminal].screen_y;
-    // update_screen_axis(sc_x, sc_y);
-    // // map the page [idk how to do this PAUL]
+    curr_terminal = (curr_terminal+1) % NUMBER_OF_TERMINALS;
+    if (pit_counter < 3){
+        //curr_terminal = pit_counter;
+        switch_terminal_work(pit_counter);
+        pit_counter++;
+        terminals[curr_terminal].screen_x = get_screen_pos(0);
+        terminals[curr_terminal].screen_y = get_screen_pos(1);
+        send_eoi(0);
+        printf("sys_execute #%d\n", pid_counter);
+        sys_execute((uint8_t*)"shell");
+        return;
+    }
+    /*
+        * load the new scheduled tss
+        * page the video mem that we want to write to  OR  map into the video buff 
+    */
+    // load the new scheduled tss
+    tss = terminals[curr_terminal].save_tss;
+    ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
+    esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
 
-    // asm volatile(
-    //     "movl %0, %%ebp;"
-    //     "movl %1, %%esp"
-    // :
-    // : "r"(ebp), "r"(esp)
-    // );
-    // printf("pit test #%d\n", test_val);
-    // est_val++;
+    // page the video mem that we want to write to
+    if(curr_terminal == on_screen){
+        // map the video page [idk how to do this PAUL]
+    }
+    else{
+        // map into the buffer [idk how to do this PAUL]
+    }
+    int sc_x;
+    int sc_y;
+    sc_x = terminals[curr_terminal].screen_x;
+    sc_y = terminals[curr_terminal].screen_y;
+    update_screen_axis(sc_x, sc_y);
+    // map the page [idk how to do this PAUL]
+
+    asm volatile(
+        "movl %0, %%ebp;"
+        "movl %1, %%esp"
+    :
+    : "r"(ebp), "r"(esp)
+    );
+    printf("pit test #%d\n", test_val);
+    test_val++;
     send_eoi(0); // PIT IRQ is 0
     return;
 }
@@ -93,11 +117,11 @@ void start_terminals(void){
         // add pids per counter array
         memset(terminals[idx].buf_kb, 0, KB_BUFFER_SIZE);
 
-        curr_terminal = idx;
-        switch_terminal_work(idx);
-        sys_execute((uint8_t*)"shell");
+        // curr_terminal = idx;
+        // switch_terminal_work(idx);
+        // sys_execute((uint8_t*)"shell");
     }
-
+    pit_counter = 0;
     curr_terminal = 0;
     return;
 }

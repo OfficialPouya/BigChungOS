@@ -22,6 +22,7 @@
 // and channel operation
 #define ACCESS_LO_HI 0x30
 int test_val;
+int pit_counter;
 void init_PIT(uint32_t freq);
 void pit_handler();
 uint8_t on_screen; // flag 0,1,2 which terminal should be shown

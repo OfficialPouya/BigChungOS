@@ -24,17 +24,17 @@
 int test_val;
 void init_PIT(uint32_t freq);
 void pit_handler();
-volatile interrupt_counter_pit;
 uint8_t on_screen; // flag 0,1,2 which terminal should be shown
 uint8_t curr_terminal;
 typedef struct terminal_t {
     uint8_t screen_x; // screen logical location x
     uint8_t screen_y; // screen logical location y
     uint8_t curr_idx; // current location in command
-    int pid_shell;  //current shell that corresponds to this terminal
+    int ProcPerTerm;  // amnt of processes per terminal
     uint8_t* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;
     char buf_kb[KB_BUFFER_SIZE];
+    int procs[6];
     int curr_process;
     tss_t save_tss;
     int num_chars;
@@ -43,6 +43,6 @@ typedef struct terminal_t {
 terminal_t terminals[NUMBER_OF_TERMINALS];
 
 void start_terminals();
-void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal);
-void pit_helper(uint32_t ebp,uint32_t esp);
+void switch_terminal_work(int target_terminal);
+void switch_terminal_keypress(int target_terminal);
 #endif

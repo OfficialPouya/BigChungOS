@@ -196,6 +196,8 @@ int32_t sys_execute(const uint8_t *command){
     int32_t eip_data;
     if(-1 != (eip_data = exec_check(filename))){
         ++pid_counter;
+        terminals[curr_terminal].procs[terminals[curr_terminal].ProcPerTerm] = pid_counter;
+        terminals[curr_terminal].ProcPerTerm++;
         init_pcb(pid_counter);
         // then do what needs to be done with exec
         //paging, call change address fucntion
@@ -218,7 +220,7 @@ int32_t sys_execute(const uint8_t *command){
         "movl %%esp, %1;"
         :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
     );
-    ++pid_counter;
+
     asm volatile (
         "pushl %0;"
         "pushl %1;"
@@ -244,6 +246,7 @@ int32_t sys_execute(const uint8_t *command){
  */
 int32_t sys_halt(uint8_t status){
     uint32_t status_num = (uint32_t) status;
+    // closes all fds bleonigng to a process
     int fdt_loop;
     for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
       all_pcbs[pid_counter].fdt[fdt_loop].exists=-1;
@@ -273,7 +276,7 @@ int32_t sys_halt(uint8_t status){
         "movl %1, %%esp;"
         "movl %2, %%eax"
         :
-        :"r"(all_pcbs[pid_counter].old_ebp), "r"(all_pcbs[pid_counter].old_esp) ,"r" (status_num)
+        :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
     );
     if(flag_exception==1){
         flag_exception = 0;
@@ -395,3 +398,5 @@ int32_t sys_vidmap(uint8_t **screen_start){
     *screen_start = (uint8_t*)(0x84b8000);
     return 0;
 }
+
+

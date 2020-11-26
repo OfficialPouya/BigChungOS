@@ -301,4 +301,3 @@ int32_t exec_check(const uint8_t* filename){
 
     return (*(temp_ptr+6));
 }
-

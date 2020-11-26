@@ -221,14 +221,17 @@ void keyboard_handler() {
         if(scan_code == 0x3B){
             clear();
             printf("terminal 1 selected");
+            // adding swithch terminal function
         }
         else if(scan_code == 0x3C){
             clear();
             printf("terminal 2 selected");
+            // adding swithch terminal function
         }
         else if(scan_code == 0x3D){
             clear();
             printf("terminal 3 selected");
+            // adding swithch terminal function
         }
     }
     send_eoi(IRQ_KB);
@@ -287,7 +290,7 @@ int special_key_check(unsigned int code){
  RETURN VALUE: kb_idx, char_count or -1
  IMPACTS ON OTHERS: NONE
  */
-get_kb_info(int arg){
+int get_kb_info(int arg){
     int ret_val = -1;
     if(arg == 0){ret_val = kb_idx;}
     if(arg == 1){ret_val = char_count;}

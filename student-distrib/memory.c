@@ -73,22 +73,22 @@ void paging_init(void) {
             page_table1[i] |= VIDMEM;
         }
 
-        if(i == (0xBC000>>ENTRY4KB)){
+        if(i == (TERM0>>ENTRY4KB)){
             page_table1[i] |= P;
             page_table1[i] |= RW;
-            page_table1[i] |= 0xBC000;
+            page_table1[i] |= TERM0;
         }
 
-        if(i == (0xC0000>>ENTRY4KB)){
+        if(i == (TERM1>>ENTRY4KB)){
             page_table1[i] |= P;
             page_table1[i] |= RW;
-            page_table1[i] |= 0xC0000;
+            page_table1[i] |= TERM1;
         }
 
-        if(i == (0xC4000>>ENTRY4KB)){
+        if(i == (TERM2>>ENTRY4KB)){
             page_table1[i] |= P;
             page_table1[i] |= RW;
-            page_table1[i] |= 0xC4000;
+            page_table1[i] |= TERM2;
         }
         // These are 1022 empty table entries blanked, all pages in MP3 will be RW enabled
         else {

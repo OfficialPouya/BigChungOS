@@ -11,6 +11,7 @@
 #include "FileSystem.h"
 #include "memory.h"
 #include "x86_desc.h"
+#include "sched.h"
 
 #define MAX_FD_AMNT 8
 #define NUM_ARGS 1024

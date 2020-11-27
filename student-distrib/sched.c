@@ -32,17 +32,63 @@ void init_PIT(uint32_t freq){
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(void){
-    send_eoi(0); // PIT IRQ is 0
+    uint32_t esp;
+    uint32_t ebp;
+    // saving parent ebp and esp
+    asm volatile(
+        "movl %%ebp, %0;"
+        "movl %%esp, %1"
+    : "=r"(ebp), "=r"(esp)
+    :
+    );
+    // save the current scheduled tss
+    terminals[curr_terminal].save_tss = tss;
+    all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
+    all_pcbs[terminals[curr_terminal].curr_process].esp_task = esp;
+    terminals[curr_terminal].screen_x = get_screen_pos(0);
+    terminals[curr_terminal].screen_y = get_screen_pos(1);
+
+    curr_terminal = (curr_terminal+1) % NUMBER_OF_TERMINALS;
     
-    //all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
-
-
-    if(pit_count<3){
-        printf("PIT INT %d\n", pit_count);
+    if (pit_count < 3){
+        //curr_terminal = pit_counter;
+        switch_terminal_work(pit_count);
+        terminals[curr_terminal].screen_x = get_screen_pos(0);
+        terminals[curr_terminal].screen_y = get_screen_pos(1);
         pit_count++;
+        send_eoi(0); // PIT IRQ is 0
         sys_execute((uint8_t*)"shell");
+        return;
     }
-    
+
+    else if (pit_count == NUMBER_OF_TERMINALS){
+        switch_terminal_work(0);
+        pit_count++;
+    }
+    /*
+        * load the new scheduled tss
+        * page the video mem that we want to write to  OR  map into the video buff 
+    */
+    // load the new scheduled tss
+    tss = terminals[curr_terminal].save_tss;
+    ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
+    esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
+
+    int sc_x;
+    int sc_y;
+    sc_x = terminals[curr_terminal].screen_x;
+    sc_y = terminals[curr_terminal].screen_y;
+    update_screen_axis(sc_x, sc_y);
+    // map the page [idk how to do this PAUL]
+
+    asm volatile(
+        "movl %0, %%ebp;"
+        "movl %1, %%esp"
+    :
+    : "r"(ebp), "r"(esp)
+    );
+
+    send_eoi(0); // PIT IRQ is 0
     return;
 }
 
@@ -97,16 +143,17 @@ void switch_terminal_work(int target_terminal){
     */ 
 
     // SAVE CURR TERMINAL VALUES BACK INTO ITS PROPPER STRUCT
-    terminals[curr_terminal].screen_x = get_screen_pos(0);
-    terminals[curr_terminal].screen_y = get_screen_pos(1);
-    terminals[curr_terminal].curr_idx = get_kb_info(0);
-    terminals[curr_terminal].num_chars = get_kb_info(1);
-    memcpy(terminals[curr_terminal].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
+    terminals[on_screen].screen_x = get_screen_pos(0);
+    terminals[on_screen].screen_y = get_screen_pos(1);
+    terminals[on_screen].curr_idx = get_kb_info(0);
+    terminals[on_screen].num_chars = get_kb_info(1);
+    memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
+    // memcpy(terminals[on_screen].video_buffer, (void*)MAIN_VIDEO, KB_FOUR_OFFSET);
 
     // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-
+    // memcpy((void*)MAIN_VIDEO, terminals[on_screen].video_buffer, KB_FOUR_OFFSET);
     // SCREEN DATA CONTROL
     // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
     // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
@@ -126,7 +173,7 @@ void switch_terminal_work(int target_terminal){
         }
         flush_tlb();
     }
-
+    on_screen = target_terminal;
     return;
 }
 

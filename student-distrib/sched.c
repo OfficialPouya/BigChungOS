@@ -1,7 +1,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "sched.h"
-volatile uint8_t pit_count = 0; // counter for our 3 initial shells
+volatile uint32_t pit_count = 0; // counter for our 3 initial shells
 
 
 void init_PIT(uint32_t freq){
@@ -32,41 +32,17 @@ void init_PIT(uint32_t freq){
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(void){
-    // uint32_t esp;
-    // uint32_t ebp;
-    // pit_helper(ebp, esp);
-    // /*
-    //     * load the new scheduled tss
-    //     * page the video mem that we want to write to  OR  map into the video buff 
-    // */
-    // // load the new scheduled tss
-    // tss = terminals[curr_terminal].save_tss;
-    // ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    // esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
-
-    // // page the video mem that we want to write to
-    // if(curr_terminal == on_screen){
-    //     // map the video page [idk how to do this PAUL]
-    // }
-    // else{
-    //     // map into the buffer [idk how to do this PAUL]
-    // }
-    // int sc_x;
-    // int sc_y;
-    // sc_x = terminals[curr_terminal].screen_x;
-    // sc_y = terminals[curr_terminal].screen_y;
-    // update_screen_axis(sc_x, sc_y);
-    // // map the page [idk how to do this PAUL]
-
-    // asm volatile(
-    //     "movl %0, %%ebp;"
-    //     "movl %1, %%esp"
-    // :
-    // : "r"(ebp), "r"(esp)
-    // );
-    // printf("pit test #%d\n", test_val);
-    // est_val++;
     send_eoi(0); // PIT IRQ is 0
+    
+    //all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
+
+
+    if(pit_count<3){
+        printf("PIT INT %d\n", pit_count);
+        pit_count++;
+        sys_execute((uint8_t*)"shell");
+    }
+    
     return;
 }
 
@@ -92,10 +68,6 @@ void start_terminals(void){
         terminals[idx].curr_process = -1;
         // add pids per counter array
         memset(terminals[idx].buf_kb, 0, KB_BUFFER_SIZE);
-
-        curr_terminal = idx;
-        switch_terminal_work(idx);
-        sys_execute((uint8_t*)"shell");
     }
 
     curr_terminal = 0;

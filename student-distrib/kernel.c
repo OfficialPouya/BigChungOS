@@ -176,10 +176,10 @@ void entry(unsigned long magic, unsigned long addr) {
 #endif
     /* Execute the first program ("shell") ... */
     pid_counter = -1;
-    //start_terminals();
-    //init_PIT(20); // starting PIT freq is 20
+    start_terminals();
+    init_PIT(20); // starting PIT freq is 20
 
-    sys_execute((uint8_t*)"shell");
+    //sys_execute((uint8_t*)"shell");
     //sys_execute((uint8_t*)"testprint");
     //sys_execute((uint8_t*)"ls");
     //sys_execute((uint8_t*)"syserr");

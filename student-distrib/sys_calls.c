@@ -225,12 +225,15 @@ int32_t sys_execute(const uint8_t *command){
         "pushl %0;"
         "pushl %1;"
         "pushfl;"
+        "popl %%eax;"
+        "orl $0x200, %%eax;"
+        "pushl %%eax;"
         "pushl %2;"
         "pushl %3;"
         "iret"
         :
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (USER_CS), "r" (eip_data)
-        : "memory"
+        : "eax", "memory"
     );
     // 0x83FFFFC, is the bottom of the USER page - 4B.
     return 0;

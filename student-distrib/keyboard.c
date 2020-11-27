@@ -220,17 +220,17 @@ void keyboard_handler() {
     if(flag_keys[3]==1){
         if(scan_code == 0x3B){
             clear();
-            printf("terminal 1 selected");
+            printf("terminal 1 selected \n");
             // adding swithch terminal function
         }
         else if(scan_code == 0x3C){
-            clear();
-            printf("terminal 2 selected");
+            clear(); 
+            printf("terminal 2 selected \n");
             // adding swithch terminal function
         }
         else if(scan_code == 0x3D){
-            clear();
-            printf("terminal 3 selected");
+            clear();  
+            printf("terminal 3 selected \n");
             // adding swithch terminal function
         }
     }

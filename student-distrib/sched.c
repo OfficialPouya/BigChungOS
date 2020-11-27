@@ -74,13 +74,30 @@ void pit_handler(void){
     ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
     esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
 
+    if (curr_terminal == on_screen){
+        page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+        flush_tlb();
+    }
+
+    else{
+        switch(curr_terminal) {
+            case 0:
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;    
+            case 1:
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+            case 2:
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;    
+        }
+        flush_tlb();
+    }
+    
     int sc_x;
     int sc_y;
     sc_x = terminals[curr_terminal].screen_x;
     sc_y = terminals[curr_terminal].screen_y;
     update_screen_axis(sc_x, sc_y);
     // map the page [idk how to do this PAUL]
-
+    // switch_terminal_work(curr_terminal);
     asm volatile(
         "movl %0, %%ebp;"
         "movl %1, %%esp"
@@ -105,6 +122,14 @@ void pit_handler(void){
 void start_terminals(void){
     int idx;
     on_screen = 0;
+
+    terminals[0].video_buffer = (uint8_t *) TERM0;
+    memset((void *) TERM0, 0, KB_FOUR_OFFSET);
+    terminals[1].video_buffer = (uint8_t *) TERM1;
+    memset((void *) TERM1, 0, KB_FOUR_OFFSET);
+    terminals[2].video_buffer = (uint8_t *) TERM2;
+    memset((void *) TERM2, 0, KB_FOUR_OFFSET);
+
     for(idx=0; idx<NUMBER_OF_TERMINALS; idx++){
         terminals[idx].ProcPerTerm = 0;
         terminals[idx].screen_x = 0;
@@ -148,12 +173,12 @@ void switch_terminal_work(int target_terminal){
     terminals[on_screen].curr_idx = get_kb_info(0);
     terminals[on_screen].num_chars = get_kb_info(1);
     memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
-    // memcpy(terminals[on_screen].video_buffer, (void*)MAIN_VIDEO, KB_FOUR_OFFSET);
+    memcpy(terminals[on_screen].video_buffer, (void*)MAIN_VIDEO, KB_FOUR_OFFSET);
 
     // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-    // memcpy((void*)MAIN_VIDEO, terminals[on_screen].video_buffer, KB_FOUR_OFFSET);
+    memcpy((void*)MAIN_VIDEO, terminals[on_screen].video_buffer, KB_FOUR_OFFSET);
     // SCREEN DATA CONTROL
     // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
     // TWO CASES, WORKED ONE IS ON SCREEN OR NOT

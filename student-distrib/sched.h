@@ -11,7 +11,7 @@
 #define NUMBER_OF_TERMINALS 3
 #define KB_FOUR_OFFSET 4096
 #define MAIN_VIDEO 0xB8000
-#define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET) 
+#define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET)
 #define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
 #define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
 #define MAX_PIT_FREQ 1193182
@@ -38,7 +38,7 @@ typedef struct terminal_t {
     int procs[6];
     int curr_process;
     tss_t save_tss;
-    int num_chars;
+    int char_count;
 } terminal_t;
 
 terminal_t terminals[NUMBER_OF_TERMINALS];

@@ -51,10 +51,10 @@ int idt_test(){
 
 /*
  NAME: div_z
- DESCRIPTION: tries to divide by 0 
+ DESCRIPTION: tries to divide by 0
  INPUTS: NONE
  OUTPUTS: NONE
- RETURN VALUE: Should never reach return 0 
+ RETURN VALUE: Should never reach return 0
  IMPACTS ON OTHERS: should cause exception
  */
 int div_z(){
@@ -73,7 +73,7 @@ int div_z(){
 * Outputs: PASS/FAIL
 * Side Effects: None
 * Coverage: init paging
-* Files: memory.c/.h 
+* Files: memory.c/.h
 */
 int page_test_null() {
 	TEST_HEADER;
@@ -93,7 +93,7 @@ int page_test_null() {
 * Outputs: PASS/FAIL
 * Side Effects: None
 * Coverage: init paging
-* Files: memory.c/.h 
+* Files: memory.c/.h
 */
 int page_test_deref_out() {
 	TEST_HEADER;
@@ -115,8 +115,8 @@ int page_test_deref_out() {
  IMPACTS ON OTHERS: none
  */
 int rtc_test(){
-	uint32_t freq; 
-	int i; 
+	uint32_t freq;
+	int i;
 	clear();
 	rtc_open(0);
 	for(freq = 2; freq <= 1024; freq *= 2){
@@ -133,7 +133,7 @@ int rtc_test(){
 }
 /*
  NAME: rtc_bad_input_test1
- DESCRIPTION: tests bad input for frequency (frequency > 1024), should cause RTC to not do anything. 
+ DESCRIPTION: tests bad input for frequency (frequency > 1024), should cause RTC to not do anything.
  INPUTS: NONE
  OUTPUTS: NONE
  RETURN VALUE: Should return PASS
@@ -149,7 +149,7 @@ int rtc_bad_input_test1(){
 }
 /*
  NAME: rtc_bad_input_test2
- DESCRIPTION: tests bad input for buffer pointer, should cause RTC to not do anything. 
+ DESCRIPTION: tests bad input for buffer pointer, should cause RTC to not do anything.
  INPUTS: NONE
  OUTPUTS: NONE
  RETURN VALUE: Should return PASS
@@ -164,7 +164,7 @@ int rtc_bad_input_test2(){
 }
 /*
  NAME: rtc_bad_input_test3
- DESCRIPTION: tests bad input for nbytes, should cause RTC to not do anything. 
+ DESCRIPTION: tests bad input for nbytes, should cause RTC to not do anything.
  INPUTS: NONE
  OUTPUTS: NONE
  RETURN VALUE: Should return PASS
@@ -172,7 +172,7 @@ int rtc_bad_input_test2(){
  */
 int rtc_bad_input_test3(){
 	TEST_HEADER;
-	uint32_t freq = 2; 
+	uint32_t freq = 2;
 	rtc_open(0);
 	rtc_write(0,(void*)&freq,3);
 	rtc_close(0);
@@ -182,7 +182,7 @@ int rtc_bad_input_test3(){
 
 /*
  NAME: read_test
- DESCRIPTION: counts numbers of bits read 
+ DESCRIPTION: counts numbers of bits read
  INPUTS: NONE
  OUTPUTS: NONE
  RETURN VALUE: Should return PASS
@@ -211,21 +211,21 @@ int read_test(){
 	test_buffer[15] = '\n';
 	printf("\nPRESS ENTER TO RUN");
 	// number 16 is size of the buffer here
-	// number 2 is the fd number 
-	memmove(keyboard_buffer, &test_buffer, 16);
-    tst = terminal_read(2, keyboard_buffer, 16);
+	// number 2 is the fd number
+	memmove(terminals[curr_terminal].buf_kb, &test_buffer, 16);
+    tst = terminal_read(2, terminals[curr_terminal].buf_kb, 16);
 
-    if (tst != 15) {results = FAIL;} 
+    if (tst != 15) {results = FAIL;}
 	else {results = PASS;}
 
-    memset(&keyboard_buffer, 0, 128);
+    memset(&terminals[curr_terminal].buf_kb, 0, 128);
 
     return results;
 }
 
 /*
  NAME: write_test
- DESCRIPTION: writes the number of bits from buffer passed to terminal 
+ DESCRIPTION: writes the number of bits from buffer passed to terminal
  INPUTS: NONE
  OUTPUTS: NONE
  RETURN VALUE: Should return PASS
@@ -242,7 +242,7 @@ int write_test() {
     test_buffer[2] = '1';
 
     // number 3 is the size of the buffer here
-	// number 2 is the fd number 
+	// number 2 is the fd number
     temp = terminal_write(2, test_buffer, 3);
 
     if (temp != 3) {result = FAIL;}
@@ -266,9 +266,9 @@ int read_n_write_test() {
 	//char test_buffer[128];
 	while(1){
 		printf("Type something: ");
-		tst = terminal_read(2, keyboard_buffer, 128);
+		tst = terminal_read(2, terminals[curr_terminal].buf_kb, 128);
 		printf("\nYou typed: ");
-		temp = terminal_write(2, keyboard_buffer, 128);
+		temp = terminal_write(2, terminals[curr_terminal].buf_kb, 128);
 		result = PASS;
 		break;
 	}
@@ -278,22 +278,22 @@ int read_n_write_test() {
 
 
 
-/* Check if can open, close, and write files 
+/* Check if can open, close, and write files
 *
 * Should print pcb before and after open/close
-* write should print -1, as expected 
+* write should print -1, as expected
 *
 * Inputs: None
 * Outputs: Should display contents of primitive pcb
 * Side Effects: None
 * Coverage: file system
-* Files: FileSystem.c/.h 
+* Files: FileSystem.c/.h
 */
 // void open_close_write_test() {
 // 	int i;
 // 	uint8_t* temp;
 // 	temp = (uint8_t*)"frame1.txt";
-	
+
 // 	clear();
 // 	printf("Before fopen: ");
 // 	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
@@ -306,7 +306,7 @@ int read_n_write_test() {
 // 	for(i = 0; i < 8; i++){printf("%d, ", inode_list[i].inode_num);}
 // }
 
-/* Home Brew LS 
+/* Home Brew LS
 *
 * Should print filenames of all files in file system
 *
@@ -314,7 +314,7 @@ int read_n_write_test() {
 * Outputs: All 17 items in file system
 * Side Effects: None
 * Coverage: file system
-* Files: FileSystem.c/.h 
+* Files: FileSystem.c/.h
 */
 // void dir_read_test() {
 // 	clear();
@@ -331,7 +331,7 @@ int read_n_write_test() {
 * Outputs: file data
 * Side Effects: None
 * Coverage: file system
-* Files: FileSystem.c/.h 
+* Files: FileSystem.c/.h
 */
 // void file_read_test() {
 // 	uint8_t temper[5280];			// 5280 is the size of the largest amount of bytes we need to read for this checkpoint
@@ -347,7 +347,7 @@ int read_n_write_test() {
 // 	clear();
 // 	fd = file_open(temp);
 // 	file_read(fd, temper, 5000);
-	
+
 // 	int i;
 // 	for (i = 0; i < 5000; i++){
 // 		putc(temper[i]);
@@ -373,7 +373,7 @@ int read_n_write_test() {
 
 void launch_tests(){
 	// launch your tests here
-	
+
 
 
 /*
@@ -390,7 +390,7 @@ void launch_tests(){
 	// PAGING TEST
 		//TEST_OUTPUT("page_test_null", page_test_null());
 		//TEST_OUTPUT("page_test_deref_out", page_test_deref_out());
-	
+
 /*
 |===================================================|
 |					CP 2 Tests						|
@@ -400,13 +400,13 @@ void launch_tests(){
 		//open_close_write_test();
 		//dir_read_test();
 		//file_read_test();
-	
+
 	// RTC TESTS
 		//TEST_OUTPUT("rtc_test", rtc_test());
 		//TEST_OUTPUT("rtc_bad_input_test1", rtc_bad_input_test1());
 		//TEST_OUTPUT("rtc_bad_input_test2", rtc_bad_input_test2());
 		//TEST_OUTPUT("rtc_bad_input_test3", rtc_bad_input_test3());
-	
+
 	// TERMINAL TESTS
 		// TEST_OUTPUT("terminal_read", read_test());
 		// printf("\n");

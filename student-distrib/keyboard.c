@@ -112,7 +112,7 @@ void keyboard_handler() {
     // cli();
     scan_code = inb(PORT_NUM_KB);
 /*
-        
+
 |===================================================|
 |					Magic Numbers					|
 |===================================================|
@@ -122,7 +122,7 @@ void keyboard_handler() {
     0x1D        ==> Press Control
     0x38        ==> Press Alt
     0xAA & 0xB6 ==> Release Shift
-    0x9D        ==> Release Control 
+    0x9D        ==> Release Control
     0xB8        ==> Release Alt
 
             FLAG MAP
@@ -139,12 +139,12 @@ void keyboard_handler() {
     if(scan_code == 0x3A){flag_keys[1] = ~flag_keys[1];}  //CAPS LOCK
     if(scan_code == 0x1D){flag_keys[2]=1;}  // CONTROL
     if(scan_code == 0x38){flag_keys[3]=1;}  // ALT
-    
+
     // RELEASE
     if(scan_code == 0xAA || scan_code == 0xB6){flag_keys[0]=0;} // SHIFT
     if(scan_code == 0x9D){flag_keys[2]=0;}  // CONTROL
     if(scan_code == 0xB8){flag_keys[3]=0;}  // ALT
-    if(char_count<127){
+    if(terminals[curr_terminal].char_count<127){
         if((scan_code>ESC_KEY_PRESS && scan_code <= F10_KEY_PRESS) || (scan_code == F11_KEY_PRESS)){
             int case_key;
             /*
@@ -153,7 +153,7 @@ void keyboard_handler() {
             CASE 1: SHIFT
             CASE 2: CAPS
             CASE 3: CAPS + SHIFT
-            CASE 4: CTRL 
+            CASE 4: CTRL
             CASE 5: ALT
             */
             if(flag_keys[0]== 0 && flag_keys[1]== 1){case_key=0;} // NORMAL
@@ -162,34 +162,34 @@ void keyboard_handler() {
             if(flag_keys[0]== 1 && flag_keys[1]== -2){case_key=3;} // SHIFT + CAPS
             //if(flag_keys[2]==1){printf("CONTROL IS PRESSED");}
             //if(flag_keys[3]==1){printf("ALT IS PRESSED");}
-            //Select the correct array 
+            //Select the correct array
             if(case_key==0){key_char = char_array_normal[scan_code];}
             if(case_key==1){key_char = char_array_shift_no_cap[scan_code];}
             if(case_key==2){key_char = char_array_noshift_cap[scan_code];}
             if(case_key==3){key_char = char_array_shift_cap[scan_code];}
             // special_key_check checks if any of the special keys have been pressed
-            // returns 1 if that is the case, thus, it wont print that char 
+            // returns 1 if that is the case, thus, it wont print that char
             // Scan code 0x0E is Backspace
             if((special_key_check(scan_code)!=1) && (scan_code != 0x0E) && (scan_code != 0x1C)){
                 putc(key_char);
-                keyboard_buffer[kb_idx]=key_char;
-                keyboard_buffer[kb_idx+1]='\n';
-                ++kb_idx;
-                ++char_count;
+                terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx]=key_char;
+                terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx+1]='\n';
+                ++terminals[curr_terminal].curr_idx;
+                ++terminals[curr_terminal].char_count;
             }
         }
     }
     // Scan code 0x0E is Backspace
-    if(scan_code==0x0E && kb_idx > 0){
+    if(scan_code==0x0E && terminals[curr_terminal].curr_idx > 0){
         rm_c();
-        // keyboard_buffer[kb_idx]='\n';
-        kb_idx--; 
-        char_count--;
-        keyboard_buffer[kb_idx]='\n';
+        // keyboard_buffer[curr_idx]='\n';
+        terminals[curr_terminal].curr_idx--;
+        terminals[curr_terminal].char_count--;
+        terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx]='\n';
 
     }
 
-    
+
 
     //CTRL+L Handling
     // L ==> 0x26
@@ -201,11 +201,11 @@ void keyboard_handler() {
         update_cursor(x_pos, y_pos);
     }
 
-    if((scan_code == 0x0F) && (kb_idx<127)){
+    if((scan_code == 0x0F) && (terminals[curr_terminal].curr_idx<127)){
         putc(' ');
-        keyboard_buffer[kb_idx]=' ';
-        ++kb_idx;
-        ++char_count;
+        terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx]=' ';
+        ++terminals[curr_terminal].curr_idx;
+        ++terminals[curr_terminal].char_count;
     }
 
 
@@ -213,8 +213,8 @@ void keyboard_handler() {
     if(scan_code == 0x1C){
         putc('\n');
         enter_p_flag = 1;
-        kb_idx = 0;
-        char_count = 0;
+        terminals[curr_terminal].curr_idx = 0;
+        terminals[curr_terminal].char_count = 0;
     }
 
     if(flag_keys[3]==1){
@@ -222,22 +222,25 @@ void keyboard_handler() {
             //clear();
             //printf("terminal 1 selected \n");
             switch_terminal_keypress(0);
+            switch_terminal_work(0);
         }
         else if(scan_code == 0x3C){
-            //clear(); 
+            //clear();
             //printf("terminal 2 selected \n");
             switch_terminal_keypress(1);
+            switch_terminal_work(1);
         }
         else if(scan_code == 0x3D){
-            //clear();  
+            //clear();
             //printf("terminal 3 selected \n");
             switch_terminal_keypress(2);
+            switch_terminal_work(2);
         }
     }
     send_eoi(IRQ_KB);
     // sti();
 }
-    
+
 
 
 
@@ -287,14 +290,12 @@ int special_key_check(unsigned int code){
  DESCRIPTION: returns info about kb
  INPUTS: 0 or 1
  OUTPUTS: none
- RETURN VALUE: kb_idx, char_count or -1
+ RETURN VALUE: curr_idx, char_count or -1
  IMPACTS ON OTHERS: NONE
  */
 int get_kb_info(int arg){
     int ret_val = -1;
-    if(arg == 0){ret_val = kb_idx;}
-    if(arg == 1){ret_val = char_count;}
+    if(arg == 0){ret_val = terminals[curr_terminal].curr_idx;}
+    if(arg == 1){ret_val = terminals[curr_terminal].char_count;}
     return ret_val;
 }
-
-

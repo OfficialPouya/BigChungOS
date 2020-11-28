@@ -179,19 +179,19 @@ void entry(unsigned long magic, unsigned long addr) {
     start_terminals();
     init_PIT(20); // starting PIT freq is 20
     
-    /*page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-    page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
-    flush_tlb();
+    // page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    // page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+    // flush_tlb();
 
-    memset((void *)0xB8000, 0x0720, 1000);  
+    // memset((void *)0xB8000, 'u' , 4096);  
 
-    puts((uint8_t *)"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    // puts((int8_t *)"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 
-    page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-    page_table1[(VIDMEM>>ENTRY4KB)] |= VIDMEM;
-    flush_tlb();
+    // page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    // page_table1[(VIDMEM>>ENTRY4KB)] |= VIDMEM;
+    // flush_tlb();
 
-    memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);*/
+    // memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
 
     //sys_execute((uint8_t*)"shell");
     //sys_execute((uint8_t*)"testprint");

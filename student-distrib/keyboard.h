@@ -1,6 +1,8 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
+#include "sched.h"
+
 // only type 127 chars per line, the extra space is
 // for NULL padding
 #define TYPE_BUFFER_SIZE 128

@@ -582,10 +582,9 @@ void test_interrupts(void) {
  IMPACTS ON OTHERS: none
  */
 int get_screen_pos(int arg){
-    int ret_val = -1;
-    if(arg == 0){ret_val = screen_x;}
-    if(arg == 1){ret_val = screen_y;}
-    return ret_val;
+    if(arg == 0) return screen_x;
+    else if(arg == 1) return screen_y;
+    else return -1;
 }
 
 /*

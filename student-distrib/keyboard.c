@@ -219,19 +219,19 @@ void keyboard_handler() {
 
     if(flag_keys[3]==1){
         if(scan_code == 0x3B){
-            clear();
-            printf("terminal 1 selected \n");
-            // adding swithch terminal function
+            //clear();
+            //printf("terminal 1 selected \n");
+            switch_terminal_keypress(0);
         }
         else if(scan_code == 0x3C){
-            clear(); 
-            printf("terminal 2 selected \n");
-            // adding swithch terminal function
+            //clear(); 
+            //printf("terminal 2 selected \n");
+            switch_terminal_keypress(1);
         }
         else if(scan_code == 0x3D){
-            clear();  
-            printf("terminal 3 selected \n");
-            // adding swithch terminal function
+            //clear();  
+            //printf("terminal 3 selected \n");
+            switch_terminal_keypress(2);
         }
     }
     send_eoi(IRQ_KB);

@@ -22,9 +22,9 @@
 #define KERNELPG    0x400000
 #define USERPG      0x800000
 #define VIDMEM      0xB8000
-#define TERM0       0xB9000
-#define TERM1       0xBA000
-#define TERM2       0xBB000
+#define TERM0       0xBA000
+#define TERM1       0xBC000
+#define TERM2       0xBE000
 
 /* Enabe paging */
 void paging_init(void);

@@ -1,8 +1,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "sched.h"
-volatile uint8_t pit_count = 0; // counter for our 3 initial shells
-
+volatile uint32_t pit_count = 0; // counter for our 3 initial shells
 
 
 void init_PIT(uint32_t freq){
@@ -24,6 +23,7 @@ void init_PIT(uint32_t freq){
     return;
 }
 
+
 /*
  NAME: pit_handler
  DESCRIPTION: keeps tracks of interrupts and spawn new shells at 0, 1, 2 interrupts
@@ -32,47 +32,28 @@ void init_PIT(uint32_t freq){
  RETURN VALUE: NONE
  IMPACTS ON OTHERS: Opens New shells
  */
-void pit_handler(){
-    // uint32_t esp;
-    // uint32_t ebp;
-    // pit_helper(ebp, esp);
-    // /*
-    //     * load the new scheduled tss
-    //     * page the video mem that we want to write to  OR  map into the video buff
-    // */
-    // // load the new scheduled tss
-    // tss = terminals[curr_terminal].save_tss;
-    // ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    // ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    //
-    // // page the video mem that we want to write to
-    // if(curr_terminal == on_screen){
-    //     // map the video page [idk how to do this PAUL]
-    // }
-    // else{
-    //     // map into the buffer [idk how to do this PAUL]
-    // }
-    // int sc_x;
-    // int sc_y;
-    // sc_x = terminals[curr_terminal].screen_x;
-    // sc_y = terminals[curr_terminal].screen_y;
-    // update_screen_axis(sc_x, sc_y);
-    // // map the page [idk how to do this PAUL]
-    //
-    // asm volatile(
-    //     "movl %0, %%ebp;"
-    //     "movl %1, %%esp"
-    // :
-    // : "r"(ebp), "r"(esp)
-    // );
-    printf("pit test #%d\n", test_val);
-    test_val++;
+void pit_handler(void){
+    if(pit_count<NUMBER_OF_TERMINALS){
+        switch_terminal_work(pit_count);
+        pit_count++;
+        printf("Terminal %d\n", pit_count);
+        send_eoi(0); // PIT IRQ is 0
+        sys_execute((uint8_t*)"shell");
+        // terminals[pit_count].procs[0] = pid_counter;
+        // terminals[pit_count].curr_process = pid_counter;
+    }
 
-    send_eoi(0); // PIT IRQ is 0
+    if (pit_count == NUMBER_OF_TERMINALS){
+        switch_terminal_work(0);
+        pit_count++;
+    }
+
+    // call the scheduling function here
+    // make sure to write test functions for this checkpoint
+
+    send_eoi(0);
     return;
 }
-
-
 
 /*
  NAME: start_terminals
@@ -82,27 +63,23 @@ void pit_handler(){
  RETURN VALUE: NONE
  IMPACTS ON OTHERS: initlizes stuff for all 3 terminals (sets stuff to 0 or -1)
  */
-void start_terminals(){
-    terminals[0].video_buffer = (uint8_t *) TERM1_VIDEO;
-    memset((void *) TERM1_VIDEO, 0, KB_FOUR_OFFSET);
-    terminals[1].video_buffer = (uint8_t *) TERM2_VIDEO;
-    memset((void *) TERM2_VIDEO, 0, KB_FOUR_OFFSET);
-    terminals[2].video_buffer = (uint8_t *) TERM3_VIDEO;
-    memset((void *) TERM3_VIDEO, 0, KB_FOUR_OFFSET);
-
+void start_terminals(void){
     int idx;
+    on_screen = 0;
     for(idx=0; idx<NUMBER_OF_TERMINALS; idx++){
-        terminals[idx].pid_shell = idx;
+        terminals[idx].ProcPerTerm = 0;
         terminals[idx].screen_x = 0;
         terminals[idx].screen_y = 0;
         terminals[idx].curr_idx = 0;
         terminals[idx].screen_start = 0;
         terminals[idx].curr_process = -1;
+        // add pids per counter array
         memset(terminals[idx].buf_kb, 0, KB_BUFFER_SIZE);
-        memset(terminals[idx].video_buffer, 0, KB_FOUR_OFFSET);
+        // memset(terminals[idx].procs, 0, PCB_SIZE)
     }
-    on_screen = 0;
+    pit_counter = 0;
     curr_terminal = 0;
+    return;
 }
 
 
@@ -114,12 +91,9 @@ void start_terminals(){
  RETURN VALUE: NONE
  IMPACTS ON OTHERS: saves and restore terminal information
  */
-void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal){
-
+void switch_terminal_work(int target_terminal){
     // QUICK CHECKS + FIX
-    if(target_terminal == on_screen) {return;}
-    if(target_terminal > NUMBER_OF_TERMINALS) {return;}
-    if(curr_terminal != on_screen){curr_terminal=on_screen;}
+    if(target_terminal >= NUMBER_OF_TERMINALS) return;
 
     /*
     MAGIC NUMBERS
@@ -131,65 +105,97 @@ void switch_terminal(uint8_t curr_terminal, uint8_t target_terminal){
     */
 
     // SAVE CURR TERMINAL VALUES BACK INTO ITS PROPPER STRUCT
-    terminals[curr_terminal].screen_x = get_screen_pos(0);
-    terminals[curr_terminal].screen_y = get_screen_pos(1);
-    terminals[curr_terminal].curr_idx = get_kb_info(0);
-    terminals[curr_terminal].num_chars = get_kb_info(1);
-    memcpy(terminals[curr_terminal].video_buffer, (void *) MAIN_VIDEO, KB_FOUR_OFFSET);
-    memcpy(terminals[curr_terminal].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
+    // UNNECESSARY DUE TO CHANGES IN KEYBOARD, TERMINAL, AND LIB
+
+    // terminals[curr_terminal].screen_x = get_screen_pos(0);
+    // terminals[curr_terminal].screen_y = get_screen_pos(1);
+    // terminals[curr_terminal].curr_idx = get_kb_info(0);
+    // terminals[curr_terminal].char_count = get_kb_info(1);
+    // memcpy(terminals[curr_terminal].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
+
+    // SCREEN DATA CONTROL
+    // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
+    // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
+    if(on_screen == target_terminal){
+        page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+        page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+        flush_tlb();
+    }
+
+    else{
+        switch(target_terminal) {
+            case 0:
+                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;
+                flush_tlb();
+                break;
+            case 1:
+                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+                flush_tlb();
+                break;
+            case 2:
+                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
+                flush_tlb();
+                break;
+        }
+    }
+
+    curr_terminal = target_terminal;
 
     // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    memcpy((void *) MAIN_VIDEO, terminals[target_terminal].video_buffer, KB_FOUR_OFFSET);
-    memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-    // magic num 0xB8 index inside page table
-    // page_table1[0xB8] |= MAIN_VIDEO;
-    flush_tlb();
-    on_screen = target_terminal;
-    return;
+    // not needed after changes to keyboard functionality
+    // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
 
+    return;
 }
 
-
 /*
-|===================================================|
-|				Helper Functions		    		|
-|===================================================|
-*/
-
-
-/*
- NAME: pit_helper
- DESCRIPTION: helps save the task state segment, helps handle pit interrupts
- INPUTS:  esp, ebp
+ NAME: switch_terminal_keypress
+ DESCRIPTION: switches viewed terminal
+ INPUTS:  curr_terminal and target_terminal
  OUTPUTS: NONE
  RETURN VALUE: NONE
- IMPACTS ON OTHERS: changes states of TSS and handles data within struct
+ IMPACTS ON OTHERS: points the video bif to correct, and saves and restores vid of rother terminals
  */
-void pit_helper(uint32_t ebp,uint32_t esp){
-    asm volatile(
-        "movl %%ebp, %0;"
-        "movl %%esp, %1"
-        :"=r"(ebp), "=r"(esp)
-    );
-    ++interrupt_counter_pit;
-    // saving the current state of tss (task state segment)
-    terminals[curr_terminal].save_tss = tss;
-    all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
-    all_pcbs[terminals[curr_terminal].curr_process].esp_task = esp;
+void switch_terminal_keypress(int target_terminal){
+    if (target_terminal == on_screen) return;
 
-    if(pit_count < NUMBER_OF_TERMINALS){
-        switch_terminal('\0',pit_count); // helps restore correct information
-        clear(); // clears whatever was on screen from prev terminal
-        terminals[curr_terminal].screen_x = get_screen_pos(0);
-        terminals[curr_terminal].screen_y = get_screen_pos(1);
-        ++pit_count;
-        send_eoi(0); // PIT IRQ is 0
-        sys_execute((uint8_t *)"shell");
+    switch(on_screen) {
+        case 0: // save to term 0
+            memcpy((uint8_t *)TERM0, (uint8_t *)MAIN_VIDEO, 4096);
+            break;
+        case 1: // save to term 1
+            memcpy((uint8_t *)TERM1, (uint8_t *)MAIN_VIDEO, 4096);
+            break;
+        case 2: // save to term 2
+            memcpy((uint8_t *)TERM2, (uint8_t *)MAIN_VIDEO, 4096);
+            break;
     }
-    else if(pit_count == NUMBER_OF_TERMINALS){
-        switch_terminal('\0',0);
-        ++pit_count;
+
+    switch(target_terminal) {
+        case 0: // switch to term 0
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb();
+            memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM0, 4096);
+            break;
+        case 1: // switch to term 1
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb();
+            memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
+            break;
+        case 2: // switch to term 2
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb();
+            memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM2, 4096);
+            break;
     }
+    on_screen = target_terminal;
+
     return;
 }

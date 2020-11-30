@@ -32,9 +32,12 @@ extern int32_t sys_halt(uint8_t status);
 extern int32_t sys_execute(const uint8_t *command);
 extern int32_t sys_getargs(uint8_t *buf, int32_t nbytes);
 extern int32_t sys_vidmap(uint8_t **screen_start);
+extern int32_t sys_set_handler(int32_t signum, void* handler_address);
+extern int32_t sys_sigreturn(void);
 
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes);
 int32_t file_close_helper(int32_t fd);
+// int get_free_pcb();
 
 /*
 FOP
@@ -55,6 +58,7 @@ typedef struct fd_table{
     uint8_t     filename[FILENAME_LEN];
     int         exists; // bool type var: 1 or -1
     uint32_t    file_bytes_read;
+    uint32_t    inode;
 }fd_table;
 
 /*
@@ -68,7 +72,7 @@ typedef struct pcb{
     fd_table fdt[MAX_FD_AMNT]; // we have 8 descriptor tables
     uint8_t args[NUM_ARGS]; // max number of arguments
     int32_t esp_task;
-    int32_t ebp_task; 
+    int32_t ebp_task;
 } pcb;
 
 // pcb first_pcb;
@@ -78,7 +82,7 @@ void init_pcb(int curr_pcb);
 /*
 Array of PCBs to keep track of them
 */
-pcb all_pcbs[6]; // we have 0-5
+pcb all_pcbs[PCB_SIZE]; // we have 0-5
 
 
 #endif

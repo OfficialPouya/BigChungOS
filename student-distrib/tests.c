@@ -2,6 +2,8 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "rtc.h"
+// #include "sys_calls.h"
+// #include "sched.h"
 
 #include "keyboard.h"
 #include "terminal.h"

@@ -144,7 +144,7 @@ void keyboard_handler() {
     if(scan_code == 0xAA || scan_code == 0xB6){flag_keys[0]=0;} // SHIFT
     if(scan_code == 0x9D){flag_keys[2]=0;}  // CONTROL
     if(scan_code == 0xB8){flag_keys[3]=0;}  // ALT
-    if(terminals[curr_terminal].char_count<127){
+    if(terminals[on_screen].char_count<127){
         if((scan_code>ESC_KEY_PRESS && scan_code <= F10_KEY_PRESS) || (scan_code == F11_KEY_PRESS)){
             int case_key;
             /*
@@ -172,20 +172,20 @@ void keyboard_handler() {
             // Scan code 0x0E is Backspace
             if((special_key_check(scan_code)!=1) && (scan_code != 0x0E) && (scan_code != 0x1C)){
                 putc(key_char);
-                terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx]=key_char;
-                terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx+1]='\n';
-                ++terminals[curr_terminal].curr_idx;
-                ++terminals[curr_terminal].char_count;
+                terminals[on_screen].buf_kb[terminals[on_screen].curr_idx]=key_char;
+                terminals[on_screen].buf_kb[terminals[on_screen].curr_idx+1]='\n';
+                ++terminals[on_screen].curr_idx;
+                ++terminals[on_screen].char_count;
             }
         }
     }
     // Scan code 0x0E is Backspace
-    if(scan_code==0x0E && terminals[curr_terminal].curr_idx > 0){
+    if(scan_code==0x0E && terminals[on_screen].curr_idx > 0){
         rm_c();
         // keyboard_buffer[curr_idx]='\n';
-        terminals[curr_terminal].curr_idx--;
-        terminals[curr_terminal].char_count--;
-        terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx]='\n';
+        terminals[on_screen].curr_idx--;
+        terminals[on_screen].char_count--;
+        terminals[on_screen].buf_kb[terminals[on_screen].curr_idx]='\0';
 
     }
 
@@ -201,11 +201,11 @@ void keyboard_handler() {
         update_cursor(x_pos, y_pos);
     }
 
-    if((scan_code == 0x0F) && (terminals[curr_terminal].curr_idx<127)){
+    if((scan_code == 0x0F) && (terminals[on_screen].curr_idx<127)){
         putc(' ');
-        terminals[curr_terminal].buf_kb[terminals[curr_terminal].curr_idx]=' ';
-        ++terminals[curr_terminal].curr_idx;
-        ++terminals[curr_terminal].char_count;
+        terminals[on_screen].buf_kb[terminals[on_screen].curr_idx]=' ';
+        ++terminals[on_screen].curr_idx;
+        ++terminals[on_screen].char_count;
     }
 
 
@@ -213,8 +213,8 @@ void keyboard_handler() {
     if(scan_code == 0x1C){
         putc('\n');
         enter_p_flag = 1;
-        terminals[curr_terminal].curr_idx = 0;
-        terminals[curr_terminal].char_count = 0;
+        terminals[on_screen].curr_idx = 0;
+        terminals[on_screen].char_count = 0;
     }
 
     if(flag_keys[3]==1){
@@ -222,19 +222,19 @@ void keyboard_handler() {
             //clear();
             //printf("terminal 1 selected \n");
             switch_terminal_keypress(0);
-            switch_terminal_work(0);
+            // switch_terminal_work(0);
         }
         else if(scan_code == 0x3C){
             //clear();
             //printf("terminal 2 selected \n");
             switch_terminal_keypress(1);
-            switch_terminal_work(1);
+            // switch_terminal_work(1);
         }
         else if(scan_code == 0x3D){
             //clear();
             //printf("terminal 3 selected \n");
             switch_terminal_keypress(2);
-            switch_terminal_work(2);
+            // switch_terminal_work(2);
         }
     }
     send_eoi(IRQ_KB);
@@ -295,7 +295,7 @@ int special_key_check(unsigned int code){
  */
 int get_kb_info(int arg){
     int ret_val = -1;
-    if(arg == 0){ret_val = terminals[curr_terminal].curr_idx;}
-    if(arg == 1){ret_val = terminals[curr_terminal].char_count;}
+    if(arg == 0){ret_val = terminals[on_screen].curr_idx;}
+    if(arg == 1){ret_val = terminals[on_screen].char_count;}
     return ret_val;
 }

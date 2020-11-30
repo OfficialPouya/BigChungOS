@@ -46,9 +46,9 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
     int count = 0;
     int how_many = 0;
     if(nbytes==0){return how_many;}
-    if(terminals[curr_terminal].buf_kb[0]=='\n'){return how_many;}
+    if(terminals[on_screen].buf_kb[0]=='\n'){return how_many;}
 
-    while(terminals[curr_terminal].buf_kb[count] != '\0'){
+    while(terminals[on_screen].buf_kb[count] != '\0'){
         ++count;
     }
     if(count == nbytes){
@@ -61,11 +61,12 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
         how_many=count;
     }
     //printf("Number of bytes typed: %d \n", how_many);
-    memcpy(buf, terminals[curr_terminal].buf_kb, how_many+1); // copy keyboard buffer into buf
+    memcpy(buf, terminals[on_screen].buf_kb, how_many+1); // copy keyboard buffer into buf
     // set NULL values for the entire keyboard buffer now that the buffer was copied
-    // The value of 128 is the size of the terminals[curr_terminal].buf_kb
+    // The value of 128 is the size of the terminals[on_screen].buf_kb
     enter_p_flag = 0;
-    terminals[curr_terminal].curr_idx = 0;
+    terminals[on_screen].curr_idx = 0;
+    memset(terminals[on_screen].buf_kb, '\0', 128);
     return how_many;
 }
 
@@ -90,8 +91,8 @@ int32_t terminal_write(int32_t fd, const void *buf, int32_t nbytes) {
     }
 
     // printf("HERE");
-    memset(terminals[curr_terminal].buf_kb, '\0', 128);
-    terminals[curr_terminal].curr_idx = 0;
+    // memset(terminals[curr_terminal].buf_kb, '\0', 128);
+    // terminals[curr_terminal].curr_idx = 0;
     // printf(" HERE after mem set %d \n", count);
     return count;
 }

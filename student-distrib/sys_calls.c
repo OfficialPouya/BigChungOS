@@ -131,13 +131,14 @@ int32_t sys_execute(const uint8_t *command){
     // do not want to run more than 6 processes
     // the + 2 is there bc -1 index of pid counter, and we dont want to page fault so +2
     // should we change this to be something with g
-    if(pid_counter+2>PCB_SIZE){
+    int x;
+    x = get_free_pcb();
+    if(get_free_pcb()==-1){
         printf("MAX Program Count reached \n");
         // --pid_counter;
         // sys_execute((uint8_t *) "shell");
         return -1;
     }
-
     // if (terminals[curr_terminal].ProcPerTerm >= 4){
     //     printf("Too many programs on this terminal \n");
     //     return -1;
@@ -155,7 +156,7 @@ int32_t sys_execute(const uint8_t *command){
     //1. PARSE COMMAND FOR FILE NAME
     //check for valid command
     if(command == NULL){
-        all_pcbs[pid_counter].in_use = -1;
+        // all_pcbs[pid_counter].in_use = -1;
         return -1;
     }
 
@@ -194,7 +195,7 @@ int32_t sys_execute(const uint8_t *command){
           printf("Filename is too long :(\n");
           return -1;
         }
-
+        
         all_pcbs[pid_counter].args[j] = command[command_index];
         j++;
         command_index++;
@@ -211,8 +212,8 @@ int32_t sys_execute(const uint8_t *command){
     if (read_dentry_by_name(filename, &temp) == -1) return -1;
     if(-1 != (eip_data = exec_check(temp.inode_num))){
         ++pid_counter;
-
-        init_pcb(pid_counter);
+        
+        // init_pcb(pid_counter);
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
@@ -442,12 +443,13 @@ int32_t sys_sigreturn(void){
   return -1;
 }
 
-// int get_free_pcb(){
-//   int i;
-//   for (i = 0; i < PCB_SIZE; i++){
-//     if (all_pcbs[i].in_use == -1){
-//       return i;
-//     }
-//   }
-//   return -1;
-// }
+int get_free_pcb(){
+  int i;
+  for (i = 0; i < PCB_SIZE; i++){
+    if (all_pcbs[i].in_use == -1){
+        printf("i: %d \n", i);
+      return i;
+    }
+  }
+  return -1;
+}

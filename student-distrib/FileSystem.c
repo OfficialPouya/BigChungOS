@@ -5,6 +5,7 @@
 #include "FileSystem.h"
 #include "lib.h"
 #include "sys_calls.h"
+#include "sched.h"
 
 /*
  NAME: read_dentry_by_name
@@ -151,15 +152,15 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
       return -1;
 
     // confirm that we haven't read the whole file
-    const uint32_t * placeholder = boot_block_ptr + blocksizenorm*(1+all_pcbs[pid_counter].fdt[fd].inode);
-    if(all_pcbs[pid_counter].fdt[fd].file_bytes_read == *placeholder){
+    const uint32_t * placeholder = boot_block_ptr + blocksizenorm*(1+terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].inode);
+    if(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].file_bytes_read == *placeholder){
         // all_pcbs[pid_counter].fdt[fd].file_bytes_read = 0;
         return 0;
     }
 
     // read the data
-    return read_data(all_pcbs[pid_counter].fdt[fd].inode,
-                      all_pcbs[pid_counter].fdt[fd].file_bytes_read, buf, nbytes);
+    return read_data(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].inode,
+                      terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].file_bytes_read, buf, nbytes);
 }
 
 /*

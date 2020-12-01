@@ -1,4 +1,5 @@
 #include "sys_calls.h"
+#include "sched.h"
 
 int fd_index_holder;
 
@@ -38,27 +39,27 @@ int32_t sys_open(const uint8_t *filename) {
     for(t_index=2; t_index<MAX_FD_AMNT; t_index++){
         // used : 1
         // empty : -1
-        if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
+        if(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].exists == -1){
             // set struct items
             // we could store the inode in the pcb's fdt here
-            all_pcbs[pid_counter].fdt[t_index].exists = 1;
-            all_pcbs[pid_counter].fdt[t_index].file_type = temp_dentry.filetype;
+            terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].exists = 1;
+            terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].file_type = temp_dentry.filetype;
             for (floop = 0; floop< FILENAME_LEN; floop++){
-                all_pcbs[pid_counter].fdt[t_index].filename[floop] = temp_dentry.filename[floop];
+                terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].filename[floop] = temp_dentry.filename[floop];
             }
-            all_pcbs[pid_counter].fdt[t_index].inode = temp_dentry.inode_num;
+            terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].inode = temp_dentry.inode_num;
             switch (temp_dentry.filetype){
                 case 0:
-                    all_pcbs[pid_counter].fdt[t_index].fop_ = &rtc_struct;
+                    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].fop_ = &rtc_struct;
                     break;
                 case 1:
-                    all_pcbs[pid_counter].fdt[t_index].fop_ = &dir_struct;
+                    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].fop_ = &dir_struct;
                     break;
                 case 2:
-                    all_pcbs[pid_counter].fdt[t_index].fop_ = &file_struct;
+                    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].fop_ = &file_struct;
                     break;
             }
-            all_pcbs[pid_counter].fdt[t_index].fop_->open(filename);
+            terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[t_index].fop_->open(filename);
             return t_index;
         }
     }
@@ -75,9 +76,9 @@ int32_t sys_open(const uint8_t *filename) {
  */
 int32_t sys_close(int32_t fd) {
     if (fd <= 1 || fd >= MAX_FD_AMNT) return -1;
-    if(all_pcbs[pid_counter].fdt[fd].exists == 1){
-        all_pcbs[pid_counter].fdt[fd].fop_->close(fd);
-        all_pcbs[pid_counter].fdt[fd].exists = -1;
+    if(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists == 1){
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].fop_->close(fd);
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists = -1;
         return 0;
     }
     else return -1;
@@ -95,8 +96,8 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf) return -1;
     // the fd ranges from 0 - 7
     if (fd <= 0 || fd >= MAX_FD_AMNT) return -1;
-    if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
-    return all_pcbs[pid_counter].fdt[fd].fop_->write(fd, buf, nbytes);
+    if(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists == -1) return -1;
+    return terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].fop_->write(fd, buf, nbytes);
 }
 
 /*
@@ -110,8 +111,8 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf) return -1;
     if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL){return -1;}
-    if(all_pcbs[pid_counter].fdt[fd].exists == -1){return -1;}
-    int32_t ret = all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
+    if(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists == -1){return -1;}
+    int32_t ret = terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].fop_->read(fd, buf, nbytes);
     return ret;
 }
 
@@ -155,7 +156,7 @@ int32_t sys_execute(const uint8_t *command){
     //1. PARSE COMMAND FOR FILE NAME
     //check for valid command
     if(command == NULL){
-        all_pcbs[pid_counter].in_use = -1;
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].in_use = -1;
         return -1;
     }
 
@@ -195,7 +196,7 @@ int32_t sys_execute(const uint8_t *command){
           return -1;
         }
 
-        all_pcbs[pid_counter].args[j] = command[command_index];
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].args[j] = command[command_index];
         j++;
         command_index++;
     }
@@ -229,7 +230,7 @@ int32_t sys_execute(const uint8_t *command){
     }
 
     // terminals[curr_terminal].ProcPerTerm++;
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    // terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]]    = pid_counter;
     // terminals[curr_terminal].curr_process++;
 
     // the math: 8MB - (curr pid)*8KB-4B
@@ -239,7 +240,7 @@ int32_t sys_execute(const uint8_t *command){
     asm volatile(
         "movl %%ebp, %0;"
         "movl %%esp, %1;"
-        :"=r"(all_pcbs[pid_counter].old_ebp), "=r"(all_pcbs[pid_counter].old_esp)
+        :"=r"(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].old_ebp), "=r"(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].old_esp)
     );
 
     asm volatile (
@@ -274,9 +275,9 @@ int32_t sys_halt(uint8_t status){
     // we may want to use a variable more related to our terminals
     int fdt_loop;
     for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
-      all_pcbs[pid_counter].fdt[fdt_loop].exists=-1;
+      terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fdt_loop].exists=-1;
     }
-    all_pcbs[pid_counter].in_use = -1;
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].in_use = -1;
     // update the terminal's data here
 
     // if (terminals[curr_terminal].curr_process == 0) would cover a shell being
@@ -312,7 +313,7 @@ int32_t sys_halt(uint8_t status){
         "movl %1, %%esp;"
         "movl %2, %%eax"
         :
-        :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
+        :"r"(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process + 1]].old_ebp), "r"(terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process + 1]].old_esp) ,"r" (status_num)
     );
     if(flag_exception==1){
         flag_exception = 0;
@@ -331,33 +332,33 @@ int32_t sys_halt(uint8_t status){
  */
 void init_pcb(int curr_pcb){
     int fdt_index;
-    all_pcbs[curr_pcb].in_use = 1;
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].in_use = 1;
     // only 6 processes
     for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
-        all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fdt_index].exists = -1;
     }
 
     // the size of our array of args is 1024
     for (fdt_index = 0; fdt_index < NUM_ARGS; fdt_index++){
-        all_pcbs[curr_pcb].args[fdt_index] = 0;
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].args[fdt_index] = 0;
     }
 
     // all files have starting read position = 0
     for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
-        all_pcbs[curr_pcb].fdt[fdt_index].file_bytes_read = 0;
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fdt_index].file_bytes_read = 0;
     }
 
     // stdin members
-    all_pcbs[curr_pcb].fdt[0].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[0].file_type = 3; // the file_type for stdin and out
-    all_pcbs[curr_pcb].fdt[0].exists = 1;
-    all_pcbs[curr_pcb].fdt[0].fop_->open((uint8_t*)"blah");
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[0].fop_ = &terminal_struct;
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[0].file_type = 3; // the file_type for stdin and out
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[0].exists = 1;
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[0].fop_->open((uint8_t*)"blah");
 
     // stdout members
-    all_pcbs[curr_pcb].fdt[1].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[1].file_type = 3; // the file_type for stdin and out
-    all_pcbs[curr_pcb].fdt[1].exists = 1;
-    all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[1].fop_ = &terminal_struct;
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[1].file_type = 3; // the file_type for stdin and out
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[1].exists = 1;
+    terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[1].fop_->open((uint8_t*)"blah");
 }
 
 /*
@@ -370,10 +371,10 @@ void init_pcb(int curr_pcb){
  */
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
     uint32_t temp;
-    if (all_pcbs[pid_counter].fdt[fd].exists == 1){
+    if (terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists == 1){
         // call actual file reading func
         temp = file_read(fd, buf, nbytes);
-        all_pcbs[pid_counter].fdt[fd].file_bytes_read += temp;
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].file_bytes_read += temp;
         return temp;
     }
 
@@ -389,9 +390,9 @@ int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
  IMPACTS ON OTHERS: updates fd table much easier
  */
 int32_t file_close_helper(int32_t fd){
-    if (all_pcbs[pid_counter].fdt[fd].exists == 1){
-        all_pcbs[pid_counter].fdt[fd].exists = -1;
-        all_pcbs[pid_counter].fdt[fd].file_bytes_read = 0;
+    if (terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists == 1){
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].exists = -1;
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]].fdt[fd].file_bytes_read = 0;
         return 0;
     }
 
@@ -409,11 +410,11 @@ int32_t file_close_helper(int32_t fd){
  */
 int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
     int floop;
-    if (all_pcbs[pid_counter-1].args[0] == '\0') return -1;
-    memcpy (buf, all_pcbs[pid_counter-1].args, nbytes);
+    if (terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process - 1]].args[0] == '\0') return -1;
+    memcpy (buf, terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process - 1]].args, nbytes);
     buf[nbytes+1]='\0';
     for (floop = 0; floop < FILENAME_LEN; floop++){
-        all_pcbs[pid_counter-1].args[floop] = '\0';
+        terminals[curr_terminal].TermPCB[terminals[curr_terminal].procs[terminals[curr_terminal].curr_process - 1]].args[floop] = '\0';
     }
     return 0;
 }

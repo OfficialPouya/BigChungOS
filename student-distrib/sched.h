@@ -35,7 +35,6 @@ typedef struct terminal_t {
     // is this variable necessary?
     int ProcPerTerm;  // amnt of processes per terminal
 
-
     uint8_t* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;
     char buf_kb[KB_BUFFER_SIZE];
@@ -43,6 +42,7 @@ typedef struct terminal_t {
     int curr_process; // is this an index to procs?
     tss_t save_tss;
     int char_count;
+    pcb TermPCB[4];
 } terminal_t;
 
 terminal_t terminals[NUMBER_OF_TERMINALS];

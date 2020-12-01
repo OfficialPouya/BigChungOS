@@ -153,11 +153,6 @@ void entry(unsigned long magic, unsigned long addr) {
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
-    int init_idx;
-    for(init_idx =0; init_idx < PCB_SIZE; init_idx++){
-        init_pcb(init_idx);
-        all_pcbs[init_idx].in_use=-1;
-    }
     // char_count = 0;
     // kb_idx = 0; // set kb index to 0
     // bytes_read = 0;

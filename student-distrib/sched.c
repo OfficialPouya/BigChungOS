@@ -33,33 +33,6 @@ void init_PIT(uint32_t freq){
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(void){
-    // uint32_t ebp;
-    // uint32_t esp;
-    // // saving ebp and esp of the current task
-    // asm volatile(
-    //     "movl %%ebp, %0;"
-    //     "movl %%esp, %1"
-    // : "=r"(ebp), "=r"(esp)
-    // :
-    // );
-    
-    /*
-        make an array of PIDS
-        * to keep track of which one are being used 
-        * to keep track of what is the active PID in which terminal
-        array 1: if PID is used or not
-        array 2: if it is running (top most)
-
-        re-mapping the process mem
-    */
-   
-    // terminals[curr_terminal].save_tss = tss;
-    // dont save the entire tss (too big) isntead of saving tss calc using PID
-    // all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
-    // all_pcbs[terminals[curr_terminal].curr_process].esp_task = esp;
-
-    // curr_terminal = (curr_terminal) % NUMBER_OF_TERMINALS; // this is to handle the round robin implementation
-    // for first 3 shells we handle things diff
     if(pit_count<NUMBER_OF_TERMINALS){
         switch_terminal_work(pit_count);
         pit_count++;
@@ -69,30 +42,14 @@ void pit_handler(void){
         // terminals[pit_count].procs[0] = pid_counter;
         // terminals[pit_count].curr_process = pid_counter;
     }
-    // else{
-    //   pit_count++; 
-    //   if(pit_count == 4){pit_count = 0;} 
-    // }
-    
-    // after 3 shells have spawned in, we want to go and wait in terminal 1 (0 index)
-    else if (pit_count == NUMBER_OF_TERMINALS){
+
+    if (pit_count == NUMBER_OF_TERMINALS){
         switch_terminal_work(0);
         pit_count++;
     }
-    // switch_terminal_work(curr_terminal);
-    // to load in the newly scheduled task
-    // tss = terminals[curr_terminal].save_tss;
-    // ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    // esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
 
+    // call the scheduling function here
     // make sure to write test functions for this checkpoint
-    // switch_terminal_work(curr_terminal);
-    //  asm volatile(
-    //     "movl %0, %%ebp;"
-    //     "movl %1, %%esp"
-    // :
-    // : "r"(ebp), "r"(esp)
-    // );
 
     send_eoi(0);
     return;

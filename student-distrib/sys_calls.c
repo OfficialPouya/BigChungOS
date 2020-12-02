@@ -211,7 +211,7 @@ int32_t sys_execute(const uint8_t *command){
     dentry_t temp;
     if (read_dentry_by_name(filename, &temp) == -1) return -1;
     if(-1 != (eip_data = exec_check(temp.inode_num))){
-        ++pid_counter;
+        ++pid_counter; // replace with get pcb
 
         init_pcb(pid_counter);
         // then do what needs to be done with exec
@@ -229,9 +229,8 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     }
 
-    // terminals[curr_terminal].ProcPerTerm++;
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
-    // terminals[curr_terminal].curr_process++;
+    terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    terminals[curr_terminal].curr_process++;
 
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
@@ -282,8 +281,13 @@ int32_t sys_halt(uint8_t status){
 
     // if (terminals[curr_terminal].curr_process == 0) would cover a shell being
     // closed i believe. curr_process being 0 here represents halting the shell
-    --pid_counter;
-    if(pid_counter==-1){
+    --pid_counter;          // replace with free pcb
+    
+    terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = 0;
+    terminals[curr_terminal].curr_process--;
+    
+    
+    if(pid_counter==-1 || terminals[curr_terminal].curr_process == 0){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");

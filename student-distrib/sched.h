@@ -32,9 +32,8 @@ typedef struct terminal_t {
     uint8_t screen_y; // screen logical location y
     uint8_t curr_idx; // current location in command
 
-    // is this variable necessary?
-    int ProcPerTerm;  // amnt of processes per terminal
-
+    uint32_t ebp[6];
+    uint32_t esp[6];
 
     char* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;

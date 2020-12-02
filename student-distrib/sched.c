@@ -70,13 +70,11 @@ void start_terminals(void){
     on_screen = 0;
 
     for(idx=0; idx<NUMBER_OF_TERMINALS; idx++){
-        terminals[idx].ProcPerTerm = 0;
         terminals[idx].screen_x = 0;
         terminals[idx].screen_y = 0;
         terminals[idx].curr_idx = 0;
         terminals[idx].screen_start = 0;
-        terminals[idx].curr_process = -1;
-        
+        terminals[idx].curr_process = 0;
         switch(idx) {
             case 0:
                 terminals[idx].video_buffer = (char *)MAIN_VIDEO;
@@ -126,14 +124,37 @@ void switch_terminal_work(int target_terminal){
     terminals[curr_terminal].screen_y = get_screen_pos(1);
 
     
+    // saving parent ebp and esp
+    asm volatile(
+        "movl %%ebp, %0;"
+        "movl %%esp, %1"
+    : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+    :
+    );
 
+    if (terminals[target_terminal].ebp[terminals[target_terminal].curr_process] != 0){
+        update_user_addr(terminals[target_terminal].procs[terminals[target_terminal].curr_process]);
 
+        // recall ebp and esp
+        asm volatile(
+            "movl %0, %%ebp;"
+            "movl %1, %%esp"
+        :
+        : "r"(terminals[target_terminal].ebp[terminals[target_terminal].curr_process]), "r"(terminals[target_terminal].esp[terminals[target_terminal].curr_process])
+        );
+    }
 
 
     // SCREEN DATA CONTROL
     // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
     // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
     // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+
+    // save current esp
+    // save current ebp
+    // update_user_addr(target pid);
+    // restore target esp
+    // restore target ebp
 
     // change_vid_mem(target_terminal);
     // if(on_screen == target_terminal){

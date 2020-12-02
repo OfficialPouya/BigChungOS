@@ -8,7 +8,7 @@
 /*
  NAME: paging_init
  DESCRIPTION: This sets up all the bits in the already
-                declared paging structures. It also 
+                declared paging structures. It also
                 access cro0, cr3, and cr4 to enable paging
                 and related features.
  IO: NONE
@@ -36,7 +36,7 @@ void paging_init(void) {
             page_directory[i] |= G;
             page_directory[i] |= KERNELPG;
         }
-        
+
         // 33rd directory entry gets mapped to 128MB page reserved for user programs
         // Requires: Present, Read/Write, Page cache, page size, global, and address bits
         if(i == 32){
@@ -113,8 +113,8 @@ void paging_init(void) {
             page_table2[i] |= RW;
         }
     }
-    
-    /* 
+
+    /*
     Setting control registers to enable paging.
     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     $$$       ORDER IS SO IMPORTANT HERE     $$$
@@ -122,10 +122,10 @@ void paging_init(void) {
     Assume, CR0 has paging disabled when starting
     First, Enable PSE, or Page Size Extension
     to enable 4MB pages.
-    Second, Load address of page directory into 
+    Second, Load address of page directory into
     CR3
     Third, Enable paging, leave in protected mode.
-    If you enable paging in real mode you'll 
+    If you enable paging in real mode you'll
     encounter page fault.
     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     $$$       ORDER IS SO IMPORTANT HERE     $$$
@@ -140,8 +140,8 @@ void paging_init(void) {
             "movl %%cr0, %%eax          /* move cr0 to EAX*/                     ;"
             "orl $0x80000000, %%eax     /* 0x80000000 = 32nd bit enables paging*/;"
             "movl %%eax, %%cr0                                                   "
-        : // no outputs 
-        : // no inputs 
+        : // no outputs
+        : // no inputs
         : "eax"
     );
 }
@@ -149,20 +149,20 @@ void paging_init(void) {
 /*
  NAME: flush_tlb
  DESCRIPTION: This simply flushes the TLB by
-              putting same directory back into 
+              putting same directory back into
               cr3.
  IO: NONE
  IMPACTS ON OTHERS: Flushes TLB
  */
 void flush_tlb(void) {
-    /* gets address of same directory, 
+    /* gets address of same directory,
        and puts value back in cr3.
     */
     asm volatile (
             "lea page_directory, %%eax  /* grab address of pd*/                  ;"
             "movl %%eax, %%cr3          /* place into cr3*/                       "
-        : // no outputs 
-        : // no inputs 
+        : // no outputs
+        : // no inputs
         : "eax"
     );
 }
@@ -177,6 +177,7 @@ void flush_tlb(void) {
  IMPACTS ON OTHERS: Changes address pointed by 128MB page
  */
 void update_user_addr(int process_num){
+    // 32 is the index for the user program page
     page_directory[32] &= 0xFFFFF;      // Save all lower 20 bits
     page_directory[32] |= (USERPG+(KERNELPG*process_num));
     flush_tlb();

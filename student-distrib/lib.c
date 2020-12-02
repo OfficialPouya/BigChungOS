@@ -17,6 +17,10 @@ static char* video_mem = (char *)VIDEO;
  * Return Value: none
  * Function: Clears video memory */
 void clear(void) {
+    video_mem = terminals[curr_terminal].video_buffer;
+    if (curr_terminal == on_screen){
+        video_mem = (char *)(VIDEO);
+    }
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
@@ -170,6 +174,10 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    video_mem = terminals[curr_terminal].video_buffer;
+    if (curr_terminal == on_screen){
+        video_mem = (char *)(VIDEO);
+    }
     // if enter has been pressed
     // or new line in file
     if (c == '\0')
@@ -184,17 +192,16 @@ void putc(uint8_t c) {
         if(screen_y>=NUM_ROWS){
             int idx=0;
             // this copies the lines over
-            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
+            memmove((void *) video_mem, (void *) (video_mem + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
                 // clear out the new line that was just created. (over right with NULL)
                 screen_y = NUM_ROWS -1;
                 while(idx<NUM_COLS){
-                    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
-                    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                    *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                    *(uint8_t *) (video_mem + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
                     ++idx;
                 }
         }
     }
-
     else{
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
@@ -205,12 +212,12 @@ void putc(uint8_t c) {
         // checks if we have reached bottom of screen
         if(screen_y>=NUM_ROWS){
             int idx=0;
-            memmove((void *) VIDEO, (void *) (VIDEO + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
+            memmove((void *) video_mem, (void *) (video_mem + (NUM_COLS << 1)), (NUM_COLS * (NUM_ROWS - 1)) << 1);
                 // clear out the new line that was just created. (over right with NULL)
                 screen_y = NUM_ROWS -1;
                 while(idx<NUM_COLS){
-                    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
-                    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
+                    *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x + idx) << 1)) = ' '; // ROW Major calc
+                    *(uint8_t *) (video_mem + (((NUM_COLS * screen_y + screen_x + idx) << 1)) + 1) = ATTRIB; // ROW Major calc
                     ++idx;
                 }
         }
@@ -229,16 +236,20 @@ void putc(uint8_t c) {
  INPUTS: none
  OUTPUTS: NULL value in video mem
  RETURN VALUE: none
- IMPACTS ON OTHERS: changes whats on the screen, udpates screen_x & screen_y
+ IMPACTS ON OTHERS: changes whats on the screen, udpates terminals[curr_terminal].screen_x & terminals[curr_terminal].screen_y
  */
 //This is PUTC Modified
 void rm_c(void) {
+    video_mem = terminals[curr_terminal].video_buffer;
+    if (curr_terminal == on_screen){
+        video_mem = (char *)(VIDEO);
+    }
     // remove 1 space from the
     //printf("HERE");
     if(screen_y==0 && screen_x == 0){return;}
-    if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
-    *(uint8_t *) (VIDEO + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
-    *(uint8_t *) (VIDEO + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
+    if(terminals[on_screen].buf_kb[0] == '\n' || terminals[on_screen].buf_kb[0] == '\0'){return;}
+    *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
+    *(uint8_t *) (video_mem + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
     // move the current x back 1
     if (screen_x) {screen_x--;}
     else if (screen_y){
@@ -257,7 +268,6 @@ void update_cursor(int x, int y) {
     // To obtain the coordinates,
     // just calculate: y = pos / VGA_WIDTH; x = pos % VGA_WIDTH;.
     uint16_t pos = y * NUM_COLS + x;
-
     // draw cursors new location
     outb(0x0F, 0x3D4);
     outb((unsigned char)(pos &0xFF), 0x3D5);
@@ -576,16 +586,15 @@ void test_interrupts(void) {
 /*
  NAME: get_screen_pos
  DESCRIPTION: return either screen x or screen y
- INPUTS:  0 or 1 
+ INPUTS:  0 or 1
  OUTPUTS: NONE
  RETURN VALUE: screen x or screen y, else fail
  IMPACTS ON OTHERS: none
  */
 int get_screen_pos(int arg){
-    int ret_val = -1;
-    if(arg == 0){ret_val = screen_x;}
-    if(arg == 1){ret_val = screen_y;}
-    return ret_val;
+    if(arg == 0) return screen_x;
+    else if(arg == 1) return screen_y;
+    else return -1;
 }
 
 /*
@@ -594,7 +603,7 @@ int get_screen_pos(int arg){
  INPUTS:  x and y
  OUTPUTS: NONE
  RETURN VALUE: NONE
- IMPACTS ON OTHERS: Changes screen_x and screen_y
+ IMPACTS ON OTHERS: Changes terminals[curr_terminal].terminals[curr_terminal].screen_x and terminals[curr_terminal].screen_y
  */
 void update_screen(int x, int y){
     screen_x = x;
@@ -609,10 +618,29 @@ void update_screen(int x, int y){
  INPUTS:  x and y
  OUTPUTS: NONE
  RETURN VALUE: NONE
- IMPACTS ON OTHERS: Changes screen_x and screen_y
+ IMPACTS ON OTHERS: Changes terminals[curr_terminal].screen_x and terminals[curr_terminal].screen_y
  */
 void update_screen_axis(int x, int y){
     screen_x = x;
     screen_y = y;
     return;
+}
+
+void change_vid_mem(int running){
+    if (running == on_screen){
+      video_mem = (char *)(VIDEO);
+    }
+    else {
+      switch(running) {
+          case 0:
+              video_mem = (char *)TERM0;
+              break;
+          case 1:
+              video_mem = (char *)TERM1;
+              break;
+          case 2:
+              video_mem = (char *)TERM2;
+              break;
+      }
+    }
 }

@@ -153,10 +153,10 @@ void entry(unsigned long magic, unsigned long addr) {
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
-    char_count = 0; 
-    kb_idx = 0; // set kb index to 0
-    bytes_read = 0;
-    flag_exception = 0; // see if expetion raised 
+    // char_count = 0;
+    // kb_idx = 0; // set kb index to 0
+    // bytes_read = 0;
+    flag_exception = 0; // see if expetion raised
     dir_open((uint8_t*)".");  // for opening shell
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
@@ -178,6 +178,20 @@ void entry(unsigned long magic, unsigned long addr) {
     pid_counter = -1;
     start_terminals();
     init_PIT(20); // starting PIT freq is 20
+
+    // page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    // page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+    // flush_tlb();
+
+    // memset((void *)0xB8000, 'u' , 4096);
+
+    // puts((int8_t *)"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+
+    // page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    // page_table1[(VIDMEM>>ENTRY4KB)] |= VIDMEM;
+    // flush_tlb();
+
+    // memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
 
     //sys_execute((uint8_t*)"shell");
     //sys_execute((uint8_t*)"testprint");

@@ -10,9 +10,9 @@
 #include "sys_calls.h"
 #include "sched.h"
 #define SYSCALL_NUM 128 // 0x80
-#define KEYBOARD_ADDR 0x21 // addr for kb 
-#define RTC_ADDR 0x28 // addr for rtc 
-#define NUM_IDT_ENTRIES 256 // we need to fill IDT all the way no matter what 
+#define KEYBOARD_ADDR 0x21 // addr for kb
+#define RTC_ADDR 0x28 // addr for rtc
+#define NUM_IDT_ENTRIES 256 // we need to fill IDT all the way no matter what
 #define HALT_BY_EXCEPTION 256 // defined in docs
 #define PIT_ADDR 0x20
 
@@ -24,7 +24,7 @@
  INPUTS: NONE
  OUTPUTS: Prints error message
  RETURN VALUE: NONE
- IMPACTS ON OTHERS: will stay in loop, have to terminate the program 
+ IMPACTS ON OTHERS: will stay in loop, have to terminate the program
  */
 
 void exception0_C(void) {
@@ -178,7 +178,7 @@ void exception19_C(void) {
 /*
  NAME: IDT SETUP
  DESCRIPTION: this sets the interrupt gate
- INPUTS: value of idt 
+ INPUTS: value of idt
  OUTPUTS: NONE
  RETURN VALUE: NONE
  IMPACTS ON OTHERS: fills out the IDT tables gates to interrupt
@@ -220,7 +220,7 @@ void idt_vector(){
     for (i = 0; i < NUM_IDT_ENTRIES; i++) {
         idt_setup(i);
     }
-    
+
     SET_IDT_ENTRY(idt[0], exception0_C);
     SET_IDT_ENTRY(idt[1], exception1_C);
     SET_IDT_ENTRY(idt[2], exception2_C);
@@ -245,5 +245,5 @@ void idt_vector(){
     SET_IDT_ENTRY(idt[PIT_ADDR], pit_asm);
     SET_IDT_ENTRY(idt[KEYBOARD_ADDR], keyboard_asm);
     SET_IDT_ENTRY(idt[SYSCALL_NUM], sys_call_handler_asm);
-    
+
 }

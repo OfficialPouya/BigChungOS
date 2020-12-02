@@ -9,19 +9,20 @@ void init_PIT(uint32_t freq){
     uint8_t lower;
     uint8_t higher;
     div = MAX_PIT_FREQ / freq;
-    lower = div & 0xFF;
-    higher = (div >> 8) & 0xFF;
-    test_val = 1;
+    lower = div & 0xFF;     // get lowest byte
+    higher = (div >> 8) & 0xFF;     // get highest byte
+    test_val = 1; // used to see if pit was working
     // https://wiki.osdev.org/Programmable_Interval_Timer
-    outb(0x30 | 0x6,0x43); // x43 for mode 3, 0x30 was example given, 0x6 is
-                          // channel 0
-    outb(lower, 0x40);      // send low byte to channel 0
-    outb(higher, 0x40);  // send high byte of div to channel 0
+    outb(ACCESS_LO_HI | OP_SQUARE_WAVE, MODE_THREE_SELECT); // x43 for mode 3, 0x30 gives us access mode, 0x6 is
+                          // operating mode (square wave generator)
+    outb(lower, CHANNEL_ZERO_PORT);      // send low byte to channel 0
+    outb(higher, CHANNEL_ZERO_PORT);  // send high byte of div to channel 0
     // paul is doing the rest
 
     enable_irq(0); // PIT IRQ num is 0
     return;
 }
+
 
 /*
  NAME: pit_handler
@@ -32,84 +33,32 @@ void init_PIT(uint32_t freq){
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(void){
-    uint32_t esp;
-    uint32_t ebp;
-    // saving parent ebp and esp
-    asm volatile(
-        "movl %%ebp, %0;"
-        "movl %%esp, %1"
-    : "=r"(ebp), "=r"(esp)
-    :
-    );
-    // save the current scheduled tss
-    terminals[curr_terminal].save_tss = tss;
-    all_pcbs[terminals[curr_terminal].curr_process].ebp_task = ebp;
-    all_pcbs[terminals[curr_terminal].curr_process].esp_task = esp;
-    terminals[curr_terminal].screen_x = get_screen_pos(0);
-    terminals[curr_terminal].screen_y = get_screen_pos(1);
-
-    curr_terminal = (curr_terminal+1) % NUMBER_OF_TERMINALS;
-    
-    if (pit_count < 3){
-        //curr_terminal = pit_counter;
+    if(pit_count<NUMBER_OF_TERMINALS){
         switch_terminal_work(pit_count);
-        terminals[curr_terminal].screen_x = get_screen_pos(0);
-        terminals[curr_terminal].screen_y = get_screen_pos(1);
         pit_count++;
+        printf("Terminal %d\n", pit_count);
         send_eoi(0); // PIT IRQ is 0
         sys_execute((uint8_t*)"shell");
-        return;
+        // terminals[pit_count].procs[0] = pid_counter;
+        // terminals[pit_count].curr_process = pid_counter;
     }
 
-    else if (pit_count == NUMBER_OF_TERMINALS){
-        switch_terminal_work(0);
+    //If PIT_COUNT is not at end, just increment
+    else{
+        switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
         pit_count++;
     }
-    /*
-        * load the new scheduled tss
-        * page the video mem that we want to write to  OR  map into the video buff 
-    */
-    // load the new scheduled tss
-    tss = terminals[curr_terminal].save_tss;
-    ebp = all_pcbs[terminals[curr_terminal].curr_process].ebp_task;
-    esp = all_pcbs[terminals[curr_terminal].curr_process].esp_task;
 
-    if (curr_terminal == on_screen){
-        page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-        flush_tlb();
+    if (pit_count == 99){
+        pit_count = 3;
     }
 
-    else{
-        switch(curr_terminal) {
-            case 0:
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;    
-            case 1:
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
-            case 2:
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;    
-        }
-        flush_tlb();
-    }
-    
-    int sc_x;
-    int sc_y;
-    sc_x = terminals[curr_terminal].screen_x;
-    sc_y = terminals[curr_terminal].screen_y;
-    update_screen_axis(sc_x, sc_y);
-    // map the page [idk how to do this PAUL]
-    // switch_terminal_work(curr_terminal);
-    asm volatile(
-        "movl %0, %%ebp;"
-        "movl %1, %%esp"
-    :
-    : "r"(ebp), "r"(esp)
-    );
+    // call the scheduling function here
+    // make sure to write test functions for this checkpoint
 
-    send_eoi(0); // PIT IRQ is 0
+    send_eoi(0);
     return;
 }
-
-
 
 /*
  NAME: start_terminals
@@ -137,8 +86,22 @@ void start_terminals(void){
         terminals[idx].curr_idx = 0;
         terminals[idx].screen_start = 0;
         terminals[idx].curr_process = -1;
+        
+        switch(idx) {
+            case 0:
+                terminals[idx].video_buffer = (char *)TERM0;
+                break;
+            case 1:
+                terminals[idx].video_buffer = (char *)TERM1;
+                break;
+            case 2:
+                terminals[idx].video_buffer = (char *)TERM2;
+                break;
+        }
+
         // add pids per counter array
         memset(terminals[idx].buf_kb, 0, KB_BUFFER_SIZE);
+        // memset(terminals[idx].procs, 0, PCB_SIZE)
     }
     pit_counter = 0;
     curr_terminal = 0;
@@ -152,7 +115,7 @@ void start_terminals(void){
  INPUTS:  curr_terminal and target_terminal
  OUTPUTS: NONE
  RETURN VALUE: NONE
- IMPACTS ON OTHERS: saves and restore terminal information 
+ IMPACTS ON OTHERS: saves and restore terminal information
  */
 void switch_terminal_work(int target_terminal){
     // QUICK CHECKS + FIX
@@ -165,40 +128,39 @@ void switch_terminal_work(int target_terminal){
     get_screen_pos(1) = y
     get_kb_info(0) = kb_idx
     get_kb_info(1) = char_count
-    */ 
+    */
 
     // SAVE CURR TERMINAL VALUES BACK INTO ITS PROPPER STRUCT
-    terminals[on_screen].screen_x = get_screen_pos(0);
-    terminals[on_screen].screen_y = get_screen_pos(1);
-    terminals[on_screen].curr_idx = get_kb_info(0);
-    terminals[on_screen].num_chars = get_kb_info(1);
-    memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
-    memcpy(terminals[on_screen].video_buffer, (void*)MAIN_VIDEO, KB_FOUR_OFFSET);
+    // UNNECESSARY DUE TO CHANGES IN KEYBOARD, TERMINAL, AND LIB
+    terminals[curr_terminal].screen_x = get_screen_pos(0);
+    terminals[curr_terminal].screen_y = get_screen_pos(1);
 
-    // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
-    update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-    memcpy((void*)MAIN_VIDEO, terminals[on_screen].video_buffer, KB_FOUR_OFFSET);
+    
+
+
+
+
     // SCREEN DATA CONTROL
     // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
     // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
-    if(on_screen == target_terminal){
-        page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-        flush_tlb();
-    }
+    // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
 
-    else{
-        switch(target_terminal) {
-            case 0:
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;    
-            case 1:
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
-            case 2:
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;    
-        }
-        flush_tlb();
-    }
-    on_screen = target_terminal;
+    // change_vid_mem(target_terminal);
+    // if(on_screen == target_terminal){
+    //     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+    // }
+    // else{
+    update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+    // }
+
+    curr_terminal = target_terminal;
+
+    // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
+    // update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+    // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+    // not needed after changes to keyboard functionality
+    // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
+
     return;
 }
 
@@ -208,18 +170,42 @@ void switch_terminal_work(int target_terminal){
  INPUTS:  curr_terminal and target_terminal
  OUTPUTS: NONE
  RETURN VALUE: NONE
- IMPACTS ON OTHERS: points the video bif to correct, and saves and restores vid of rother terminals 
+ IMPACTS ON OTHERS: points the video bif to correct, and saves and restores vid of rother terminals
  */
 void switch_terminal_keypress(int target_terminal){
-    /*
-    terminals[0].video_buffer = (uint8_t *) TERM1_VIDEO;
-    memset((void *) TERM1_VIDEO, 0, KB_FOUR_OFFSET);
-    terminals[1].video_buffer = (uint8_t *) TERM2_VIDEO;
-    memset((void *) TERM2_VIDEO, 0, KB_FOUR_OFFSET);
-    terminals[2].video_buffer = (uint8_t *) TERM3_VIDEO;
-    memset((void *) TERM3_VIDEO, 0, KB_FOUR_OFFSET);
-    */
-    
-    //switching visibile terminal 
+    if (target_terminal == on_screen) return;
+
+    terminals[on_screen].screen_x = get_screen_pos(0);
+    terminals[on_screen].screen_y = get_screen_pos(1);
+
+    switch(on_screen) {
+        case 0: // save to term 0
+            memcpy((uint8_t *)TERM0, (uint8_t *)MAIN_VIDEO, 4096);
+            break;
+        case 1: // save to term 1
+            memcpy((uint8_t *)TERM1, (uint8_t *)MAIN_VIDEO, 4096);
+            break;
+        case 2: // save to term 2
+            memcpy((uint8_t *)TERM2, (uint8_t *)MAIN_VIDEO, 4096);
+            break;
+    }
+    change_vid_mem(target_terminal);
+    switch(target_terminal) {
+        case 0: // switch to term 0
+            // flush_tlb();
+            memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM0, 4096);
+            break;
+        case 1: // switch to term 1
+            // flush_tlb();
+            memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
+            break;
+        case 2: // switch to term 2
+            // flush_tlb();
+            memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM2, 4096);
+            break;
+    }
+    on_screen = target_terminal;
+    update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+
     return;
 }

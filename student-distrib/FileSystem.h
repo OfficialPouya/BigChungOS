@@ -6,6 +6,7 @@
 
 #include "types.h"
 #include "x86_desc.h"
+// #include "sys_calls.h"
 
 #define FILENAME_LEN    32
 #define reserved24B     24
@@ -21,7 +22,7 @@
 typedef struct dentry_t {
     int8_t      filename[FILENAME_LEN];
     int32_t     filetype;
-    int32_t     inode_num;
+    uint32_t     inode_num;
     int8_t      reserved[reserved24B];
 } dentry_t;
 
@@ -39,7 +40,7 @@ typedef struct inode_t {
 } inode_t;
 
 int curr_dir;
-int bytes_read;
+// int bytes_read;
 int dir_is_open;
 
 const uint32_t* boot_block_ptr;
@@ -47,7 +48,7 @@ boot_block_t boot_block_main;
 
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
-int32_t read_data (inode_t* inode, uint32_t offset, uint8_t* buf, uint32_t length);
+int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 // FILE FUNCTIONS
 // initialize any temp structs, return 0 success
@@ -60,7 +61,7 @@ int32_t file_close(int32_t fd);
 int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
 
 // reads count bytesof data from file into buf
-int32_t file_read(const uint8_t* filename, void* buf, int32_t nbytes);
+int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
 
 // DIRECTORY FUNCTIONS
 // opens a directory file, return 0 with success
@@ -76,6 +77,9 @@ int32_t dir_write(int32_t fd, const void* buf, int32_t nbytes);
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes);
 
 // Checks if first 4 bytes are ELF
-int32_t exec_check(const uint8_t* filename);
+int32_t exec_check(uint32_t inode);
+
+// helper function for execute
+int32_t exec_file_load(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 #endif

@@ -11,9 +11,9 @@
 #define NUMBER_OF_TERMINALS 3
 #define KB_FOUR_OFFSET 4096
 #define MAIN_VIDEO 0xB8000
-#define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET) 
-#define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
-#define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
+// #define TERM1_VIDEO (MAIN_VIDEO + KB_FOUR_OFFSET)
+// #define TERM2_VIDEO (TERM1_VIDEO + KB_FOUR_OFFSET)
+// #define TERM3_VIDEO (TERM2_VIDEO + KB_FOUR_OFFSET)
 #define MAX_PIT_FREQ 1193182
 #define OP_SQUARE_WAVE 0x6
 #define MODE_THREE_SELECT 0x43
@@ -31,14 +31,18 @@ typedef struct terminal_t {
     uint8_t screen_x; // screen logical location x
     uint8_t screen_y; // screen logical location y
     uint8_t curr_idx; // current location in command
+
+    // is this variable necessary?
     int ProcPerTerm;  // amnt of processes per terminal
-    uint8_t* video_buffer; //pointer to this terminals video buffer
+
+
+    char* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;
     char buf_kb[KB_BUFFER_SIZE];
-    int procs[6];
-    int curr_process;
+    int procs[6];     // map this to pid_counter for easy program switching?
+    int curr_process; // is this an index to procs?
     tss_t save_tss;
-    int num_chars;
+    int char_count;
 } terminal_t;
 
 terminal_t terminals[NUMBER_OF_TERMINALS];

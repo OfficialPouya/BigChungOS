@@ -1,4 +1,5 @@
 #include "sys_calls.h"
+#include "sched.h"
 
 int fd_index_holder;
 
@@ -40,11 +41,13 @@ int32_t sys_open(const uint8_t *filename) {
         // empty : -1
         if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
             // set struct items
+            // we could store the inode in the pcb's fdt here
             all_pcbs[pid_counter].fdt[t_index].exists = 1;
             all_pcbs[pid_counter].fdt[t_index].file_type = temp_dentry.filetype;
             for (floop = 0; floop< FILENAME_LEN; floop++){
                 all_pcbs[pid_counter].fdt[t_index].filename[floop] = temp_dentry.filename[floop];
             }
+            all_pcbs[pid_counter].fdt[t_index].inode = temp_dentry.inode_num;
             switch (temp_dentry.filetype){
                 case 0:
                     all_pcbs[pid_counter].fdt[t_index].fop_ = &rtc_struct;
@@ -126,14 +129,25 @@ int32_t sys_execute(const uint8_t *command){
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
-    // do not want to run more than 6 processes 
+    // do not want to run more than 6 processes
     // the + 2 is there bc -1 index of pid counter, and we dont want to page fault so +2
+    // should we change this to be something with g
     if(pid_counter+2>PCB_SIZE){
         printf("MAX Program Count reached \n");
         // --pid_counter;
         // sys_execute((uint8_t *) "shell");
         return -1;
     }
+
+    // if (terminals[curr_terminal].ProcPerTerm >= 4){
+    //     printf("Too many programs on this terminal \n");
+    //     return -1;
+    // }
+
+
+    // will need a separate function for getting an open pcb
+    // incrementing and decrementing pid_counter will not work now
+
     command_index = 0;
     i = 0;
     j = 0;
@@ -194,22 +208,30 @@ int32_t sys_execute(const uint8_t *command){
     // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
     // helper function in filesys to check first 4 bytes
     int32_t eip_data;
-    if(-1 != (eip_data = exec_check(filename))){
+    dentry_t temp;
+    if (read_dentry_by_name(filename, &temp) == -1) return -1;
+    if(-1 != (eip_data = exec_check(temp.inode_num))){
         ++pid_counter;
-        terminals[curr_terminal].procs[terminals[curr_terminal].ProcPerTerm] = pid_counter;
-        terminals[curr_terminal].ProcPerTerm++;
+
         init_pcb(pid_counter);
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
         // laodeer, load bytes to right address
         // num 0x8048000: given, starting addr
-        // num 4MB = 4096 * 1024 (at most or whatever file size is) 
-        while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
+        // num 4MB = 4096 * 1024 (at most or whatever file size is)
+
+        // while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
+
+        exec_file_load(temp.inode_num, 0, (void*)0x8048000, 4096*1024);
     }
     else{
         return -1;
     }
+
+    // terminals[curr_terminal].ProcPerTerm++;
+    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    // terminals[curr_terminal].curr_process++;
 
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
@@ -250,22 +272,34 @@ int32_t sys_execute(const uint8_t *command){
 int32_t sys_halt(uint8_t status){
     uint32_t status_num = (uint32_t) status;
     // closes all fds bleonigng to a process
+    // we may want to use a variable more related to our terminals
     int fdt_loop;
     for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
       all_pcbs[pid_counter].fdt[fdt_loop].exists=-1;
     }
     all_pcbs[pid_counter].in_use = -1;
+    // update the terminal's data here
+
+    // if (terminals[curr_terminal].curr_process == 0) would cover a shell being
+    // closed i believe. curr_process being 0 here represents halting the shell
     --pid_counter;
     if(pid_counter==-1){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
     }
+
+
+    // i believe we set pid_counter to the current terminal's
+    // procs[curr_process (-1 depending on where this goes)]
+    // does vidmap need some changing to account for fish?
+
+
     update_user_addr(pid_counter);
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
-    
+
     /*
     Magic Numbers
     number '0x800000':
@@ -283,7 +317,7 @@ int32_t sys_halt(uint8_t status){
     );
     if(flag_exception==1){
         flag_exception = 0;
-        return EXCEPTION_ERROR; // return errno. 
+        return EXCEPTION_ERROR; // return errno.
     }
     return 0;
 }
@@ -299,7 +333,7 @@ int32_t sys_halt(uint8_t status){
 void init_pcb(int curr_pcb){
     int fdt_index;
     all_pcbs[curr_pcb].in_use = 1;
-    // only 6 processes 
+    // only 6 processes
     for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
         all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
     }
@@ -316,13 +350,13 @@ void init_pcb(int curr_pcb){
 
     // stdin members
     all_pcbs[curr_pcb].fdt[0].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[0].file_type = 3; // the file_type for stdin and out 
+    all_pcbs[curr_pcb].fdt[0].file_type = 3; // the file_type for stdin and out
     all_pcbs[curr_pcb].fdt[0].exists = 1;
     all_pcbs[curr_pcb].fdt[0].fop_->open((uint8_t*)"blah");
 
     // stdout members
     all_pcbs[curr_pcb].fdt[1].fop_ = &terminal_struct;
-    all_pcbs[curr_pcb].fdt[1].file_type = 3; // the file_type for stdin and out 
+    all_pcbs[curr_pcb].fdt[1].file_type = 3; // the file_type for stdin and out
     all_pcbs[curr_pcb].fdt[1].exists = 1;
     all_pcbs[curr_pcb].fdt[1].fop_->open((uint8_t*)"blah");
 }
@@ -338,9 +372,8 @@ void init_pcb(int curr_pcb){
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
     uint32_t temp;
     if (all_pcbs[pid_counter].fdt[fd].exists == 1){
-        bytes_read = all_pcbs[pid_counter].fdt[fd].file_bytes_read;
         // call actual file reading func
-        temp = file_read(all_pcbs[pid_counter].fdt[fd].filename, buf, nbytes);
+        temp = file_read(fd, buf, nbytes);
         all_pcbs[pid_counter].fdt[fd].file_bytes_read += temp;
         return temp;
     }
@@ -396,10 +429,38 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
  IMPACTS ON OTHERS: none
  */
 int32_t sys_vidmap(uint8_t **screen_start){
+    // page_table2[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+
+    // if (curr_terminal == on_screen){
+    //     page_table2[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+    // }
+
+    // else {
+    //     page_table2[(VIDMEM>>ENTRY4KB)] |= *terminals[curr_terminal].video_buffer;
+    // }
+    
+    // flush_tlb();
+
     // number 0x8000000 and 0x8400000 is the range of user program page
     if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
-    *screen_start = (uint8_t*)(0x84b8000);
+    *screen_start = (uint8_t*)(0x84b8000); // do we clear this during halt? how?
     return 0;
 }
 
+int32_t sys_set_handler(int32_t signum, void* handler_address){
+    return -1;
+}
 
+int32_t sys_sigreturn(void){
+  return -1;
+}
+
+// int get_free_pcb(){
+//   int i;
+//   for (i = 0; i < PCB_SIZE; i++){
+//     if (all_pcbs[i].in_use == -1){
+//       return i;
+//     }
+//   }
+//   return -1;
+// }

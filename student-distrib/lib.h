@@ -36,7 +36,7 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 // to be able to test RTC
 void test_interrupts(void);
-void change_vid_mem(int running, int displayed);
+void change_vid_mem(int running);
 
 
 /* Port read functions */

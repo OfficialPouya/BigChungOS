@@ -1,4 +1,5 @@
 #include "sys_calls.h"
+#include "sched.h"
 
 int fd_index_holder;
 
@@ -428,6 +429,18 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
  IMPACTS ON OTHERS: none
  */
 int32_t sys_vidmap(uint8_t **screen_start){
+    // page_table2[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+
+    // if (curr_terminal == on_screen){
+    //     page_table2[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+    // }
+
+    // else {
+    //     page_table2[(VIDMEM>>ENTRY4KB)] |= *terminals[curr_terminal].video_buffer;
+    // }
+    
+    // flush_tlb();
+
     // number 0x8000000 and 0x8400000 is the range of user program page
     if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
     *screen_start = (uint8_t*)(0x84b8000); // do we clear this during halt? how?

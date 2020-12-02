@@ -36,7 +36,7 @@ typedef struct terminal_t {
     int ProcPerTerm;  // amnt of processes per terminal
 
 
-    uint8_t* video_buffer; //pointer to this terminals video buffer
+    char* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;
     char buf_kb[KB_BUFFER_SIZE];
     int procs[6];     // map this to pid_counter for easy program switching?

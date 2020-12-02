@@ -43,9 +43,14 @@ void pit_handler(void){
         // terminals[pit_count].curr_process = pid_counter;
     }
 
-    if (pit_count == NUMBER_OF_TERMINALS){
-        switch_terminal_work(0);
+    //If PIT_COUNT is not at end, just increment
+    else{
+        switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
         pit_count++;
+    }
+
+    if (pit_count == 99){
+        pit_count = 3;
     }
 
     // call the scheduling function here
@@ -73,6 +78,19 @@ void start_terminals(void){
         terminals[idx].curr_idx = 0;
         terminals[idx].screen_start = 0;
         terminals[idx].curr_process = -1;
+        
+        switch(idx) {
+            case 0:
+                terminals[idx].video_buffer = (char *)TERM0;
+                break;
+            case 1:
+                terminals[idx].video_buffer = (char *)TERM1;
+                break;
+            case 2:
+                terminals[idx].video_buffer = (char *)TERM2;
+                break;
+        }
+
         // add pids per counter array
         memset(terminals[idx].buf_kb, 0, KB_BUFFER_SIZE);
         // memset(terminals[idx].procs, 0, PCB_SIZE)
@@ -106,16 +124,20 @@ void switch_terminal_work(int target_terminal){
 
     // SAVE CURR TERMINAL VALUES BACK INTO ITS PROPPER STRUCT
     // UNNECESSARY DUE TO CHANGES IN KEYBOARD, TERMINAL, AND LIB
-
     terminals[curr_terminal].screen_x = get_screen_pos(0);
     terminals[curr_terminal].screen_y = get_screen_pos(1);
+
+    
+
+
+
 
     // SCREEN DATA CONTROL
     // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
     // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
     // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
 
-    change_vid_mem(target_terminal, on_screen);
+    // change_vid_mem(target_terminal);
     // if(on_screen == target_terminal){
     //     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     // }
@@ -159,7 +181,7 @@ void switch_terminal_keypress(int target_terminal){
             memcpy((uint8_t *)TERM2, (uint8_t *)MAIN_VIDEO, 4096);
             break;
     }
-    change_vid_mem(target_terminal, target_terminal);
+    change_vid_mem(target_terminal);
     switch(target_terminal) {
         case 0: // switch to term 0
             // flush_tlb();

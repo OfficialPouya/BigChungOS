@@ -39,12 +39,12 @@ void pit_handler(void){
         printf("Terminal %d\n", pit_count);
         send_eoi(0); // PIT IRQ is 0
         sys_execute((uint8_t*)"shell");
-        // terminals[pit_count].procs[0] = pid_counter;
-        // terminals[pit_count].curr_process = pid_counter;
     }
 
     //If PIT_COUNT is not at end, just increment
     else{
+        // call the scheduling function here
+        // make sure to write test functions for this checkpoint
         switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
         pit_count++;
     }
@@ -52,9 +52,6 @@ void pit_handler(void){
     if (pit_count == 99){
         pit_count = 3;
     }
-
-    // call the scheduling function here
-    // make sure to write test functions for this checkpoint
 
     send_eoi(0);
     return;
@@ -72,13 +69,6 @@ void start_terminals(void){
     int idx;
     on_screen = 0;
 
-    terminals[0].video_buffer = (uint8_t *) TERM0;
-    memset((void *) TERM0, 0, KB_FOUR_OFFSET);
-    terminals[1].video_buffer = (uint8_t *) TERM1;
-    memset((void *) TERM1, 0, KB_FOUR_OFFSET);
-    terminals[2].video_buffer = (uint8_t *) TERM2;
-    memset((void *) TERM2, 0, KB_FOUR_OFFSET);
-
     for(idx=0; idx<NUMBER_OF_TERMINALS; idx++){
         terminals[idx].ProcPerTerm = 0;
         terminals[idx].screen_x = 0;
@@ -89,7 +79,7 @@ void start_terminals(void){
         
         switch(idx) {
             case 0:
-                terminals[idx].video_buffer = (char *)TERM0;
+                terminals[idx].video_buffer = (char *)MAIN_VIDEO;
                 break;
             case 1:
                 terminals[idx].video_buffer = (char *)TERM1;
@@ -181,27 +171,30 @@ void switch_terminal_keypress(int target_terminal){
     switch(on_screen) {
         case 0: // save to term 0
             memcpy((uint8_t *)TERM0, (uint8_t *)MAIN_VIDEO, 4096);
+            terminals[on_screen].video_buffer = (char *)TERM0;
             break;
         case 1: // save to term 1
             memcpy((uint8_t *)TERM1, (uint8_t *)MAIN_VIDEO, 4096);
+            terminals[on_screen].video_buffer = (char *)TERM1;
             break;
         case 2: // save to term 2
             memcpy((uint8_t *)TERM2, (uint8_t *)MAIN_VIDEO, 4096);
+            terminals[on_screen].video_buffer = (char *)TERM2;
             break;
     }
-    change_vid_mem(target_terminal);
+    
     switch(target_terminal) {
         case 0: // switch to term 0
-            // flush_tlb();
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM0, 4096);
+            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
         case 1: // switch to term 1
-            // flush_tlb();
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
+            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
         case 2: // switch to term 2
-            // flush_tlb();
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM2, 4096);
+            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
     }
     on_screen = target_terminal;

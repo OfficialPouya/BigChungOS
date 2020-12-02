@@ -149,7 +149,6 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     idt_vector(); // this inits the IDT
     i8259_init(); // this inits the PIC
-    clear(); // to clear stuff off the screen
     paging_init(); // this inits paging
     init_rtc(); // this inits the rtc
     init_keyboard(); // this inits the keyboard
@@ -177,6 +176,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Execute the first program ("shell") ... */
     pid_counter = -1;
     start_terminals();
+    clear(); // to clear stuff off the screen
     init_PIT(20); // starting PIT freq is 20
 
     // page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits

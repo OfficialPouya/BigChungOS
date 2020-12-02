@@ -18,9 +18,6 @@ static char* video_mem = (char *)VIDEO;
  * Function: Clears video memory */
 void clear(void) {
     video_mem = terminals[curr_terminal].video_buffer;
-    if (curr_terminal == on_screen){
-        video_mem = (char *)(VIDEO);
-    }
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
@@ -175,9 +172,6 @@ int32_t puts(int8_t* s) {
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
     video_mem = terminals[curr_terminal].video_buffer;
-    if (curr_terminal == on_screen){
-        video_mem = (char *)(VIDEO);
-    }
     // if enter has been pressed
     // or new line in file
     if (c == '\0')
@@ -241,9 +235,6 @@ void putc(uint8_t c) {
 //This is PUTC Modified
 void rm_c(void) {
     video_mem = terminals[curr_terminal].video_buffer;
-    if (curr_terminal == on_screen){
-        video_mem = (char *)(VIDEO);
-    }
     // remove 1 space from the
     //printf("HERE");
     if(screen_y==0 && screen_x == 0){return;}

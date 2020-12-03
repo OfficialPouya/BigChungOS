@@ -229,8 +229,8 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     }
 
-    terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
-    terminals[curr_terminal].curr_process++;
+    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    // terminals[curr_terminal].curr_process++;
 
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;

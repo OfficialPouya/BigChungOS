@@ -152,13 +152,29 @@ void switch_terminal_work(int target_terminal){
     // }
 
     // step 1: push general (just needs to be callee saved but all is ok) registers and store ebp and esp
-    // step 2: update variables related to current terminal
+    // asm volatile(
+    //     "pushal:"
+    //     "movl %%ebp, %0;"
+    //     "movl %%esp, %1"
+    // : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+    // :
+    // );
+
+    // step 2: update variables related to current terminal\
+    // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+    
     // step 3: switch to esp of next process (ebp as well)
     // step 4: pop off anything left from sched() (shouldn't be anything I think)
     // step 5: restore general registers
     // step 6: iret
-    // ur now in kernel stack of process u wanted to switch to
-    // at some point update TSS (goes before switching esp and ebp)
+    //     asm volatile(
+    //         "movl %0, %%ebp;"
+    //         "movl %1, %%esp;"
+    //         "popal;"
+    //         "iret"
+    //     :
+    //     : "r"(all_pcbs[terminals[target_terminal].procs[terminals[target_terminal].curr_process]]), "r"(all_pcbs[terminals[target_terminal].procs[terminals[target_terminal].curr_process]])
+    //     );
 
 
     // memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);

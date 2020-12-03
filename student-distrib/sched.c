@@ -160,7 +160,7 @@ void switch_terminal_work(int target_terminal){
     // :
     // );
 
-    // step 2: update variables related to current terminal\
+    // step 2: update variables related to current terminal
     // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     
     // step 3: switch to esp of next process (ebp as well)

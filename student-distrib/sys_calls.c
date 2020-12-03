@@ -212,7 +212,7 @@ int32_t sys_execute(const uint8_t *command){
     if (read_dentry_by_name(filename, &temp) == -1) return -1;
     if(-1 != (eip_data = exec_check(temp.inode_num))){
         ++pid_counter; // replace with get pcb
-
+        printf("execute:1 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
         init_pcb(pid_counter);
         // then do what needs to be done with exec
         //paging, call change address fucntion
@@ -228,10 +228,10 @@ int32_t sys_execute(const uint8_t *command){
     else{
         return -1;
     }
-
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
-    // terminals[curr_terminal].curr_process++;
-
+    
+    ++terminals[curr_terminal].curr_process;
+    //terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    printf("execute:2 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
@@ -283,12 +283,13 @@ int32_t sys_halt(uint8_t status){
     // closed i believe. curr_process being 0 here represents halting the shell
     --pid_counter;          // replace with free pcb
     
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = 0;
-    // terminals[curr_terminal].curr_process--;
+    printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
+
+    //terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
+    --terminals[curr_terminal].curr_process;
     
-    
-    // if(pid_counter==-1 || terminals[curr_terminal].curr_process == 0){
-        if (pid_counter == -1){
+    if(pid_counter==-1 || terminals[curr_terminal].curr_process == -1){
+        //if (pid_counter == -1){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
@@ -320,6 +321,10 @@ int32_t sys_halt(uint8_t status){
         :
         :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
     );
+
+    printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
+    printf("flag %d\n", flag_exception);
+
     if(flag_exception==1){
         flag_exception = 0;
         return EXCEPTION_ERROR; // return errno.

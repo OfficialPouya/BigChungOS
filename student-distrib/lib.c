@@ -189,6 +189,13 @@ void putc(uint8_t c) {
     // if enter has been pressed
     // or new line in file
 
+    // page fault could be result of not updating paging 
+    // want to write to background buffer instead of offscreen. the weird cross we have now is likely causing that
+
+    // could not changing paging cause the page fault?
+
+    // is something overflowing? it's not clear what would
+
     video_mem = terminals[curr_terminal].video_buffer;
 
     if (on_screen == curr_terminal)

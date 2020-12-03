@@ -148,7 +148,7 @@ int32_t sys_execute(const uint8_t *command){
     //     return -1;
     // }
 
-    all_pcbs[pid_counter].in_use = 1;
+    // all_pcbs[pid_counter].in_use = 1;
     init_pcb(pid_counter);
     // will need a separate function for getting an open pcb
     // incrementing and decrementing pid_counter will not work now
@@ -303,16 +303,16 @@ int32_t sys_halt(uint8_t status){
     
     // printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
 
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
-    // --terminals[curr_terminal].curr_process;
-    
-    if(prev_pid==-1 || prev_pid >= PCB_SIZE){
+    // this may need to be changed but i'm unsure
+    if(pid_counter > -1 && pid_counter < 3){
         //if (pid_counter == -1){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
     }
 
+    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
+    // --terminals[curr_terminal].curr_process;
 
     // i believe we set pid_counter to the current terminal's
     // procs[curr_process (-1 depending on where this goes)]
@@ -439,7 +439,7 @@ int32_t file_close_helper(int32_t fd){
  */
 int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
     int floop;
-    printf("args: %s\n", (char *) all_pcbs[pid_counter].args);
+    // printf("args: %s\n", (char *) all_pcbs[pid_counter].args);
     if (all_pcbs[pid_counter].args[0] == '\0') return -1;
     memcpy (buf, all_pcbs[pid_counter].args, nbytes);
     buf[nbytes+1]='\0';

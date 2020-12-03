@@ -133,7 +133,7 @@ void exception14_C(void) {
 } //page fault
 
 void exception15_C(void) {
-    // printf("Reserved\n");
+    printf("Reserved\n");
     flag_exception = 1;
     sys_halt((uint8_t) HALT_BY_EXCEPTION);
 } //intel reserved do not use

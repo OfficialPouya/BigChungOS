@@ -46,7 +46,8 @@ void pit_handler(void){
         pit_count++;
     }
 
-    
+    // ++curr_terminal;
+    // curr_terminal = curr_terminal % NUMBER_OF_TERMINALS;
     // //If PIT_COUNT is not at end, just increment
     // else{
     //     // call the scheduling function here

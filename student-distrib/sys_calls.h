@@ -20,6 +20,7 @@
 #define MAX_COMMAND_LENGTH 32
 #define EXCEPTION_ERROR 256
 int pid_counter;
+int prev_pid;
 int flag_exception;
 int32_t ret_val;
 
@@ -37,7 +38,7 @@ extern int32_t sys_sigreturn(void);
 
 int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes);
 int32_t file_close_helper(int32_t fd);
-// int get_free_pcb();
+int get_free_pcb();
 
 /*
 FOP

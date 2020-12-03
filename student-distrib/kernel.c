@@ -174,7 +174,6 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    pid_counter = -1;
     start_terminals();
     clear(); // to clear stuff off the screen
     init_PIT(20); // starting PIT freq is 20

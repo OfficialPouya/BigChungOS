@@ -39,7 +39,7 @@ int32_t sys_open(const uint8_t *filename) {
     for(t_index=2; t_index<MAX_FD_AMNT; t_index++){
         // used : 1
         // empty : -1
-        if(all_pcbs[pid_counter].fdt[t_index].exists == -1){
+        if(all_pcbs[pid_counter].fdt[t_index].exists == 0){
             // set struct items
             // we could store the inode in the pcb's fdt here
             all_pcbs[pid_counter].fdt[t_index].exists = 1;
@@ -78,7 +78,7 @@ int32_t sys_close(int32_t fd) {
     if (fd <= 1 || fd >= MAX_FD_AMNT) return -1;
     if(all_pcbs[pid_counter].fdt[fd].exists == 1){
         all_pcbs[pid_counter].fdt[fd].fop_->close(fd);
-        all_pcbs[pid_counter].fdt[fd].exists = -1;
+        all_pcbs[pid_counter].fdt[fd].exists = 0;
         return 0;
     }
     else return -1;
@@ -96,7 +96,7 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
     if(!buf) return -1;
     // the fd ranges from 0 - 7
     if (fd <= 0 || fd >= MAX_FD_AMNT) return -1;
-    if(all_pcbs[pid_counter].fdt[fd].exists == -1) return -1;
+    if(all_pcbs[pid_counter].fdt[fd].exists == 0) return -1;
     return all_pcbs[pid_counter].fdt[fd].fop_->write(fd, buf, nbytes);
 }
 
@@ -111,7 +111,7 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes) {
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
     if (!buf) return -1;
     if (fd < 0 || fd >= MAX_FD_AMNT || fd == 1 || buf == NULL){return -1;}
-    if(all_pcbs[pid_counter].fdt[fd].exists == -1){return -1;}
+    if(all_pcbs[pid_counter].fdt[fd].exists == 0){return -1;}
     int32_t ret = all_pcbs[pid_counter].fdt[fd].fop_->read(fd, buf, nbytes);
     return ret;
 }
@@ -129,11 +129,15 @@ int32_t sys_execute(const uint8_t *command){
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
+    prev_pid = pid_counter;
+    pid_counter = get_free_pcb();
     // do not want to run more than 6 processes
     // the + 2 is there bc -1 index of pid counter, and we dont want to page fault so +2
     // should we change this to be something with g
-    if(pid_counter+2>PCB_SIZE){
+    if(pid_counter < 0 || pid_counter>=PCB_SIZE){
+        printf("pid_counter: %d\n", pid_counter);
         printf("MAX Program Count reached \n");
+        pid_counter = prev_pid;
         // --pid_counter;
         // sys_execute((uint8_t *) "shell");
         return -1;
@@ -144,7 +148,8 @@ int32_t sys_execute(const uint8_t *command){
     //     return -1;
     // }
 
-
+    all_pcbs[pid_counter].in_use = 1;
+    init_pcb(pid_counter);
     // will need a separate function for getting an open pcb
     // incrementing and decrementing pid_counter will not work now
 
@@ -156,7 +161,8 @@ int32_t sys_execute(const uint8_t *command){
     //1. PARSE COMMAND FOR FILE NAME
     //check for valid command
     if(command == NULL){
-        all_pcbs[pid_counter].in_use = -1;
+        all_pcbs[pid_counter].in_use = 0;
+        pid_counter = prev_pid;
         return -1;
     }
 
@@ -170,6 +176,8 @@ int32_t sys_execute(const uint8_t *command){
         command_len_check++;
         if (command_len_check > FILENAME_LEN){
           printf("Command is too long :(\n");
+          all_pcbs[pid_counter].in_use = 0;
+          pid_counter = prev_pid;
           return -1;
         }
 
@@ -193,6 +201,9 @@ int32_t sys_execute(const uint8_t *command){
         command_len_check++;
         if (command_len_check > MAX_COMMAND_LENGTH){
           printf("Filename is too long :(\n");
+          memset(all_pcbs[pid_counter].args, 0, MAX_COMMAND_LENGTH); // clear args buffer
+          all_pcbs[pid_counter].in_use = 0;
+          pid_counter = prev_pid;
           return -1;
         }
 
@@ -209,11 +220,15 @@ int32_t sys_execute(const uint8_t *command){
     // helper function in filesys to check first 4 bytes
     int32_t eip_data;
     dentry_t temp;
-    if (read_dentry_by_name(filename, &temp) == -1) return -1;
+    if (read_dentry_by_name(filename, &temp) == -1){
+        memset(all_pcbs[pid_counter].args, 0, MAX_COMMAND_LENGTH); // clear args buffer
+        all_pcbs[pid_counter].in_use = 0;
+        pid_counter = prev_pid;
+        return -1;
+    } 
     if(-1 != (eip_data = exec_check(temp.inode_num))){
-        ++pid_counter; // replace with get pcb
-        printf("execute:1 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
-        init_pcb(pid_counter);
+        // ++pid_counter; // replace with get pcb
+        // printf("execute:1 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
         // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
@@ -226,12 +241,15 @@ int32_t sys_execute(const uint8_t *command){
         exec_file_load(temp.inode_num, 0, (void*)0x8048000, 4096*1024);
     }
     else{
+        memset(all_pcbs[pid_counter].args, 0, MAX_COMMAND_LENGTH); // clear args buffer
+        all_pcbs[pid_counter].in_use = 0;
+        pid_counter = prev_pid;
         return -1;
     }
     
-    ++terminals[curr_terminal].curr_process;
-    //terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
-    printf("execute:2 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
+    // ++terminals[curr_terminal].curr_process;
+    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    // printf("execute:2 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
@@ -274,21 +292,21 @@ int32_t sys_halt(uint8_t status){
     // we may want to use a variable more related to our terminals
     int fdt_loop;
     for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
-      all_pcbs[pid_counter].fdt[fdt_loop].exists=-1;
+      sys_close(fdt_loop);
     }
-    all_pcbs[pid_counter].in_use = -1;
+    all_pcbs[pid_counter].in_use = 0;
     // update the terminal's data here
 
     // if (terminals[curr_terminal].curr_process == 0) would cover a shell being
     // closed i believe. curr_process being 0 here represents halting the shell
-    --pid_counter;          // replace with free pcb
     
-    printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
+    
+    // printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
 
-    //terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
-    --terminals[curr_terminal].curr_process;
+    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
+    // --terminals[curr_terminal].curr_process;
     
-    if(pid_counter==-1 || terminals[curr_terminal].curr_process == -1){
+    if(prev_pid==-1 || prev_pid >= PCB_SIZE){
         //if (pid_counter == -1){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
@@ -301,9 +319,9 @@ int32_t sys_halt(uint8_t status){
     // does vidmap need some changing to account for fish?
 
 
-    update_user_addr(pid_counter);
+    update_user_addr(prev_pid);
     // the math: 8MB - (curr pid)*8KB-4B
-    tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
+    tss.esp0 = 0x800000 - ((prev_pid)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
 
     /*
@@ -319,11 +337,12 @@ int32_t sys_halt(uint8_t status){
         "movl %1, %%esp;"
         "movl %2, %%eax"
         :
-        :"r"(all_pcbs[pid_counter+1].old_ebp), "r"(all_pcbs[pid_counter+1].old_esp) ,"r" (status_num)
+        :"r"(all_pcbs[pid_counter].old_ebp), "r"(all_pcbs[pid_counter].old_esp) ,"r" (status_num)
     );
 
-    printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
-    printf("flag %d\n", flag_exception);
+    pid_counter = prev_pid;          // replace with free pcb
+    // printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
+    // printf("flag %d\n", flag_exception);
 
     if(flag_exception==1){
         flag_exception = 0;
@@ -345,7 +364,7 @@ void init_pcb(int curr_pcb){
     all_pcbs[curr_pcb].in_use = 1;
     // only 6 processes
     for(fdt_index=0; fdt_index < MAX_FD_AMNT; fdt_index++){
-        all_pcbs[curr_pcb].fdt[fdt_index].exists = -1;
+        all_pcbs[curr_pcb].fdt[fdt_index].exists = 0;
     }
 
     // the size of our array of args is 1024
@@ -401,7 +420,7 @@ int32_t file_read_helper(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t file_close_helper(int32_t fd){
     if (all_pcbs[pid_counter].fdt[fd].exists == 1){
-        all_pcbs[pid_counter].fdt[fd].exists = -1;
+        all_pcbs[pid_counter].fdt[fd].exists = 0;
         all_pcbs[pid_counter].fdt[fd].file_bytes_read = 0;
         return 0;
     }
@@ -415,16 +434,17 @@ int32_t file_close_helper(int32_t fd){
  DESCRIPTION: get arguments for programs like cat
  INPUTS:  file descriptor, buffer to read from, number of bytes to read from
  OUTPUTS: NONE
- RETURN VALUE: -1 for now
- IMPACTS ON OTHERS: none
+ RETURN VALUE: 0
+ IMPACTS ON OTHERS: clears args if successful
  */
 int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
     int floop;
-    if (all_pcbs[pid_counter-1].args[0] == '\0') return -1;
-    memcpy (buf, all_pcbs[pid_counter-1].args, nbytes);
+    printf("args: %s\n", (char *) all_pcbs[pid_counter].args);
+    if (all_pcbs[pid_counter].args[0] == '\0') return -1;
+    memcpy (buf, all_pcbs[pid_counter].args, nbytes);
     buf[nbytes+1]='\0';
     for (floop = 0; floop < FILENAME_LEN; floop++){
-        all_pcbs[pid_counter-1].args[floop] = '\0';
+        all_pcbs[pid_counter].args[floop] = '\0';
     }
     return 0;
 }
@@ -465,12 +485,12 @@ int32_t sys_sigreturn(void){
   return -1;
 }
 
-// int get_free_pcb(){
-//   int i;
-//   for (i = 0; i < PCB_SIZE; i++){
-//     if (all_pcbs[i].in_use == -1){
-//       return i;
-//     }
-//   }
-//   return -1;
-// }
+int get_free_pcb(){
+  int i;
+  for (i = 0; i < PCB_SIZE; i++){
+    if (all_pcbs[i].in_use == 0){
+      return i;
+    }
+  }
+  return -1;
+}

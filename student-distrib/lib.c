@@ -12,19 +12,33 @@ static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
 
+void clear_out_kb(void){
+    int32_t x;
+    for (x = 0; x < NUM_COLS*NUM_ROWS; x++){
+        *(uint8_t *)(video_mem + (x << 1)) = ' ';
+        *(uint8_t *)(video_mem + (x << 1) + 1) = ATTRIB;
+    }
+    screen_x=0;
+    screen_y=0;
+    update_cursor(screen_x, screen_y);
+}
+
 /* void clear(void);
  * Inputs: void
  * Return Value: none
  * Function: Clears video memory */
 void clear(void) {
-    video_mem = terminals[curr_terminal].video_buffer;
+    // video_mem = terminals[curr_terminal].video_buffer;
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+    // clear_out_kb();
     screen_x=0;
     screen_y=0;
+    update_cursor(screen_x, screen_y);
+    
 }
 
 /* Standard printf().
@@ -171,9 +185,15 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    video_mem = terminals[curr_terminal].video_buffer;
+    // video_mem = terminals[curr_terminal].video_buffer;
     // if enter has been pressed
     // or new line in file
+
+    video_mem = terminals[curr_terminal].video_buffer;
+
+    if (on_screen == curr_terminal)
+        video_mem = (void *) VIDEO;
+
     if (c == '\0')
       return;
     if (c == '\n' && screen_x == 0){
@@ -234,11 +254,16 @@ void putc(uint8_t c) {
  */
 //This is PUTC Modified
 void rm_c(void) {
-    video_mem = terminals[curr_terminal].video_buffer;
+    // video_mem = terminals[curr_terminal].video_buffer;
     // remove 1 space from the
     //printf("HERE");
+    video_mem = terminals[on_screen].video_buffer;
+
+    if (on_screen == curr_terminal)
+        video_mem = (void *) VIDEO;
+
     if(screen_y==0 && screen_x == 0){return;}
-    if(terminals[on_screen].buf_kb[0] == '\n' || terminals[on_screen].buf_kb[0] == '\0'){return;}
+    if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
     *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
     *(uint8_t *) (video_mem + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
     // move the current x back 1

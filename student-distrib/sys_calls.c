@@ -283,11 +283,12 @@ int32_t sys_halt(uint8_t status){
     // closed i believe. curr_process being 0 here represents halting the shell
     --pid_counter;          // replace with free pcb
     
-    terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = 0;
-    terminals[curr_terminal].curr_process--;
+    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = 0;
+    // terminals[curr_terminal].curr_process--;
     
     
-    if(pid_counter==-1 || terminals[curr_terminal].curr_process == 0){
+    // if(pid_counter==-1 || terminals[curr_terminal].curr_process == 0){
+        if (pid_counter == -1){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");

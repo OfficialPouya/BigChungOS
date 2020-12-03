@@ -40,18 +40,24 @@ void pit_handler(void){
         send_eoi(0); // PIT IRQ is 0
         sys_execute((uint8_t*)"shell");
     }
-
-    //If PIT_COUNT is not at end, just increment
-    else{
-        // call the scheduling function here
-        // make sure to write test functions for this checkpoint
-        switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
+    else if (pit_count == NUMBER_OF_TERMINALS){
+        switch_terminal_work(0);
+        // printf("pit_count: %d", pit_count);
         pit_count++;
     }
 
-    if (pit_count == 99){
-        pit_count = 3;
-    }
+    
+    // //If PIT_COUNT is not at end, just increment
+    // else{
+    //     // call the scheduling function here
+    //     // make sure to write test functions for this checkpoint
+    //     switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
+    //     pit_count++;
+    // }
+
+    // if (pit_count == 99){
+    //     pit_count = 3;
+    // }
 
     send_eoi(0);
     return;
@@ -73,6 +79,7 @@ void start_terminals(void){
         terminals[idx].screen_x = 0;
         terminals[idx].screen_y = 0;
         terminals[idx].curr_idx = 0;
+        terminals[idx].enter_p_flag = 0;
         terminals[idx].screen_start = 0;
         terminals[idx].curr_process = 0;
         switch(idx) {
@@ -124,26 +131,38 @@ void switch_terminal_work(int target_terminal){
     terminals[curr_terminal].screen_y = get_screen_pos(1);
 
     
-    // saving parent ebp and esp
-    asm volatile(
-        "movl %%ebp, %0;"
-        "movl %%esp, %1"
-    : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-    :
-    );
+    // // saving parent ebp and esp
+    // asm volatile(
+    //     "movl %%ebp, %0;"
+    //     "movl %%esp, %1"
+    // : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+    // :
+    // );
 
-    if (terminals[target_terminal].ebp[terminals[target_terminal].curr_process] != 0){
-        update_user_addr(terminals[target_terminal].procs[terminals[target_terminal].curr_process]);
+    // if (terminals[target_terminal].ebp[terminals[target_terminal].curr_process] != 0){
+    //     update_user_addr(terminals[target_terminal].procs[terminals[target_terminal].curr_process]);
 
-        // recall ebp and esp
-        asm volatile(
-            "movl %0, %%ebp;"
-            "movl %1, %%esp"
-        :
-        : "r"(terminals[target_terminal].ebp[terminals[target_terminal].curr_process]), "r"(terminals[target_terminal].esp[terminals[target_terminal].curr_process])
-        );
-    }
+    //     // recall ebp and esp
+    //     asm volatile(
+    //         "movl %0, %%ebp;"
+    //         "movl %1, %%esp"
+    //     :
+    //     : "r"(terminals[target_terminal].ebp[terminals[target_terminal].curr_process]), "r"(terminals[target_terminal].esp[terminals[target_terminal].curr_process])
+    //     );
+    // }
 
+    // step 1: push general (just needs to be callee saved but all is ok) registers and store ebp and esp
+    // step 2: update variables related to current terminal
+    // step 3: switch to esp of next process (ebp as well)
+    // step 4: pop off anything left from sched() (shouldn't be anything I think)
+    // step 5: restore general registers
+    // step 6: iret
+    // ur now in kernel stack of process u wanted to switch to
+    // at some point update TSS (goes before switching esp and ebp)
+
+
+    // memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
+    // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
 
     // SCREEN DATA CONTROL
     // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
@@ -184,7 +203,7 @@ void switch_terminal_work(int target_terminal){
  IMPACTS ON OTHERS: points the video bif to correct, and saves and restores vid of rother terminals
  */
 void switch_terminal_keypress(int target_terminal){
-    if (target_terminal == on_screen) return;
+    if (target_terminal == on_screen || target_terminal >= NUMBER_OF_TERMINALS) return;
 
     terminals[on_screen].screen_x = get_screen_pos(0);
     terminals[on_screen].screen_y = get_screen_pos(1);
@@ -218,7 +237,14 @@ void switch_terminal_keypress(int target_terminal){
             terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
     }
+    memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
+    memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
+
+    terminals[on_screen].curr_idx = kb_idx;
+    kb_idx = terminals[target_terminal].curr_idx;
+
     on_screen = target_terminal;
+    curr_terminal = on_screen;
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
 
     return;

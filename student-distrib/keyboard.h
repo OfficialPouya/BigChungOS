@@ -8,12 +8,12 @@
 #define TYPE_BUFFER_SIZE 128
 #define MAX_TYPE 127
 
-// char keyboard_buffer[TYPE_BUFFER_SIZE];
+char keyboard_buffer[TYPE_BUFFER_SIZE];
 // kb_idx, is the index for our keyboard buffer
-// int kb_idx;
+int kb_idx;
 // char_count is to ensure we don't go over the char limit
 // there will be if statements later on
-// int char_count;
+int char_count;
 
 
 // initialize keyboard

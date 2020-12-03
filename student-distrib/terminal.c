@@ -42,13 +42,13 @@ int32_t terminal_close(int32_t fd) {
 //read
 int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
     // sti();
-    while(enter_p_flag == 0);
+    while(terminals[on_screen].enter_p_flag == 0);
     int count = 0;
     int how_many = 0;
     if(nbytes==0){return how_many;}
-    if(terminals[on_screen].buf_kb[0]=='\n'){return how_many;}
-
-    while(terminals[on_screen].buf_kb[count] != '\0'){
+    if(keyboard_buffer[0]=='\n'){return how_many;}    
+    
+    while(keyboard_buffer[count] != '\0'){
         ++count;
     }
     if(count == nbytes){
@@ -61,12 +61,12 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
         how_many=count;
     }
     //printf("Number of bytes typed: %d \n", how_many);
-    memcpy(buf, terminals[on_screen].buf_kb, how_many+1); // copy keyboard buffer into buf
-    // set NULL values for the entire keyboard buffer now that the buffer was copied
-    // The value of 128 is the size of the terminals[on_screen].buf_kb
-    enter_p_flag = 0;
-    terminals[on_screen].curr_idx = 0;
-    memset(terminals[on_screen].buf_kb, '\0', 128);
+    memcpy(buf, keyboard_buffer, how_many+1); // copy keyboard buffer into buf
+    // set NULL values for the entire keyboard buffer now that the buffer was copied 
+    memset(keyboard_buffer, 0, TYPE_BUFFER_SIZE);
+    // The value of 128 is the size of the keyboard_buffer
+    terminals[on_screen].enter_p_flag = 0;
+    kb_idx = 0;
     return how_many;
 }
 
@@ -74,7 +74,7 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
 
 /*
  NAME: terminal_write
- DESCRIPTION: writes what was in buffer into the video mem
+ DESCRIPTION: writes what was in buffer into the video mem 
  INPUTS: fd, buf, nbytes
  OUTPUTS: chars onto screen
  RETURN VALUE: count of chars displayed
@@ -83,7 +83,7 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
 //write
 int32_t terminal_write(int32_t fd, const void *buf, int32_t nbytes) {
     int i = 0;
-    int count = 0;
+    int count = 0;  
     // wrtie nbytes into this buf
     for (i = 0; i < nbytes; i++) {
         putc((*(uint8_t *) ((uint32_t) buf + i)));
@@ -91,8 +91,8 @@ int32_t terminal_write(int32_t fd, const void *buf, int32_t nbytes) {
     }
 
     // printf("HERE");
-    // memset(terminals[curr_terminal].buf_kb, '\0', 128);
-    // terminals[curr_terminal].curr_idx = 0;
+    // memset(keyboard_buffer, '\0', 128); 
+    // kb_idx = 0;
     // printf(" HERE after mem set %d \n", count);
     return count;
 }

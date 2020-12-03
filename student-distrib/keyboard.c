@@ -186,10 +186,7 @@ void keyboard_handler() {
         // go through gdb to check what's in this buffer, then see if that reaches the correct conditions in shell
         kb_idx--; 
         char_count--;
-        keyboard_buffer[kb_idx]='\n';
-        
-
-
+        keyboard_buffer[kb_idx]='\0';
     }
 
     

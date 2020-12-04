@@ -191,7 +191,7 @@ void putc(uint8_t c) {
     // want to write to background buffer instead of offscreen. the weird cross we have now is likely causing that
     video_mem = terminals[on_screen].video_buffer;
 
-    if (on_screen == curr_terminal)
+    if (on_screen == curr_terminal || keypress_to_vid_flag)
         video_mem = (void *) VIDEO;
 
 
@@ -263,7 +263,7 @@ void rm_c(void) {
     //printf("HERE");
     video_mem = terminals[on_screen].video_buffer;
 
-    if (on_screen == curr_terminal)
+    if (on_screen == curr_terminal || keypress_to_vid_flag)
         video_mem = (void *) VIDEO;
     char* video_mem_backup = video_mem;
 

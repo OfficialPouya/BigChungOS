@@ -40,14 +40,7 @@ void pit_handler(void){
         terminals[curr_terminal].screen_x = 0;
         terminals[curr_terminal].screen_y = 0;
         update_screen_axis(terminals[curr_terminal].screen_x, terminals[curr_terminal].screen_y);
-
-        asm volatile(
-            "movl %%ebp, %0;"
-            "movl %%esp, %1"
-        : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-        :
-        );
-
+        
         // might be able to replace the above with less logic
         pit_count++;
         printf("Terminal %d\n", pit_count);
@@ -68,18 +61,36 @@ void pit_handler(void){
 
         switch_terminal_work(0);
         // printf("pit_count: %d", pit_count);
-        pit_count++;
+        // pit_count++;
     }
 
     // ++curr_terminal;
     // curr_terminal = curr_terminal % NUMBER_OF_TERMINALS;
     // //If PIT_COUNT is not at end, just increment
-    else{
+    
         // call the scheduling function here
         // make sure to write test functions for this checkpoint
-        switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
-        pit_count++;
-    }
+    pit_count++;
+    switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
+        
+    // what pit_handler should be doing: all of this should be in pit handler according to pouya
+    /* 1. keep track of parent ebp/esp
+     * 2. save current tss state (ss0/esp0)
+     * 3. get screen_x/screen_y for current terminal
+     * 4. do the round robin (curr_terminal = (curr_terminal+1)%3)
+     * 5. check if it's the initial boot (if(pit_count < 3))
+     * 6. check else if(pit_count == 3), force into terminal 0
+     * 7. load newly scheduled tss and update esp/ebp for user stack
+     * 8. page the video memory to write to (either on screen or background)
+     * 9. set screen_x/screen_y either way
+     * 10. reverse step 1
+     * 11. end interrupt
+     */
+
+    // what should be in switch_terminal_work
+    /* 1. check if target_terminal is on screen and if target_terminal < 3
+     * 2. then, set the on_screen's coordinates, store 
+     */ 
 
     if (pit_count == 99){
         pit_count = 6;
@@ -191,7 +202,14 @@ void switch_terminal_work(int target_terminal){
     
     // MISSING:
     // set esp0
+    // tss.esp0 = 0x800000 - ((terminals[target_terminal].procs[terminals[target_terminal].curr_process])*4096*2)-4; would just be this right,
+    // online suggesting we change it (plus we have esp used elsewhere)
+    // tss.ss0 = KERNEL_DS;
 
+    // wtf does esp0 get used for and does it depend on ss0? does it change in the user program? 
+    // how does it vary from the esp register?
+    // esp0 points to the 8kB the process is in, in order to switch properly we need to point to the proper esp0 (kernel stack?)/
+    // thomas recommended storing the esp0 in pcb and restoring it upon switch
     // }
 
     // step 3: switch to esp of next process (ebp as well)

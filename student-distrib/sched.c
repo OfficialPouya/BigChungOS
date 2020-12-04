@@ -34,13 +34,59 @@ void init_PIT(uint32_t freq){
  */
 void pit_handler(void){
     if(pit_count<NUMBER_OF_TERMINALS){
-        switch_terminal_work(pit_count);
+        // switch_terminal_work(pit_count);
+        curr_terminal = pit_count;
+
+        terminals[curr_terminal].screen_x = 0;
+        terminals[curr_terminal].screen_y = 0;
+        update_screen_axis(terminals[curr_terminal].screen_x, terminals[curr_terminal].screen_y);
+
+        asm volatile(
+            "movl %%ebp, %0;"
+            "movl %%esp, %1"
+        : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+        :
+        );
+
+        if(on_screen == curr_terminal){
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb();
+        }
+
+        else{
+            switch(curr_terminal) {
+                case 1:
+                    page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                    page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+                    flush_tlb();
+                    break;
+                case 2:
+                    page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                    page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
+                    flush_tlb();
+                    break;    
+            }
+        }
+        
+        // might be able to replace the above with less logic
         pit_count++;
         printf("Terminal %d\n", pit_count);
         send_eoi(0); // PIT IRQ is 0
         sys_execute((uint8_t*)"shell");
     }
+
     else if (pit_count == NUMBER_OF_TERMINALS){
+        terminals[0].screen_x = 7;
+        terminals[0].screen_y = 2;
+
+        terminals[1].screen_x = 7;
+        terminals[1].screen_y = 2;
+        
+        terminals[2].screen_x = 7;
+        terminals[2].screen_y = 2;
+        curr_terminal = 2;
+
         switch_terminal_work(0);
         // printf("pit_count: %d", pit_count);
         pit_count++;
@@ -164,6 +210,11 @@ void switch_terminal_work(int target_terminal){
     // step 2: update variables related to current terminal
     // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     
+    // MISSING:
+    // set esp0
+
+
+
     // step 3: switch to esp of next process (ebp as well)
     // step 4: pop off anything left from sched() (shouldn't be anything I think)
     // step 5: restore general registers
@@ -177,6 +228,34 @@ void switch_terminal_work(int target_terminal){
     //     : "r"(all_pcbs[terminals[target_terminal].procs[terminals[target_terminal].curr_process]]), "r"(all_pcbs[terminals[target_terminal].procs[terminals[target_terminal].curr_process]])
     //     );
 
+    // SCREEN DATA CONTROL
+    // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
+    // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
+    if(on_screen == target_terminal){
+        page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+        page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+        flush_tlb();
+    }
+
+    else{
+        switch(target_terminal) {
+            case 0:
+                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;
+                flush_tlb();
+                break;    
+            case 1:
+                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+                flush_tlb();
+                break;
+            case 2:
+                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
+                flush_tlb();
+                break;    
+        }
+    }
 
     // memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
     // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
@@ -226,33 +305,36 @@ void switch_terminal_keypress(int target_terminal){
     terminals[on_screen].screen_y = get_screen_pos(1);
 
     switch(on_screen) {
-        case 0: // save to term 0
+        case 0: // save to term 0 
             memcpy((uint8_t *)TERM0, (uint8_t *)MAIN_VIDEO, 4096);
-            terminals[on_screen].video_buffer = (char *)TERM0;
-            break;
+            break;    
         case 1: // save to term 1
             memcpy((uint8_t *)TERM1, (uint8_t *)MAIN_VIDEO, 4096);
-            terminals[on_screen].video_buffer = (char *)TERM1;
             break;
         case 2: // save to term 2
             memcpy((uint8_t *)TERM2, (uint8_t *)MAIN_VIDEO, 4096);
-            terminals[on_screen].video_buffer = (char *)TERM2;
-            break;
+            break;    
     }
-    
+
     switch(target_terminal) {
         case 0: // switch to term 0
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb(); 
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM0, 4096);
-            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
-            break;
+            break;    
         case 1: // switch to term 1
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb(); 
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
-            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
         case 2: // switch to term 2
+            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+            flush_tlb(); 
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM2, 4096);
-            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
-            break;
+            break;    
     }
     memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
     memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);

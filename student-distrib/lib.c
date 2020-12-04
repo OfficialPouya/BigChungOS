@@ -187,19 +187,24 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     // video_mem = terminals[curr_terminal].video_buffer;
     // if enter has been pressed
-    // or new line in file
-
-    video_mem = terminals[curr_terminal].video_buffer;
+    // page fault could be result of not updating paging 
+    // want to write to background buffer instead of offscreen. the weird cross we have now is likely causing that
+    video_mem = terminals[on_screen].video_buffer;
 
     if (on_screen == curr_terminal)
         video_mem = (void *) VIDEO;
 
+
     if (c == '\0')
-      return;
-    if (c == '\n' && screen_x == 0){
-       return;
+        return;
+    else if (c == '\n' && screen_x == 0){
+        return;
     }
-    else if(c == '\n' || c == '\r') {
+
+    if (keypress_to_vid_flag)
+        video_mem = (void *) VIDEO;
+
+    if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
         // checks if we have reached bottom of screen
@@ -239,7 +244,6 @@ void putc(uint8_t c) {
     }
     // to update cursor
     update_cursor(screen_x, screen_y);
-
 }
 
 
@@ -261,9 +265,14 @@ void rm_c(void) {
 
     if (on_screen == curr_terminal)
         video_mem = (void *) VIDEO;
+    char* video_mem_backup = video_mem;
 
     if(screen_y==0 && screen_x == 0){return;}
     if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
+
+    if (keypress_to_vid_flag)
+        video_mem = (void *) VIDEO;
+
     *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
     *(uint8_t *) (video_mem + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
     // move the current x back 1
@@ -273,6 +282,10 @@ void rm_c(void) {
         screen_y--;
     }
     update_cursor(screen_x, screen_y);
+    
+    if (keypress_to_vid_flag){
+        video_mem = video_mem_backup;
+    }
 }
 
 

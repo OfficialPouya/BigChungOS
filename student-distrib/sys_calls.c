@@ -128,8 +128,10 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 int32_t sys_execute(const uint8_t *command){
     cli();
     // 1. PARSE (Chloe :: DONE)
+    int prev_pid;
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
+    // prev_pid should be terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]
     prev_pid = pid_counter;
     pid_counter = get_free_pcb();
     // do not want to run more than 6 processes
@@ -144,8 +146,9 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     }
 
-    // if (terminals[curr_terminal].ProcPerTerm >= 4){
+    // if (terminals[curr_terminal].curr_process >= 3){
     //     printf("Too many programs on this terminal \n");
+    //     pid_counter = prev_pid;
     //     return -1;
     // }
 
@@ -248,8 +251,8 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     }
     
-    ++terminals[curr_terminal].curr_process;
     // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    ++terminals[curr_terminal].curr_process;
     //printf("after inc, curr_terminal %d, curr_process %d\n", curr_terminal, terminals[curr_terminal].curr_process);
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
@@ -488,6 +491,7 @@ int32_t sys_vidmap(uint8_t **screen_start){
     // number 0x8000000 and 0x8400000 is the range of user program page
     if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
     *screen_start = (uint8_t*)(0x84b8000); // do we clear this during halt? how?
+    // we may want to change the above to be the video buffer you want instead of directly to VIDEO
     return 0;
 }
 

@@ -188,7 +188,7 @@ void putc(uint8_t c) {
     // video_mem = terminals[curr_terminal].video_buffer;
     // if enter has been pressed
     // or new line in file
-
+    char* video_mem_backup = video_mem;
     // page fault could be result of not updating paging 
     // want to write to background buffer instead of offscreen. the weird cross we have now is likely causing that
 
@@ -197,11 +197,15 @@ void putc(uint8_t c) {
     // is something overflowing? it's not clear what would
 
     if (c == '\0')
-      return;
-    if (c == '\n' && screen_x == 0){
-       return;
+        return;
+    else if (c == '\n' && screen_x == 0){
+        return;
     }
-    else if(c == '\n' || c == '\r') {
+
+    if (keypress_to_vid_flag)
+        video_mem = (void *) VIDEO;
+
+    if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
         // checks if we have reached bottom of screen
@@ -241,7 +245,9 @@ void putc(uint8_t c) {
     }
     // to update cursor
     update_cursor(screen_x, screen_y);
-
+    if (keypress_to_vid_flag){
+        video_mem = video_mem_backup;
+    }
 }
 
 
@@ -256,8 +262,14 @@ void putc(uint8_t c) {
  */
 //This is PUTC Modified
 void rm_c(void) {
+    char* video_mem_backup = video_mem;
+
     if(screen_y==0 && screen_x == 0){return;}
     if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
+
+    if (keypress_to_vid_flag)
+        video_mem = (void *) VIDEO;
+
     *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc
     *(uint8_t *) (video_mem + (((NUM_COLS * screen_y + screen_x - 1) << 1)) + 1) = ATTRIB; // ROW Major calc
     // move the current x back 1
@@ -267,6 +279,10 @@ void rm_c(void) {
         screen_y--;
     }
     update_cursor(screen_x, screen_y);
+    
+    if (keypress_to_vid_flag){
+        video_mem = video_mem_backup;
+    }
 }
 
 

@@ -212,8 +212,15 @@ void switch_terminal_work(int target_terminal){
     
     // MISSING:
     // set esp0
+    // tss.esp0 = 0x800000 - ((terminals[target_terminal].procs[terminals[target_terminal].curr_process])*4096*2)-4; would just be this right,
+    // online suggesting we change it (plus we have esp used elsewhere)
+    // tss.ss0 = KERNEL_DS;
 
-
+    // wtf does esp0 get used for and does it depend on ss0? does it change in the user program? 
+    // how does it vary from the esp register?
+    // esp0 points to the 8kB the process is in, in order to switch properly we need to point to the proper esp0 (kernel stack?)/
+    // thomas recommended storing the esp0 in pcb and restoring it upon switch
+    // esp will change bc it's the actual kernel stack, esp0 doesn't? esp0 is a point of reference, not something that should change
 
     // step 3: switch to esp of next process (ebp as well)
     // step 4: pop off anything left from sched() (shouldn't be anything I think)
@@ -343,7 +350,7 @@ void switch_terminal_keypress(int target_terminal){
     kb_idx = terminals[target_terminal].curr_idx;
 
     on_screen = target_terminal;
-    curr_terminal = on_screen;
+    // curr_terminal = on_screen;
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
 
     return;

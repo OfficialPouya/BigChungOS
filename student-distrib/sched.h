@@ -36,8 +36,9 @@ typedef struct terminal_t {
     int char_count;
     int enter_p_flag;
 
-    uint32_t ebp[6];
-    uint32_t esp[6];
+    // only used during for scheduling, don't need to be updated during a syscall
+    uint32_t ebp[6]; 
+    uint32_t esp[6]; 
 
     char* video_buffer; //pointer to this terminals video buffer
     uint8_t** screen_start;

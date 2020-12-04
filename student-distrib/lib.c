@@ -189,12 +189,10 @@ void putc(uint8_t c) {
     // if enter has been pressed
     // or new line in file
 
-    // page fault could be result of not updating paging 
-    // want to write to background buffer instead of offscreen. the weird cross we have now is likely causing that
+    video_mem = terminals[curr_terminal].video_buffer;
 
-    // could not changing paging cause the page fault?
-
-    // is something overflowing? it's not clear what would
+    if (on_screen == curr_terminal)
+        video_mem = (void *) VIDEO;
 
     if (c == '\0')
       return;
@@ -256,6 +254,14 @@ void putc(uint8_t c) {
  */
 //This is PUTC Modified
 void rm_c(void) {
+    // video_mem = terminals[curr_terminal].video_buffer;
+    // remove 1 space from the
+    //printf("HERE");
+    video_mem = terminals[on_screen].video_buffer;
+
+    if (on_screen == curr_terminal)
+        video_mem = (void *) VIDEO;
+
     if(screen_y==0 && screen_x == 0){return;}
     if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
     *(uint8_t *) (video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = '\0'; // ROW Major calc

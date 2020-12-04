@@ -126,7 +126,6 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
  */
 
 int32_t sys_execute(const uint8_t *command){
-    cli();
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
@@ -249,7 +248,7 @@ int32_t sys_execute(const uint8_t *command){
     }
     
     ++terminals[curr_terminal].curr_process;
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
+    terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
     //printf("after inc, curr_terminal %d, curr_process %d\n", curr_terminal, terminals[curr_terminal].curr_process);
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
@@ -314,7 +313,7 @@ int32_t sys_halt(uint8_t status){
     }
 
     //printf("before dec, curr_terminal %d, curr_process %d\n", curr_terminal, terminals[curr_terminal].curr_process);
-    // terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
+    terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
     --terminals[curr_terminal].curr_process;
 
     // i believe we set pid_counter to the current terminal's

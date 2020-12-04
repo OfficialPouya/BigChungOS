@@ -48,27 +48,6 @@ void pit_handler(void){
         :
         );
 
-        if(on_screen == curr_terminal){
-            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-            flush_tlb();
-        }
-
-        else{
-            switch(curr_terminal) {
-                case 1:
-                    page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-                    page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
-                    flush_tlb();
-                    break;
-                case 2:
-                    page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-                    page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
-                    flush_tlb();
-                    break;    
-            }
-        }
-        
         // might be able to replace the above with less logic
         pit_count++;
         printf("Terminal %d\n", pit_count);
@@ -95,16 +74,16 @@ void pit_handler(void){
     // ++curr_terminal;
     // curr_terminal = curr_terminal % NUMBER_OF_TERMINALS;
     // //If PIT_COUNT is not at end, just increment
-    // else{
-    //     // call the scheduling function here
-    //     // make sure to write test functions for this checkpoint
-    //     switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
-    //     pit_count++;
-    // }
+    else{
+        // call the scheduling function here
+        // make sure to write test functions for this checkpoint
+        switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
+        pit_count++;
+    }
 
-    // if (pit_count == 99){
-    //     pit_count = 3;
-    // }
+    if (pit_count == 99){
+        pit_count = 6;
+    }
 
     send_eoi(0);
     return;
@@ -199,63 +178,64 @@ void switch_terminal_work(int target_terminal){
     // }
 
     // step 1: push general (just needs to be callee saved but all is ok) registers and store ebp and esp
-    // asm volatile(
-    //     "pushal:"
-    //     "movl %%ebp, %0;"
-    //     "movl %%esp, %1"
-    // : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-    // :
-    // );
+    asm volatile(
+        "pushal:"
+        "movl %%ebp, %0;"
+        "movl %%esp, %1"
+    : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+    :
+    );
 
     // step 2: update variables related to current terminal
-    // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+    update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     
     // MISSING:
     // set esp0
 
-
+    // }
 
     // step 3: switch to esp of next process (ebp as well)
     // step 4: pop off anything left from sched() (shouldn't be anything I think)
     // step 5: restore general registers
     // step 6: iret
-    //     asm volatile(
-    //         "movl %0, %%ebp;"
-    //         "movl %1, %%esp;"
-    //         "popal;"
-    //         "iret"
-    //     :
-    //     : "r"(all_pcbs[terminals[target_terminal].procs[terminals[target_terminal].curr_process]]), "r"(all_pcbs[terminals[target_terminal].procs[terminals[target_terminal].curr_process]])
-    //     );
+    asm volatile(
+        "movl %0, %%ebp;"
+        "movl %1, %%esp;"
+        "popal"
+    :
+    : "r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+    );
 
-    // SCREEN DATA CONTROL
-    // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
-    // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
-    if(on_screen == target_terminal){
-        page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-        page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-        flush_tlb();
-    }
+    curr_terminal = target_terminal;
 
-    else{
-        switch(target_terminal) {
-            case 0:
-                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;
-                flush_tlb();
-                break;    
-            case 1:
-                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
-                flush_tlb();
-                break;
-            case 2:
-                page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-                page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
-                flush_tlb();
-                break;    
-        }
-    }
+    // // SCREEN DATA CONTROL
+    // // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
+    // // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
+    // if(on_screen == target_terminal){
+    //     page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    //     page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
+    //     flush_tlb();
+    // }
+
+    // else{
+    //     switch(target_terminal) {
+    //         case 0:
+    //             page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    //             page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;
+    //             flush_tlb();
+    //             break;    
+    //         case 1:
+    //             page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    //             page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
+    //             flush_tlb();
+    //             break;
+    //         case 2:
+    //             page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
+    //             page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
+    //             flush_tlb();
+    //             break;    
+    //     }
+    // }
 
     // memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
     // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
@@ -276,10 +256,7 @@ void switch_terminal_work(int target_terminal){
     //     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     // }
     // else{
-    update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    // }
 
-    curr_terminal = target_terminal;
 
     // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
     // update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
@@ -305,36 +282,33 @@ void switch_terminal_keypress(int target_terminal){
     terminals[on_screen].screen_y = get_screen_pos(1);
 
     switch(on_screen) {
-        case 0: // save to term 0 
+        case 0: // save to term 0
             memcpy((uint8_t *)TERM0, (uint8_t *)MAIN_VIDEO, 4096);
-            break;    
+            terminals[on_screen].video_buffer = (char *)TERM0;
+            break;
         case 1: // save to term 1
             memcpy((uint8_t *)TERM1, (uint8_t *)MAIN_VIDEO, 4096);
+            terminals[on_screen].video_buffer = (char *)TERM1;
             break;
         case 2: // save to term 2
             memcpy((uint8_t *)TERM2, (uint8_t *)MAIN_VIDEO, 4096);
-            break;    
+            terminals[on_screen].video_buffer = (char *)TERM2;
+            break;
     }
-
+    
     switch(target_terminal) {
         case 0: // switch to term 0
-            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-            flush_tlb(); 
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM0, 4096);
-            break;    
+            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
+            break;
         case 1: // switch to term 1
-            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-            flush_tlb(); 
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
+            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
         case 2: // switch to term 2
-            page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-            page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-            flush_tlb(); 
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM2, 4096);
-            break;    
+            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
+            break;
     }
     memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
     memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
@@ -343,7 +317,7 @@ void switch_terminal_keypress(int target_terminal){
     kb_idx = terminals[target_terminal].curr_idx;
 
     on_screen = target_terminal;
-    curr_terminal = on_screen;
+
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
 
     return;

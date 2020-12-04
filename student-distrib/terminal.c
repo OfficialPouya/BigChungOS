@@ -41,7 +41,7 @@ int32_t terminal_close(int32_t fd) {
  */
 //read
 int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
-    // sti();
+    sti();
     while(terminals[on_screen].enter_p_flag == 0);
     int count = 0;
     int how_many = 0;
@@ -51,6 +51,7 @@ int32_t terminal_read(int32_t fd, void *buf, int32_t nbytes) {
     while(keyboard_buffer[count] != '\0'){
         ++count;
     }
+    cli();
     if(count == nbytes){
         how_many = count;
     }

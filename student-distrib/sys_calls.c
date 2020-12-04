@@ -126,6 +126,7 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
  */
 
 int32_t sys_execute(const uint8_t *command){
+    cli();
     // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;

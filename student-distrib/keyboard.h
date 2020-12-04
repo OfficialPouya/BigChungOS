@@ -14,7 +14,7 @@ int kb_idx;
 // char_count is to ensure we don't go over the char limit
 // there will be if statements later on
 int char_count;
-
+int keypress_to_vid_flag;
 
 // initialize keyboard
 void init_keyboard();

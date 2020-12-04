@@ -191,7 +191,7 @@ void putc(uint8_t c) {
 
     video_mem = terminals[curr_terminal].video_buffer;
 
-    if (on_screen == curr_terminal)
+    if (on_screen == curr_terminal || keypress_to_vid_flag)
         video_mem = (void *) VIDEO;
 
     if (c == '\0')
@@ -259,7 +259,7 @@ void rm_c(void) {
     //printf("HERE");
     video_mem = terminals[on_screen].video_buffer;
 
-    if (on_screen == curr_terminal)
+    if (on_screen == curr_terminal || keypress_to_vid_flag)
         video_mem = (void *) VIDEO;
 
     if(screen_y==0 && screen_x == 0){return;}

@@ -171,22 +171,26 @@ void keyboard_handler() {
             // returns 1 if that is the case, thus, it wont print that char 
             // Scan code 0x0E is Backspace
             if((special_key_check(scan_code)!=1) && (scan_code != 0x0E) && (scan_code != 0x1C)){
+                keypress_to_vid_flag = 1;
                 putc(key_char);
                 keyboard_buffer[kb_idx]=key_char;
                 keyboard_buffer[kb_idx+1]='\n';
                 ++kb_idx;
                 ++char_count;
+                keypress_to_vid_flag = 0;
             }
         }
     }
     // Scan code 0x0E is Backspace
     if(scan_code==0x0E && kb_idx > 0){
+        keypress_to_vid_flag = 1;
         rm_c();
         // keyboard_buffer[kb_idx]='\n';
         // go through gdb to check what's in this buffer, then see if that reaches the correct conditions in shell
         kb_idx--; 
         char_count--;
         keyboard_buffer[kb_idx]='\0';
+        keypress_to_vid_flag = 0;
     }
 
     
@@ -202,19 +206,23 @@ void keyboard_handler() {
     }
 
     if((scan_code == 0x0F) && (kb_idx<127)){
+        keypress_to_vid_flag = 1;
         putc(' ');
         keyboard_buffer[kb_idx]=' ';
         ++kb_idx;
         ++char_count;
+        keypress_to_vid_flag = 0;
     }
 
 
     //Enter Handling 0x1C
     if(scan_code == 0x1C){
+        keypress_to_vid_flag = 1;
         putc('\n');
         terminals[on_screen].enter_p_flag = 1;
         kb_idx = 0;
         char_count = 0;
+        keypress_to_vid_flag = 0;
     }
 
     if(flag_keys[3]==1){

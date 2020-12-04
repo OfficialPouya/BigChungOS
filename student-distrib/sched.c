@@ -198,13 +198,13 @@ void switch_terminal_work(int target_terminal){
     // step 4: pop off anything left from sched() (shouldn't be anything I think)
     // step 5: restore general registers
     // step 6: iret
-    asm volatile(
-        "movl %0, %%ebp;"
-        "movl %1, %%esp;"
-        "popal"
-    :
-    : "r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-    );
+    // asm volatile(
+    //     "movl %0, %%ebp;"
+    //     "movl %1, %%esp;"
+    //     "popal"
+    // :
+    // : "r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
+    // );
 
     curr_terminal = target_terminal;
 

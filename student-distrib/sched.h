@@ -45,6 +45,7 @@ typedef struct terminal_t {
     int procs[6];     // map this to pid_counter for easy program switching?
     int curr_process; // is this an index to procs?
     
+    tss_t save_tss;
 } terminal_t;
 
 terminal_t terminals[NUMBER_OF_TERMINALS];

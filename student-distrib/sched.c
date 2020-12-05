@@ -33,21 +33,30 @@ void init_PIT(uint32_t freq){
  IMPACTS ON OTHERS: Opens New shells
  */
 void pit_handler(void){
+    uint32_t esp;
+    uint32_t ebp;
+    asm volatile(
+        "movl %%ebp, %0;"
+        "movl %%esp, %1"
+    : "=r"(ebp), "=r"(esp)
+    :
+    );
+    test_interrupts();
+    terminals[curr_terminal].save_tss = tss; // this is wasteful, just for now ;)
+    all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task = ebp;
+    all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task = esp;
+
+    terminals[curr_terminal].screen_x = get_screen_pos(0);
+    terminals[curr_terminal].screen_y = get_screen_pos(1);  
+    curr_terminal = (curr_terminal+1)%NUMBER_OF_TERMINALS;
+    
     if(pit_count<NUMBER_OF_TERMINALS){
         // switch_terminal_work(pit_count);
         curr_terminal = pit_count;
-
-        terminals[curr_terminal].screen_x = 0;
-        terminals[curr_terminal].screen_y = 0;
-        update_screen_axis(terminals[curr_terminal].screen_x, terminals[curr_terminal].screen_y);
-
-        asm volatile(
-            "movl %%ebp, %0;"
-            "movl %%esp, %1"
-        : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-        :
-        );
-
+        switch_terminal_work(curr_terminal);
+        terminals[curr_terminal].screen_x = get_screen_pos(0);
+        terminals[curr_terminal].screen_y = get_screen_pos(1);
+        
         // might be able to replace the above with less logic
         pit_count++;
         printf("Terminal %d\n", pit_count);
@@ -56,35 +65,42 @@ void pit_handler(void){
     }
 
     else if (pit_count == NUMBER_OF_TERMINALS){
-        terminals[0].screen_x = 7;
-        terminals[0].screen_y = 2;
-
-        terminals[1].screen_x = 7;
-        terminals[1].screen_y = 2;
-        
-        terminals[2].screen_x = 7;
-        terminals[2].screen_y = 2;
-        curr_terminal = 2;
-
+        curr_terminal = 0;
         switch_terminal_work(0);
         // printf("pit_count: %d", pit_count);
         pit_count++;
     }
+    
+    // tss.esp0 = 0x800000 - ((terminals[curr_terminal].procs[terminals[curr_terminal].curr_process])*4096*2)-4;
+    // tss.ss0 = KERNEL_DS;
+    tss = terminals[curr_terminal].save_tss;
+    ebp = all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task;
+    esp = all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task;
 
-    // ++curr_terminal;
-    // curr_terminal = curr_terminal % NUMBER_OF_TERMINALS;
-    // //If PIT_COUNT is not at end, just increment
+    if(curr_terminal == on_screen) terminals[curr_terminal].video_buffer = (char *)MAIN_VIDEO;// map into the main video buffer
     else{
-        // call the scheduling function here
-        // make sure to write test functions for this checkpoint
-        switch_terminal_work(pit_count%NUMBER_OF_TERMINALS);
-        pit_count++;
+        switch(curr_terminal) {
+            case 0: // save to term 0
+                terminals[curr_terminal].video_buffer = (char *)TERM0;
+                break;
+            case 1: // save to term 1
+                terminals[curr_terminal].video_buffer = (char *)TERM1;
+                break;
+            case 2: // save to term 2
+                terminals[curr_terminal].video_buffer = (char *)TERM2;
+                break;
+        }
     }
 
-    if (pit_count == 99){
-        pit_count = 6;
-    }
+    asm volatile(
+        "movl %0, %%ebp;"
+        "movl %1, %%esp"
+    :
+    : "r"(ebp), "r"(esp)
+    );
 
+    // switch_terminal_work(curr_terminal);
+    
     send_eoi(0);
     return;
 }
@@ -110,7 +126,7 @@ void start_terminals(void){
         terminals[idx].curr_process = 0;
         switch(idx) {
             case 0:
-                terminals[idx].video_buffer = (char *)MAIN_VIDEO;
+                terminals[idx].video_buffer = (char *)TERM0;
                 break;
             case 1:
                 terminals[idx].video_buffer = (char *)TERM1;
@@ -142,51 +158,15 @@ void switch_terminal_work(int target_terminal){
     // QUICK CHECKS + FIX
     if(target_terminal >= NUMBER_OF_TERMINALS) return;
 
+    terminals[on_screen].screen_x = get_screen_pos(0);
+    terminals[on_screen].screen_y = get_screen_pos(1);    
+    
     /*
     MAGIC NUMBERS
     get_screen_pos hot key values
     get_screen_pos(0) = x
     get_screen_pos(1) = y
-    get_kb_info(0) = kb_idx
-    get_kb_info(1) = char_count
     */
-
-    // SAVE CURR TERMINAL VALUES BACK INTO ITS PROPPER STRUCT
-    // UNNECESSARY DUE TO CHANGES IN KEYBOARD, TERMINAL, AND LIB
-    terminals[curr_terminal].screen_x = get_screen_pos(0);
-    terminals[curr_terminal].screen_y = get_screen_pos(1);
-
-    
-    // // saving parent ebp and esp
-    // asm volatile(
-    //     "movl %%ebp, %0;"
-    //     "movl %%esp, %1"
-    // : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-    // :
-    // );
-
-    // if (terminals[target_terminal].ebp[terminals[target_terminal].curr_process] != 0){
-    //     update_user_addr(terminals[target_terminal].procs[terminals[target_terminal].curr_process]);
-
-    //     // recall ebp and esp
-    //     asm volatile(
-    //         "movl %0, %%ebp;"
-    //         "movl %1, %%esp"
-    //     :
-    //     : "r"(terminals[target_terminal].ebp[terminals[target_terminal].curr_process]), "r"(terminals[target_terminal].esp[terminals[target_terminal].curr_process])
-    //     );
-    // }
-
-    // step 1: push general (just needs to be callee saved but all is ok) registers and store ebp and esp
-    asm volatile(
-        "pushal:"
-        "movl %%ebp, %0;"
-        "movl %%esp, %1"
-    : "=r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "=r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-    :
-    );
-
-    // step 2: update variables related to current terminal
     update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     
     // MISSING:
@@ -200,77 +180,14 @@ void switch_terminal_work(int target_terminal){
     // esp0 points to the 8kB the process is in, in order to switch properly we need to point to the proper esp0 (kernel stack?)/
     // thomas recommended storing the esp0 in pcb and restoring it upon switch
     // esp will change bc it's the actual kernel stack, esp0 doesn't? esp0 is a point of reference, not something that should change
+    //curr_terminal = target_terminal;
 
-    // step 3: switch to esp of next process (ebp as well)
-    // step 4: pop off anything left from sched() (shouldn't be anything I think)
-    // step 5: restore general registers
-    // step 6: iret
-    // asm volatile(
-    //     "movl %0, %%ebp;"
-    //     "movl %1, %%esp;"
-    //     "popal"
-    // :
-    // : "r"(terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]), "r"(terminals[curr_terminal].esp[terminals[curr_terminal].curr_process])
-    // );
+    memcpy(terminals[on_screen].video_buffer, (void *)MAIN_VIDEO, 4096);
 
-    curr_terminal = target_terminal;
+    memcpy((void *)MAIN_VIDEO ,terminals[on_screen].video_buffer, 4096);
 
-    // // SCREEN DATA CONTROL
-    // // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
-    // // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
-    // if(on_screen == target_terminal){
-    //     page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-    //     page_table1[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-    //     flush_tlb();
-    // }
-
-    // else{
-    //     switch(target_terminal) {
-    //         case 0:
-    //             page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-    //             page_table1[(VIDMEM>>ENTRY4KB)] |= TERM0;
-    //             flush_tlb();
-    //             break;    
-    //         case 1:
-    //             page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-    //             page_table1[(VIDMEM>>ENTRY4KB)] |= TERM1;
-    //             flush_tlb();
-    //             break;
-    //         case 2:
-    //             page_table1[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-    //             page_table1[(VIDMEM>>ENTRY4KB)] |= TERM2;
-    //             flush_tlb();
-    //             break;    
-    //     }
-    // }
-
-    // memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
-    // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-
-    // SCREEN DATA CONTROL
-    // DONT NEED TO RESTORE PREVIOUS, JUST CHANGE POINTER TO ADD ONTO EXISTING
-    // TWO CASES, WORKED ONE IS ON SCREEN OR NOT
-    // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-
-    // save current esp
-    // save current ebp
-    // update_user_addr(target pid);
-    // restore target esp
-    // restore target ebp
-
-    // change_vid_mem(target_terminal);
-    // if(on_screen == target_terminal){
-    //     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    // }
-    // else{
-
-
-    // RESTORE TARGET TERMINAL VALUES FROM ITS PROPPER STRUCT
-    // update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    // update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    // not needed after changes to keyboard functionality
-    // memcpy(keyboard_buffer, terminals[target_terminal].buf_kb, KB_BUFFER_SIZE);
-
+    
+    flush_tlb();
     return;
 }
 
@@ -325,6 +242,8 @@ void switch_terminal_keypress(int target_terminal){
 
     on_screen = target_terminal;
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-
+    // check PUTC for cursor for terminal 2 and 3
     return;
 }
+
+

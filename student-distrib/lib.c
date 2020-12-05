@@ -28,7 +28,7 @@ void clear_out_kb(void){
  * Return Value: none
  * Function: Clears video memory */
 void clear(void) {
-    // video_mem = terminals[curr_terminal].video_buffer;
+    video_mem = terminals[curr_terminal].video_buffer;
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
@@ -243,6 +243,8 @@ void putc(uint8_t c) {
 
     }
     // to update cursor
+    if (on_screen == curr_terminal || keypress_to_vid_flag)
+        video_mem = video_mem_backup;
     update_cursor(screen_x, screen_y);
 }
 
@@ -261,7 +263,12 @@ void rm_c(void) {
     // video_mem = terminals[curr_terminal].video_buffer;
     // remove 1 space from the
     //printf("HERE");
+    char * video_mem_backup = video_mem;
+
     video_mem = terminals[on_screen].video_buffer;
+
+    if(screen_y==0 && screen_x == 0){return;}
+    if(keyboard_buffer[0] == '\n' || keyboard_buffer[0] == '\0'){return;}
 
     if (on_screen == curr_terminal || keypress_to_vid_flag)
         video_mem = (void *) VIDEO;
@@ -281,6 +288,9 @@ void rm_c(void) {
         screen_x = NUM_COLS - 1;
         screen_y--;
     }
+    if (on_screen == curr_terminal || keypress_to_vid_flag)
+        video_mem = video_mem_backup;
+
     update_cursor(screen_x, screen_y);
     
     if (keypress_to_vid_flag){

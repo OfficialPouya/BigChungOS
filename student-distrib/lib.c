@@ -28,7 +28,7 @@ void clear_out_kb(void){
  * Return Value: none
  * Function: Clears video memory */
 void clear(void) {
-    // video_mem = terminals[curr_terminal].video_buffer;
+    video_mem = terminals[curr_terminal].video_buffer;
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';

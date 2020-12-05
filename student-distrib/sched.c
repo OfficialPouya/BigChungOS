@@ -41,19 +41,21 @@ void pit_handler(void){
     : "=r"(ebp), "=r"(esp)
     :
     );
+    test_interrupts();
     terminals[curr_terminal].save_tss = tss; // this is wasteful, just for now ;)
     all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task = ebp;
     all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task = esp;
 
+    terminals[curr_terminal].screen_x = get_screen_pos(0);
+    terminals[curr_terminal].screen_y = get_screen_pos(1);  
     curr_terminal = (curr_terminal+1)%NUMBER_OF_TERMINALS;
-
+    
     if(pit_count<NUMBER_OF_TERMINALS){
         // switch_terminal_work(pit_count);
         curr_terminal = pit_count;
-
-        terminals[curr_terminal].screen_x = 0;
-        terminals[curr_terminal].screen_y = 0;
-        update_screen_axis(terminals[curr_terminal].screen_x, terminals[curr_terminal].screen_y);
+        switch_terminal_work(curr_terminal);
+        terminals[curr_terminal].screen_x = get_screen_pos(0);
+        terminals[curr_terminal].screen_y = get_screen_pos(1);
         
         // might be able to replace the above with less logic
         pit_count++;
@@ -75,8 +77,20 @@ void pit_handler(void){
     ebp = all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task;
     esp = all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task;
 
-    // if(curr_terminal == on_screen){map_video_page(X);} // map into the main video buffer
-    // else{map_video_page(Y);} // map into a video buffer that is not the main one
+    if(curr_terminal == on_screen) terminals[curr_terminal].video_buffer = (char *)MAIN_VIDEO;// map into the main video buffer
+    else{
+        switch(curr_terminal) {
+            case 0: // save to term 0
+                terminals[curr_terminal].video_buffer = (char *)TERM0;
+                break;
+            case 1: // save to term 1
+                terminals[curr_terminal].video_buffer = (char *)TERM1;
+                break;
+            case 2: // save to term 2
+                terminals[curr_terminal].video_buffer = (char *)TERM2;
+                break;
+        }
+    }
 
     asm volatile(
         "movl %0, %%ebp;"
@@ -154,10 +168,14 @@ void switch_terminal_work(int target_terminal){
     get_screen_pos(1) = y
     */
     update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    curr_terminal = target_terminal;
+    //curr_terminal = target_terminal;
+
+    memcpy(terminals[on_screen].video_buffer, (void *)MAIN_VIDEO, 4096);
+
+    memcpy((void *)MAIN_VIDEO ,terminals[on_screen].video_buffer, 4096);
 
     
-    
+    flush_tlb();
     return;
 }
 

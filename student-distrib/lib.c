@@ -1,6 +1,3 @@
-/* lib.c - Some basic library functions (printf, strlen, etc.)
- * vim:ts=4 noexpandtab */
-
 #include "lib.h"
 #include "keyboard.h"
 #define VIDEO       0xB8000
@@ -184,11 +181,7 @@ int32_t puts(int8_t* s) {
  * Inputs: uint_8* c = character to print
  * Return Value: void
  *  Function: Output a character to the console */
-void putc(uint8_t c) {
-    // video_mem = terminals[curr_terminal].video_buffer;
-    // if enter has been pressed
-    // or new line in file
-    
+void putc(uint8_t c) {    
     char * video_mem_backup = video_mem;
     video_mem = terminals[curr_terminal].video_buffer;
 

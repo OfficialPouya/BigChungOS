@@ -22,6 +22,7 @@
 // and channel operation
 #define ACCESS_LO_HI 0x30
 int test_val;
+int prev_pid;
 int pit_counter;
 void init_PIT(uint32_t freq);
 void pit_handler();

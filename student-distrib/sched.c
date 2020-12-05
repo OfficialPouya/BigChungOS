@@ -41,19 +41,22 @@ void pit_handler(void){
     : "=r"(ebp), "=r"(esp)
     :
     );
-    terminals[curr_terminal].save_tss = tss; // this is wasteful, just for now ;)
+    // terminals[curr_terminal].save_tss = tss; // this is wasteful, just for now ;)
     all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task = ebp;
     all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task = esp;
 
+    terminals[curr_terminal].screen_x = get_screen_pos(0);
+    terminals[curr_terminal].screen_y = get_screen_pos(1);  
+    
     curr_terminal = (curr_terminal+1)%NUMBER_OF_TERMINALS;
+
 
     if(pit_count<NUMBER_OF_TERMINALS){
         // switch_terminal_work(pit_count);
         curr_terminal = pit_count;
-
-        terminals[curr_terminal].screen_x = 0;
-        terminals[curr_terminal].screen_y = 0;
-        update_screen_axis(terminals[curr_terminal].screen_x, terminals[curr_terminal].screen_y);
+        switch_terminal_work(curr_terminal);
+        terminals[curr_terminal].screen_x = get_screen_pos(0);
+        terminals[curr_terminal].screen_y = get_screen_pos(1);
         
         // might be able to replace the above with less logic
         pit_count++;
@@ -69,14 +72,44 @@ void pit_handler(void){
         pit_count++;
     }
     
-    // tss.esp0 = 0x800000 - ((terminals[curr_terminal].procs[terminals[curr_terminal].curr_process])*4096*2)-4;
+    
     // tss.ss0 = KERNEL_DS;
-    tss = terminals[curr_terminal].save_tss;
+    // tss = terminals[curr_terminal].save_tss;
+    tss.esp0 = 0x800000 - ((terminals[curr_terminal].procs[terminals[curr_terminal].curr_process])*4096*2)-4;
     ebp = all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task;
     esp = all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task;
 
-    // if(curr_terminal == on_screen){map_video_page(X);} // map into the main video buffer
-    // else{map_video_page(Y);} // map into a video buffer that is not the main one
+    // NOT CORRECT!
+    // update_user_addr(terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]);
+
+    if(curr_terminal == on_screen){
+        terminals[curr_terminal].video_buffer = (char *)MAIN_VIDEO;// map into the main video buffer
+        // switch(curr_terminal) {
+        //     case 0: // save to term 0
+        //         memcpy((uint8_t *)MAIN_VIDEO,(uint8_t *) TERM0, 4096);
+        //         break;
+        //     case 1: // save to term 1
+        //         memcpy((uint8_t *)MAIN_VIDEO,(uint8_t *) TERM1, 4096);
+        //         break;
+        //     case 2: // save to term 2
+        //         memcpy((uint8_t *)MAIN_VIDEO,(uint8_t *) TERM2, 4096);
+        //         break;
+        // }
+
+    }
+    else{
+        switch(curr_terminal) {
+            case 0: // save to term 0
+                terminals[curr_terminal].video_buffer = (char *)TERM0;
+                break;
+            case 1: // save to term 1
+                terminals[curr_terminal].video_buffer = (char *)TERM1;
+                break;
+            case 2: // save to term 2
+                terminals[curr_terminal].video_buffer = (char *)TERM2;
+                break;
+        }
+    }
 
     asm volatile(
         "movl %0, %%ebp;"
@@ -154,9 +187,12 @@ void switch_terminal_work(int target_terminal){
     get_screen_pos(1) = y
     */
     update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    curr_terminal = target_terminal;
+    //curr_terminal = target_terminal;
 
-    
+    // memcpy(terminals[on_screen].video_buffer, (void *)MAIN_VIDEO, 4096);
+
+    // memcpy((void *)MAIN_VIDEO ,terminals[on_screen].video_buffer, 4096);
+
     
     return;
 }
@@ -193,15 +229,15 @@ void switch_terminal_keypress(int target_terminal){
     switch(target_terminal) {
         case 0: // switch to term 0
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM0, 4096);
-            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
+            // terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
         case 1: // switch to term 1
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM1, 4096);
-            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
+            // terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
         case 2: // switch to term 2
             memcpy((uint8_t *)MAIN_VIDEO, (uint8_t *)TERM2, 4096);
-            terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
+            // terminals[target_terminal].video_buffer = (char *)MAIN_VIDEO;
             break;
     }
     memcpy(terminals[on_screen].buf_kb, keyboard_buffer, KB_BUFFER_SIZE);
@@ -211,10 +247,8 @@ void switch_terminal_keypress(int target_terminal){
     kb_idx = terminals[target_terminal].curr_idx;
 
     on_screen = target_terminal;
-
+    // curr_terminal = on_screen;
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
     // check PUTC for cursor for terminal 2 and 3
     return;
 }
-
-

@@ -306,7 +306,7 @@ int32_t sys_halt(uint8_t status){
     // printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
 
     // this may need to be changed but i'm unsure
-    if(pid_counter > -1 && pid_counter < 3){
+    if(pid_counter > 0 && pid_counter < 3){
         //if (pid_counter == -1){
         //all_pcbs[pid_counter].in_use=-1;
         //printf("Restarting Shell... \n"); //restart the base shell
@@ -487,7 +487,19 @@ int32_t sys_vidmap(uint8_t **screen_start){
 
     // number 0x8000000 and 0x8400000 is the range of user program page
     if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
-    *screen_start = (uint8_t*)(0x84b8000); // do we clear this during halt? how?
+    switch(on_screen) {
+        case 0: // save to term 0
+           *screen_start = (uint8_t*)(0x8400000 + TERM0);
+            break;
+        case 1: // save to term 1
+            *screen_start = (uint8_t*)(0x8400000 + TERM1);
+            break;
+        case 2: // save to term 2
+            *screen_start = (uint8_t*)(0x8400000 + TERM2);
+            break;
+    }
+    
+    
     return 0;
 }
 

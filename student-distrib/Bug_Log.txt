@@ -296,24 +296,37 @@ Fix: directly used the current terminal's keyboard buffer and screen variables i
 Location of Fix: lib.c, terminal.c, keyboard.c, sched.c
 Estimated Time: 10 hours?
 
-Bug #
-Bug:
-Topic:
-Fix:
-Location of Fix:
-Estimated Time:
+Bug #36
+Bug: page fault upon halt
+Topic: sys_calls 
+Fix: jump back into execute
+Location of Fix: sys_calls.c
+Estimated Time: 1 hr
 
-Bug #
-Bug:
-Topic:
-Fix:
-Location of Fix:
-Estimated Time:
+Bug #37
+Bug: typing swtiched to next terminal 
+Topic: sched
+Fix: didnt do scheduling. (ditched round robin implementation)
+Location of Fix: sched.c 
+Estimated Time: 2hrs
 
-Bug #
-Bug:
-Topic:
-Fix:
-Location of Fix:
-Estimated Time:
+Bug #37
+Bug: video on screen would get over written
+Topic: sched
+Fix: saved and restored between every switch 
+Location of Fix: sched.c
+Estimated Time: 4hrs
 
+Bug #38
+Bug: spardioc cursor movement
+Topic: sched 
+Fix: used on_screen and curr_terminal to keep track of whats on screen and what taks is getting worked on 
+Location of Fix: sched.c and lib.c
+Estimated Time: 5hrs 
+
+Bug #39 
+Bug: page fault spam after max program has been reached
+Topic: sched/halt 
+Fix: NOT FIXED 
+Location of Fix: N/A
+Estimated Time: 4hrs

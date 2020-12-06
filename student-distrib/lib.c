@@ -31,7 +31,7 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
-    // clear_out_kb();
+    memcpy((uint8_t *) terminals[on_screen].video_buffer, (uint8_t *) video_mem, 4096);
     screen_x=0;
     screen_y=0;
     update_cursor(screen_x, screen_y);

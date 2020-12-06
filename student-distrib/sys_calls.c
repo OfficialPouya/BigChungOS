@@ -127,7 +127,6 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes) {
 
 int32_t sys_execute(const uint8_t *command){
     cli();
-    // 1. PARSE (Chloe :: DONE)
     int command_index, i, j; // variables to be used as indices
     int command_len_check = 0;
     prev_pid = pid_counter;
@@ -139,21 +138,10 @@ int32_t sys_execute(const uint8_t *command){
         printf("pid_counter: %d\n", pid_counter);
         printf("MAX Program Count reached \n");
         pid_counter = prev_pid;
-        // --pid_counter;
-        // sys_execute((uint8_t *) "shell");
         return -1;
     }
 
-    // if (terminals[curr_terminal].ProcPerTerm >= 4){
-    //     printf("Too many programs on this terminal \n");
-    //     return -1;
-    // }
-
-    // all_pcbs[pid_counter].in_use = 1;
     init_pcb(pid_counter);
-    // will need a separate function for getting an open pcb
-    // incrementing and decrementing pid_counter will not work now
-
     command_index = 0;
     i = 0;
     j = 0;
@@ -213,11 +201,6 @@ int32_t sys_execute(const uint8_t *command){
         command_index++;
     }
 
-
-    // may need to append newline char not positive tho
-    // 2. EXE CHECK (PAUL :: Done/Not Checked)
-    // 3. PAGING (PAUL :: Done/Not Checked)
-    // 4. USER LVL PROGRAM LOADER (PAUL :: Done/Not Checked)
     // helper function in filesys to check first 4 bytes
     int32_t eip_data;
     dentry_t temp;
@@ -228,17 +211,10 @@ int32_t sys_execute(const uint8_t *command){
         return -1;
     } 
     if(-1 != (eip_data = exec_check(temp.inode_num))){
-        // ++pid_counter; // replace with get pcb
-        // printf("execute:1 PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
-        // then do what needs to be done with exec
         //paging, call change address fucntion
         update_user_addr(pid_counter); // put process number here, will change pointer to correct page
-        // laodeer, load bytes to right address
-        // num 0x8048000: given, starting addr
+
         // num 4MB = 4096 * 1024 (at most or whatever file size is)
-
-        // while (0 != file_read(filename, (void*)0x8048000, 4096*1024));
-
         exec_file_load(temp.inode_num, 0, (void*)0x8048000, 4096*1024);
     }
     else{
@@ -250,7 +226,7 @@ int32_t sys_execute(const uint8_t *command){
     
     ++terminals[curr_terminal].curr_process;
     terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = pid_counter;
-    //printf("after inc, curr_terminal %d, curr_process %d\n", curr_terminal, terminals[curr_terminal].curr_process);
+
     // the math: 8MB - (curr pid)*8KB-4B
     tss.esp0 = 0x800000 - ((pid_counter)*4096*2)-4;
     tss.ss0 = KERNEL_DS;
@@ -276,7 +252,7 @@ int32_t sys_execute(const uint8_t *command){
         : "r" (USER_DS), "r" (0x83FFFFC), "r" (USER_CS), "r" (eip_data)
         : "eax", "memory"
     );
-    // 0x83FFFFC, is the bottom of the USER page - 4B.
+    // magic num: 0x83FFFFC, is the bottom of the USER page - 4B.
     return 0;
 }
 
@@ -291,35 +267,21 @@ int32_t sys_execute(const uint8_t *command){
 int32_t sys_halt(uint8_t status){
     uint32_t status_num = (uint32_t) status;
     // closes all fds bleonigng to a process
-    // we may want to use a variable more related to our terminals
+
     int fdt_loop;
     for (fdt_loop = 0; fdt_loop < MAX_FD_AMNT; fdt_loop++){
       sys_close(fdt_loop);
     }
     all_pcbs[pid_counter].in_use = 0;
-    // update the terminal's data here
 
-    // if (terminals[curr_terminal].curr_process == 0) would cover a shell being
-    // closed i believe. curr_process being 0 here represents halting the shell
-    
-    
-    // printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
-
-    // this may need to be changed but i'm unsure
     if(pid_counter > 0 && pid_counter < 3){
-        //if (pid_counter == -1){
-        //all_pcbs[pid_counter].in_use=-1;
-        //printf("Restarting Shell... \n"); //restart the base shell
         sys_execute((uint8_t *) "shell");
     }
 
-    //printf("before dec, curr_terminal %d, curr_process %d\n", curr_terminal, terminals[curr_terminal].curr_process);
+   // decrements the curr process 
     terminals[curr_terminal].procs[terminals[curr_terminal].curr_process] = -1;
     --terminals[curr_terminal].curr_process;
 
-    // i believe we set pid_counter to the current terminal's
-    // procs[curr_process (-1 depending on where this goes)]
-    // does vidmap need some changing to account for fish?
 
 
     update_user_addr(prev_pid);
@@ -334,7 +296,8 @@ int32_t sys_halt(uint8_t status){
     number '4096':      4KB
     number '2':         to get to 8KB
     */
-
+   // handling return values
+   // inverse execute
     asm volatile (
         "movl %0, %%ebp;"
         "movl %1, %%esp;"
@@ -344,8 +307,6 @@ int32_t sys_halt(uint8_t status){
     );
 
     pid_counter = prev_pid;          // replace with free pcb
-    // printf("PID_counter %d, curr_process %d\n", pid_counter, terminals[curr_terminal].curr_process);
-    // printf("flag %d\n", flag_exception);
 
     if(flag_exception==1){
         flag_exception = 0;
@@ -473,44 +434,62 @@ int32_t sys_getargs(uint8_t *buf, int32_t nbytes){
  IMPACTS ON OTHERS: none
  */
 int32_t sys_vidmap(uint8_t **screen_start){
-    // page_table2[(VIDMEM>>ENTRY4KB)] &= 0xFFF;      // Save all lower 12 bits
-
-    // if (curr_terminal == on_screen){
-    //     page_table2[(VIDMEM>>ENTRY4KB)] |= MAIN_VIDEO;
-    // }
-
-    // else {
-    //     page_table2[(VIDMEM>>ENTRY4KB)] |= *terminals[curr_terminal].video_buffer;
-    // }
-    
-    // flush_tlb();
-
     // number 0x8000000 and 0x8400000 is the range of user program page
     if(screen_start == NULL ||  screen_start < (uint8_t**)0x8000000 || screen_start > (uint8_t**)0x8400000) return -1;
     switch(on_screen) {
         case 0: // save to term 0
+            //the number 0x8400000 within the range of user program page
            *screen_start = (uint8_t*)(0x8400000 + TERM0);
             break;
         case 1: // save to term 1
+            //the number 0x8400000 within the range of user program page
             *screen_start = (uint8_t*)(0x8400000 + TERM1);
             break;
         case 2: // save to term 2
+            //the number 0x8400000 within the range of user program page
             *screen_start = (uint8_t*)(0x8400000 + TERM2);
             break;
     }
     
-    
     return 0;
 }
 
+
+
+/*
+ NAME: sys_set_handler
+ DESCRIPTION: for signal not implemented
+ INPUTS:  int32_t signum, void* handler_address
+ OUTPUTS: NONE
+ RETURN VALUE: -1
+ IMPACTS ON OTHERS: none
+ */
 int32_t sys_set_handler(int32_t signum, void* handler_address){
     return -1;
 }
 
+/*
+ NAME: sys_sigreturn
+ DESCRIPTION: for signal not implemented
+ INPUTS:  NONE
+ OUTPUTS: NONE
+ RETURN VALUE: -1
+ IMPACTS ON OTHERS: NONE
+ */
 int32_t sys_sigreturn(void){
   return -1;
 }
 
+
+
+/*
+ NAME: get_free_pcb
+ DESCRIPTION: returns the # of the first free pcb
+ INPUTS:  NONE
+ OUTPUTS: NONE
+ RETURN VALUE: PCB # on success -1 on fail
+ IMPACTS ON OTHERS: none
+ */
 int get_free_pcb(){
   int i;
   for (i = 0; i < PCB_SIZE; i++){

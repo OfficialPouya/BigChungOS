@@ -3,6 +3,8 @@
 #include "i8259.h"
 #include "rtc.h"
 
+// https://wiki.osdev.org/RTC
+
 /* global variables */
 int interrupt_flag = 0; //flag to know whether an interrupt has occured 
 /* init_rtc

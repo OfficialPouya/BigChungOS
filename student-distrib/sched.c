@@ -4,6 +4,14 @@
 volatile uint32_t pit_count = 0; // counter for our 3 initial shells
 
 
+/*
+ NAME: init_PIT
+ DESCRIPTION: initalize the PIT
+ INPUTS: Freq
+ OUTPUTS: NONE
+ RETURN VALUE: NONE
+ IMPACTS ON OTHERS: Sets freq for PIT
+ */
 void init_PIT(uint32_t freq){
     uint32_t div;
     uint8_t lower;
@@ -35,6 +43,8 @@ void init_PIT(uint32_t freq){
 void pit_handler(void){
     uint32_t esp;
     uint32_t ebp;
+    // for context switch between terminals
+    // saving the ebp and esp
     asm volatile(
         "movl %%ebp, %0;"
         "movl %%esp, %1"
@@ -48,7 +58,7 @@ void pit_handler(void){
     terminals[curr_terminal].screen_x = get_screen_pos(0);
     terminals[curr_terminal].screen_y = get_screen_pos(1);  
     
-    curr_terminal = (curr_terminal+1)%NUMBER_OF_TERMINALS;
+    curr_terminal = (curr_terminal)%NUMBER_OF_TERMINALS;
 
 
     if(pit_count<NUMBER_OF_TERMINALS){
@@ -75,27 +85,15 @@ void pit_handler(void){
     
     // tss.ss0 = KERNEL_DS;
     // tss = terminals[curr_terminal].save_tss;
+    // magic Number: 4096 = 4kB
+    // magic Number: 2  = we need to get 8KB since each kernel stack place is 8kB
+    // magic Number: 4 = offset needed (mihir)
     tss.esp0 = 0x800000 - ((terminals[curr_terminal].procs[terminals[curr_terminal].curr_process])*4096*2)-4;
     ebp = all_pcbs[terminals[curr_terminal].ebp[terminals[curr_terminal].curr_process]].ebp_task;
     esp = all_pcbs[terminals[curr_terminal].esp[terminals[curr_terminal].curr_process]].esp_task;
 
-    // NOT CORRECT!
-    // update_user_addr(terminals[curr_terminal].procs[terminals[curr_terminal].curr_process]);
-
     if(curr_terminal == on_screen){
         terminals[curr_terminal].video_buffer = (char *)MAIN_VIDEO;// map into the main video buffer
-        // switch(curr_terminal) {
-        //     case 0: // save to term 0
-        //         memcpy((uint8_t *)MAIN_VIDEO,(uint8_t *) TERM0, 4096);
-        //         break;
-        //     case 1: // save to term 1
-        //         memcpy((uint8_t *)MAIN_VIDEO,(uint8_t *) TERM1, 4096);
-        //         break;
-        //     case 2: // save to term 2
-        //         memcpy((uint8_t *)MAIN_VIDEO,(uint8_t *) TERM2, 4096);
-        //         break;
-        // }
-
     }
     else{
         switch(curr_terminal) {
@@ -110,7 +108,8 @@ void pit_handler(void){
                 break;
         }
     }
-
+    // for context switch between terminals
+    // resrtoring the ebp and esp
     asm volatile(
         "movl %0, %%ebp;"
         "movl %1, %%esp"
@@ -118,8 +117,6 @@ void pit_handler(void){
     : "r"(ebp), "r"(esp)
     );
 
-    // switch_terminal_work(curr_terminal);
-    
     send_eoi(0);
     return;
 }
@@ -166,9 +163,9 @@ void start_terminals(void){
 
 
 /*
- NAME: switch_terminal
- DESCRIPTION: manages the screen data, kb info, and video mem while switching terminals
- INPUTS:  curr_terminal and target_terminal
+ NAME: switch_terminal_work
+ DESCRIPTION: updates the srenn
+ INPUTS:  target_terminal
  OUTPUTS: NONE
  RETURN VALUE: NONE
  IMPACTS ON OTHERS: saves and restore terminal information
@@ -176,9 +173,6 @@ void start_terminals(void){
 void switch_terminal_work(int target_terminal){
     // QUICK CHECKS + FIX
     if(target_terminal >= NUMBER_OF_TERMINALS) return;
-
-    terminals[on_screen].screen_x = get_screen_pos(0);
-    terminals[on_screen].screen_y = get_screen_pos(1);    
     
     /*
     MAGIC NUMBERS
@@ -186,14 +180,11 @@ void switch_terminal_work(int target_terminal){
     get_screen_pos(0) = x
     get_screen_pos(1) = y
     */
-    update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    //curr_terminal = target_terminal;
-
-    // memcpy(terminals[on_screen].video_buffer, (void *)MAIN_VIDEO, 4096);
-
-    // memcpy((void *)MAIN_VIDEO ,terminals[on_screen].video_buffer, 4096);
-
+    terminals[on_screen].screen_x = get_screen_pos(0);
+    terminals[on_screen].screen_y = get_screen_pos(1);    
     
+    update_screen_axis(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
+
     return;
 }
 
@@ -211,6 +202,7 @@ void switch_terminal_keypress(int target_terminal){
     terminals[on_screen].screen_x = get_screen_pos(0);
     terminals[on_screen].screen_y = get_screen_pos(1);
 
+    // magic number 4096: 4kB
     switch(on_screen) {
         case 0: // save to term 0
             memcpy((uint8_t *)TERM0, (uint8_t *)MAIN_VIDEO, 4096);
@@ -247,8 +239,7 @@ void switch_terminal_keypress(int target_terminal){
     kb_idx = terminals[target_terminal].curr_idx;
 
     on_screen = target_terminal;
-    // curr_terminal = on_screen;
     update_screen(terminals[target_terminal].screen_x, terminals[target_terminal].screen_y);
-    // check PUTC for cursor for terminal 2 and 3
+    curr_terminal = target_terminal;
     return;
 }

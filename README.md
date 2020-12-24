@@ -3,58 +3,33 @@
 
 ## Personal Project Performance
 
-Checkpoint 1: 10/10
+**§ Checkpoint 1**: 10/10 
 
-Checkpoint 2: 17/17
+**§ Checkpoint 2**: 17/17
 
-Checkpoint 3: 15/16
+**§ Checkpoint 3**: 15/16
 
-Checkpoint 4: 23/24
+**§ Checkpoint 4**: 23/24
 
-Checkpoint 5: 18/25
+**§ Checkpoint 5**: 18/25
 
-Questions During Final Demo: 10/10
+**§ Questions During Final Demo**: 10/10
 
-Overall: 93/100
-
-
-## Tasks Achieved by group members 
-
-**Setting up the GDT** : Pouya, Paul, Chloe
-
-**Setting up the IDT** : Pouya
-
-**RTC** : Chloe
-
-**Paging** : Paul
-
-**Terminal** : Pouya
-
-**PIC Inttertupt** : Pouya
-
-**FileSystem** : Paul
-
-**System_Calls** : Pouya and Paul (Up to checkpoint 4) (Zohair and Chloe for checkpoint 5)
-
-**PIT** : Pouya 
-
-**Scheduling** : Pouya, Paul, Chloe, and Zohair
-
-
+**§ Overall**: 93/100
 
 ## Topics Covered
-**§ x86 assembly: review of basic constructs and structures, interfacing C to assembly, macros, stack frame and calling convention 
-**§ system software basics: resource management, virtualization, protection, system call interface, asynchronous and synchronous interactions
-**§ simple data structures: queues, heaps, stacks, lists
-**§ interrupts and exceptions: controlling generation and handling, chaining, cleanup code, interactions with device functionality, interrupt controllers
-**§ synchronization: primitives, memory semantics, mutual exclusion, semaphores, scheduling, race conditions
-**§ virtualization of the CPU: processes and scheduling
-**§ I/O interface: file descriptors, buffering, control operations
-**§ device programming: basic abstractions, character and block devices, device driver development process
-**§ user-level programming interfaces for file and network I/O, relationship to kernel I/O abstractions
-**§ virtualization of memory: hardware support and software abstractions
-**§ signals: semantics, generation, and delivery
-**§ file system abstractions and disk layout
+**§ x86 assembly**: review of basic constructs and structures, interfacing C to assembly, macros, stack frame and calling convention 
+**§ system software basics**: resource management, virtualization, protection, system call interface, asynchronous and synchronous interactions
+**§ simple data structures**: queues, heaps, stacks, lists
+**§ interrupts and exceptions**: controlling generation and handling, chaining, cleanup code, interactions with device functionality, interrupt controllers
+**§ synchronization**: primitives, memory semantics, mutual exclusion, semaphores, scheduling, race conditions
+**§ virtualization of the CPU**: processes and scheduling
+**§ I/O interface**: file descriptors, buffering, control operations
+**§ device programming**: basic abstractions, character and block devices, device driver development process
+**§ user-level programming interfaces**: for file and network I/O, relationship to kernel I/O abstractions
+**§ virtualization of memory**: hardware support and software abstractions
+**§ signals**: semantics, generation, and delivery
+**§ abstractions**:file system abstractions and disk layout
 
 ACADEMIC INTEGRITY
 -----

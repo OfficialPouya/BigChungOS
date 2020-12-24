@@ -2,13 +2,21 @@
 ## VIDEO DEMO
 
 ## Personal Project Performance
+
 Checkpoint 1: 10/10
+
 Checkpoint 2: 17/17
+
 Checkpoint 3: 15/16
+
 Checkpoint 4: 23/24
+
 Checkpoint 5: 18/25
+
 Questions During Final Demo: 10/10
+
 Overall: 93/100
+
 
 ## Tasks Achieved by group members 
 **Setting up the GDT : Pouya, Paul, Chloe

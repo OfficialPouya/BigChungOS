@@ -19,16 +19,27 @@
 
 ## Topics Covered
 **§ x86 assembly**: review of basic constructs and structures, interfacing C to assembly, macros, stack frame and calling convention 
+
 **§ system software basics**: resource management, virtualization, protection, system call interface, asynchronous and synchronous interactions
+
 **§ simple data structures**: queues, heaps, stacks, lists
+
 **§ interrupts and exceptions**: controlling generation and handling, chaining, cleanup code, interactions with device functionality, interrupt controllers
+
 **§ synchronization**: primitives, memory semantics, mutual exclusion, semaphores, scheduling, race conditions
+
 **§ virtualization of the CPU**: processes and scheduling
+
 **§ I/O interface**: file descriptors, buffering, control operations
+
 **§ device programming**: basic abstractions, character and block devices, device driver development process
+
 **§ user-level programming interfaces**: for file and network I/O, relationship to kernel I/O abstractions
+
 **§ virtualization of memory**: hardware support and software abstractions
+
 **§ signals**: semantics, generation, and delivery
+
 **§ abstractions**:file system abstractions and disk layout
 
 ACADEMIC INTEGRITY

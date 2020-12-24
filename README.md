@@ -19,15 +19,25 @@ Overall: 93/100
 
 
 ## Tasks Achieved by group members 
+
 **Setting up the GDT : Pouya, Paul, Chloe
+
 **Setting up the IDT : Pouya
+
 **RTC : Chloe
+
 **Paging : Paul
+
 **Terminal : Pouya
+
 **PIC Inttertupt : Pouya
+
 **FileSystem : Paul
+
 **System_Calls : Pouya and Paul (Up to checkpoint 4) (Zohair and Chloe for checkpoint 5)
+
 **PIT : Pouya 
+
 **Scheduling : Pouya, Paul, Chloe, and Zohair
 
 

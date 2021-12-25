@@ -1,5 +1,4 @@
 # Over View
-## VIDEO DEMO
 
 
 ## Personal Project Performance
